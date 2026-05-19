@@ -1,0 +1,333 @@
+/* Global Stylesheet - Premium HSL & Glassmorphic Design System */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Font Families */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+
+  /* Colors (Light Mode) */
+  --background-hsl: 220 33% 98%;
+  --foreground-hsl: 224 71% 4%;
+  
+  --card-hsl: 0 0% 100%;
+  --card-border-hsl: 220 13% 91%;
+  
+  --primary-hsl: 224 89% 55%;
+  --primary-hover-hsl: 224 89% 48%;
+  --primary-foreground-hsl: 0 0% 100%;
+  
+  --secondary-hsl: 220 14% 96%;
+  --secondary-hover-hsl: 220 14% 90%;
+  --secondary-foreground-hsl: 224 71% 4%;
+
+  --accent-hsl: 172 66% 50%;
+  --accent-foreground-hsl: 172 100% 5%;
+
+  --muted-hsl: 220 9% 46%;
+  --muted-background-hsl: 220 10% 95%;
+
+  --success-hsl: 142 76% 36%;
+  --warning-hsl: 38 92% 50%;
+  --danger-hsl: 346 84% 61%;
+
+  /* Effects */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-blur: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Colors (Dark Mode) */
+    --background-hsl: 224 71% 4%;
+    --foreground-hsl: 220 33% 98%;
+    
+    --card-hsl: 224 71% 7%;
+    --card-border-hsl: 224 71% 12%;
+    
+    --primary-hsl: 217 91% 60%;
+    --primary-hover-hsl: 217 91% 54%;
+    --primary-foreground-hsl: 0 0% 100%;
+    
+    --secondary-hsl: 224 71% 12%;
+    --secondary-hover-hsl: 224 71% 18%;
+    --secondary-foreground-hsl: 220 33% 98%;
+
+    --accent-hsl: 172 66% 50%;
+    --accent-foreground-hsl: 224 71% 4%;
+
+    --muted-hsl: 217 12% 70%;
+    --muted-background-hsl: 224 71% 10%;
+
+    --success-hsl: 142 70% 45%;
+    --warning-hsl: 48 96% 53%;
+    --danger-hsl: 346 84% 61%;
+
+    /* Effects */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+    --glass-bg: rgba(10, 12, 18, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.07);
+  }
+}
+
+/* Base resets & layout */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-sans);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: hsl(var(--background-hsl));
+  color: hsl(var(--foreground-hsl));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography elements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-md);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* High-end micro-animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Interactive elements */
+button, .btn {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 8px;
+}
+
+button:active, .btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background-color: hsl(var(--primary-hsl));
+  color: hsl(var(--primary-foreground-hsl));
+}
+.btn-primary:hover {
+  background-color: hsl(var(--primary-hover-hsl));
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary {
+  background-color: hsl(var(--secondary-hsl));
+  color: hsl(var(--secondary-foreground-hsl));
+  border-color: hsl(var(--card-border-hsl));
+}
+.btn-secondary:hover {
+  background-color: hsl(var(--secondary-hover-hsl));
+}
+
+.btn-accent {
+  background-color: hsl(var(--accent-hsl));
+  color: hsl(var(--accent-foreground-hsl));
+}
+.btn-accent:hover {
+  opacity: 0.9;
+  box-shadow: 0 0 15px rgba(20, 184, 166, 0.4);
+}
+
+.btn-danger {
+  background-color: hsl(var(--danger-hsl));
+  color: white;
+}
+.btn-danger:hover {
+  opacity: 0.9;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: hsl(var(--foreground-hsl));
+  opacity: 0.85;
+}
+
+.form-input, .form-select, .form-textarea {
+  font-family: var(--font-sans);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: hsl(var(--foreground-hsl));
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: hsl(var(--primary-hsl));
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Beautiful Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Status Badges */
+.badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+}
+
+.badge-pendiente {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: hsl(var(--warning-hsl));
+}
+
+.badge-en_revision {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: hsl(var(--primary-hsl));
+}
+
+.badge-aprobado {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: hsl(var(--success-hsl));
+}
+
+.badge-rechazado {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: hsl(var(--danger-hsl));
+}
+
+/* Custom Table Layout */
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.custom-table th {
+  padding: 14px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.7;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.custom-table td {
+  padding: 14px 18px;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--glass-border);
+  vertical-align: middle;
+}
+
+.custom-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Shimmer Loader */
+.shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: loadingShimmer 1.5s infinite;
+}
+
+@keyframes loadingShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
