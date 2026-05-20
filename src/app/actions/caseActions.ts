@@ -22,6 +22,17 @@ export async function registerPersonAndCaseAction(formData: FormData) {
   const email = formData.get('email') as string;
   const mobile = formData.get('mobile') as string;
   const description = formData.get('description') as string;
+  const medicalCenter = formData.get('medical_center') as string;
+  const agreementType = formData.get('agreement_type') as string;
+  const dentalDiagnosis = formData.get('dental_diagnosis') as string;
+  const treatmentNeeded = formData.get('treatment_needed') as string;
+  const professionalName = formData.get('professional_name') as string;
+  const professionalTitle = formData.get('professional_title') as string;
+  const professionalPosition = formData.get('professional_position') as string;
+  const professionalEmail = formData.get('professional_email') as string;
+  const professionalPhone = formData.get('professional_phone') as string;
+  const professionalWebsite = formData.get('professional_website') as string;
+  const professionalAddress = formData.get('professional_address') as string;
 
   // Simple validation
   if (!rutRaw || !firstNames || !lastNames || !nationality || !birthDate || !commune || !mobile || !description) {
@@ -85,9 +96,30 @@ export async function registerPersonAndCaseAction(formData: FormData) {
 
       // 2. Create the case linked to the person
       await client.query(`
-        INSERT INTO cases (person_id, description, status, observations)
-        VALUES ($1, $2, $3, $4)
-      `, [personId, description.trim(), 'pendiente', '']);
+        INSERT INTO cases (
+          person_id, description, status, observations,
+          medical_center, agreement_type, dental_diagnosis, treatment_needed,
+          professional_name, professional_title, professional_position,
+          professional_email, professional_phone, professional_website, professional_address
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      `, [
+        personId, 
+        description ? description.trim() : '', 
+        'pendiente', 
+        '',
+        medicalCenter?.trim() || null,
+        agreementType?.trim() || null,
+        dentalDiagnosis?.trim() || null,
+        treatmentNeeded?.trim() || null,
+        professionalName?.trim() || null,
+        professionalTitle?.trim() || null,
+        professionalPosition?.trim() || null,
+        professionalEmail?.trim() || null,
+        professionalPhone?.trim() || null,
+        professionalWebsite?.trim() || null,
+        professionalAddress?.trim() || null
+      ]);
 
       await client.query('COMMIT');
       

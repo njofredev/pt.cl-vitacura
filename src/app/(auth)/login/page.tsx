@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { handleLogin } from '@/app/actions/authActions';
 
 export default function LoginPage() {
@@ -13,7 +14,7 @@ export default function LoginPage() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    
+
     try {
       const result = await handleLogin(null, formData);
       if (result && result.error) {
@@ -60,7 +61,7 @@ export default function LoginPage() {
       }} />
 
       {/* Login Card */}
-      <div 
+      <div
         className="glass-panel animate-fade-in"
         style={{
           width: '100%',
@@ -75,25 +76,14 @@ export default function LoginPage() {
       >
         {/* Branding header */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '50px',
-            height: '50px',
+          <Image src="/logo.svg" alt="Policlínico Logo" width={100} height={100} style={{
             borderRadius: 'var(--radius-sm)',
-            background: 'linear-gradient(135deg, hsl(var(--primary-hsl)) 0%, hsl(var(--accent-hsl)) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontWeight: 800,
-            fontSize: '1.4rem',
             boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)',
             marginBottom: '12px'
-          }}>
-            PT
-          </div>
-          <h1 style={{ 
-            fontFamily: 'var(--font-display)', 
-            fontWeight: 800, 
+          }} />
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 800,
             fontSize: '1.8rem',
             textAlign: 'center',
             letterSpacing: '-0.02em',
@@ -101,22 +91,22 @@ export default function LoginPage() {
           }}>
             Policlínico Tabancura
           </h1>
-          <p style={{ 
-            fontSize: '0.9rem', 
-            opacity: 0.7, 
+          <p style={{
+            fontSize: '0.9rem',
+            opacity: 0.7,
             textAlign: 'center',
             margin: 0,
             fontWeight: 500
           }}>
-            Convenios y Casos Sociales
+            Derivación digital
           </p>
         </div>
 
         {/* Login Form */}
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
+
           {error && (
-            <div 
+            <div
               className="badge-rechazado"
               style={{
                 padding: '12px 16px',
@@ -129,22 +119,22 @@ export default function LoginPage() {
                 lineHeight: '1.4'
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
               {error}
             </div>
           )}
 
           <div className="form-group">
             <label className="form-label" htmlFor="email">
-              Correo Electrónico
+              Correo Electrónico de funcionario
             </label>
-            <input 
-              className="form-input" 
-              type="email" 
-              id="email" 
-              name="email" 
-              placeholder="ejemplo@tabancura.cl" 
-              required 
+            <input
+              className="form-input"
+              type="email"
+              id="email"
+              name="email"
+              placeholder="ejemplo@tabancura.cl"
+              required
               autoComplete="email"
               disabled={loading}
             />
@@ -156,22 +146,22 @@ export default function LoginPage() {
                 Contraseña
               </label>
             </div>
-            <input 
-              className="form-input" 
-              type="password" 
-              id="password" 
-              name="password" 
-              placeholder="••••••••" 
+            <input
+              className="form-input"
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
               required
               autoComplete="current-password"
               disabled={loading}
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            style={{ 
+          <button
+            type="submit"
+            className="btn-primary"
+            style={{
               marginTop: '10px',
               padding: '14px 18px',
               fontSize: '1rem',
@@ -199,9 +189,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ 
-          fontSize: '0.8rem', 
-          opacity: 0.5, 
+        <div style={{
+          fontSize: '0.8rem',
+          opacity: 0.5,
           textAlign: 'center',
           borderTop: '1px solid var(--glass-border)',
           paddingTop: '20px',
@@ -210,7 +200,7 @@ export default function LoginPage() {
           Acceso privado restringido a personal autorizado.
         </div>
       </div>
-      
+
       <style jsx global>{`
         body {
           padding-left: 0 !important; /* Overrides the sidebar padding on login screen */

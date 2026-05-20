@@ -331,14 +331,6 @@ export default async function DashboardPage() {
                   textDecoration: 'none',
                   transition: 'all 0.2s ease'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.borderColor = 'hsl(var(--accent-hsl))';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-                  e.currentTarget.style.borderColor = 'var(--glass-border)';
-                }}
               >
                 <div style={{
                   backgroundColor: 'rgba(20, 184, 166, 0.1)',
@@ -368,14 +360,6 @@ export default async function DashboardPage() {
                 color: 'inherit',
                 textDecoration: 'none',
                 transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                e.currentTarget.style.borderColor = 'hsl(var(--primary-hsl))';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-                e.currentTarget.style.borderColor = 'var(--glass-border)';
               }}
             >
               <div style={{
@@ -408,14 +392,6 @@ export default async function DashboardPage() {
                   color: 'inherit',
                   textDecoration: 'none',
                   transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.borderColor = 'hsl(var(--accent-hsl))';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-                  e.currentTarget.style.borderColor = 'var(--glass-border)';
                 }}
               >
                 <div style={{

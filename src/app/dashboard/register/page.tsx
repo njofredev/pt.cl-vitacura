@@ -287,19 +287,145 @@ export default function RegisterCasePage() {
               2. Detalle del Caso o Convenio
             </h3>
 
-            <div className="form-group">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '20px'
+            }}>
+              
+              {/* Medical Center */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="medical_center">Centro Médico de Origen *</label>
+                <select 
+                  className="form-select" 
+                  id="medical_center" 
+                  name="medical_center" 
+                  required 
+                  disabled={loading}
+                  style={{ backgroundColor: 'hsl(var(--card-hsl))' }}
+                >
+                  <option value="">Seleccione un Centro</option>
+                  <option value="CESFAM Vitacura">CESFAM Vitacura</option>
+                  <option value="CESFAM Lo Barnechea">CESFAM Lo Barnechea</option>
+                  <option value="Consultorio Dr. Aníbal Ariztía">Consultorio Dr. Aníbal Ariztía</option>
+                  <option value="Otro">Otro Centro de Salud Familiar</option>
+                </select>
+              </div>
+
+              {/* Agreement Type */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="agreement_type">Convenio sin Costo de *</label>
+                <select 
+                  className="form-select" 
+                  id="agreement_type" 
+                  name="agreement_type" 
+                  required 
+                  disabled={loading}
+                  style={{ backgroundColor: 'hsl(var(--card-hsl))' }}
+                >
+                  <option value="">Seleccione el tipo de convenio</option>
+                  <option value="Confección de Prótesis Removibles">Confección de Prótesis Removibles</option>
+                  <option value="Atención Dental Básica">Atención Dental Básica</option>
+                  <option value="Tratamiento de Endodoncia">Tratamiento de Endodoncia</option>
+                  <option value="Implantes Dentales">Implantes Dentales</option>
+                  <option value="Otro">Otro Convenio</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="dental_diagnosis">
+                  Diagnóstico Odontológico *
+                </label>
+                <textarea 
+                  className="form-textarea" 
+                  id="dental_diagnosis" 
+                  name="dental_diagnosis" 
+                  required 
+                  rows={2}
+                  placeholder="Ej: Desdentado parcial superior e inferior..." 
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="treatment_needed">
+                  Por favor, realizar (Prestación a realizar) *
+                </label>
+                <textarea 
+                  className="form-textarea" 
+                  id="treatment_needed" 
+                  name="treatment_needed" 
+                  required 
+                  rows={2}
+                  placeholder="Ej: Prótesis parcial superior e inferior..." 
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px' }}>
               <label className="form-label" htmlFor="description">
-                Descripción de la Solicitud Social / Convenio *
+                Observaciones Generales de la Derivación (Opcional)
               </label>
               <textarea 
                 className="form-textarea" 
                 id="description" 
                 name="description" 
-                required 
-                rows={6}
-                placeholder="Describa en detalle la situación socioeconómica, el requerimiento clínico o el convenio social que solicita para la persona..." 
+                rows={3}
+                placeholder="Detalles adicionales relevantes sobre el paciente o el caso..." 
                 disabled={loading}
               />
+            </div>
+
+            {/* Section 3: Professional Details */}
+            <h3 style={{ 
+              fontSize: '1.1rem', 
+              fontFamily: 'var(--font-display)', 
+              fontWeight: 700, 
+              borderBottom: '1px solid var(--glass-border)',
+              paddingBottom: '10px',
+              marginTop: '40px',
+              marginBottom: '20px',
+              color: 'hsl(var(--accent-hsl))',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              3. Firma del Profesional Derivador
+            </h3>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '20px'
+            }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="professional_name">Nombre del Profesional *</label>
+                <input className="form-input" type="text" id="professional_name" name="professional_name" required placeholder="Dr. Juan Manuel Casals" disabled={loading} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="professional_title">Profesión *</label>
+                <input className="form-input" type="text" id="professional_title" name="professional_title" required placeholder="Cirujano dentista" disabled={loading} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="professional_position">Cargo *</label>
+                <input className="form-input" type="text" id="professional_position" name="professional_position" required placeholder="Encargado del Programa Odontológico." disabled={loading} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="professional_email">Correo de Contacto *</label>
+                <input className="form-input" type="email" id="professional_email" name="professional_email" required placeholder="jcasals@vitacura.cl" disabled={loading} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="professional_address">Dirección del Centro *</label>
+                <input className="form-input" type="text" id="professional_address" name="professional_address" required placeholder="Indiana Nº 1195, Vitacura" disabled={loading} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="professional_website">Sitio Web (Opcional)</label>
+                <input className="form-input" type="text" id="professional_website" name="professional_website" placeholder="www.vitacura.cl" disabled={loading} />
+              </div>
             </div>
           </div>
 

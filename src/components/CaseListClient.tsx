@@ -17,6 +17,11 @@ interface CaseRecord {
   email: string | null;
   mobile: string;
   description: string;
+  medical_center: string | null;
+  agreement_type: string | null;
+  dental_diagnosis: string | null;
+  treatment_needed: string | null;
+  professional_name: string | null;
   status: 'pendiente' | 'en_revision' | 'aprobado' | 'rechazado';
   observations: string | null;
   created_at: Date | string;
@@ -205,7 +210,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       whiteSpace: 'nowrap',
                       opacity: 0.8
                     }}>
-                      {c.description}
+                      {c.dental_diagnosis ? `Derivación: ${c.agreement_type}` : c.description}
                     </td>
                     <td style={{ fontSize: '0.85rem', opacity: 0.7 }}>{formatDate(c.created_at)}</td>
                     {user.role !== 'external' && (
@@ -216,7 +221,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         {c.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td style={{ textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                       <button 
                         onClick={() => openDetails(c)}
                         className="btn-secondary"
@@ -224,6 +229,14 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       >
                         Ver Ficha
                       </button>
+                      <a 
+                        href={`/dashboard/cases/${c.id}/print`}
+                        target="_blank"
+                        className="btn-primary"
+                        style={{ padding: '6px 12px', fontSize: '0.8rem', textDecoration: 'none' }}
+                      >
+                        Imprimir
+                      </a>
                     </td>
                   </tr>
                 ))}
@@ -271,11 +284,25 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   backgroundColor: 'rgba(255, 255, 255, 0.02)', 
                   border: '1px solid var(--glass-border)',
                   fontSize: '0.95rem',
-                  lineHeight: '1.6',
-                  whiteSpace: 'pre-wrap'
+                  lineHeight: '1.6'
                 }}
               >
-                {selectedCase.description}
+                {selectedCase.dental_diagnosis ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div><strong>Centro Médico:</strong> {selectedCase.medical_center}</div>
+                    <div><strong>Convenio:</strong> {selectedCase.agreement_type}</div>
+                    <div><strong>Diagnóstico Odontológico:</strong> {selectedCase.dental_diagnosis}</div>
+                    <div><strong>Prestación a Realizar:</strong> {selectedCase.treatment_needed}</div>
+                    {selectedCase.description && (
+                      <div><strong>Observaciones Generales:</strong> {selectedCase.description}</div>
+                    )}
+                    <div><strong>Profesional Derivador:</strong> {selectedCase.professional_name}</div>
+                  </div>
+                ) : (
+                  <div style={{ whiteSpace: 'pre-wrap' }}>
+                    {selectedCase.description}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: '20px', marginTop: '10px', fontSize: '0.8rem', opacity: 0.6 }}>
                 <span>Inscrito el: {formatDate(selectedCase.created_at)}</span>

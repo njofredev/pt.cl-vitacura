@@ -19,7 +19,8 @@ export default async function CasesPage() {
       // Admins and Internals see all cases from all registration sources
       const res = await pool.query(`
         SELECT c.id, p.rut, p.first_names, p.last_names, p.nationality, p.birth_date, p.commune, p.email, p.mobile, 
-               c.description, c.status, c.observations, c.created_at, 
+               c.description, c.medical_center, c.agreement_type, c.dental_diagnosis, c.treatment_needed, c.professional_name,
+               c.status, c.observations, c.created_at, 
                u_reg.name as registered_by_name, u_eval.name as evaluator_name
         FROM cases c
         JOIN persons p ON c.person_id = p.id
@@ -32,7 +33,8 @@ export default async function CasesPage() {
       // Externals see only the cases registered by themselves
       const res = await pool.query(`
         SELECT c.id, p.rut, p.first_names, p.last_names, p.nationality, p.birth_date, p.commune, p.email, p.mobile, 
-               c.description, c.status, c.observations, c.created_at, 
+               c.description, c.medical_center, c.agreement_type, c.dental_diagnosis, c.treatment_needed, c.professional_name,
+               c.status, c.observations, c.created_at, 
                u_reg.name as registered_by_name, u_eval.name as evaluator_name
         FROM cases c
         JOIN persons p ON c.person_id = p.id
