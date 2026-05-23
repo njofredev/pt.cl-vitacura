@@ -258,147 +258,188 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
             
             {/* Beneficiary particulars grid */}
             <div>
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, opacity: 0.6, borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Datos del Postulante
               </h4>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', fontSize: '0.95rem' }}>
-                <div><span style={{ opacity: 0.6, display: 'block', fontSize: '0.8rem' }}>RUT:</span><strong>{formatRUT(selectedCase.rut)}</strong></div>
-                <div><span style={{ opacity: 0.6, display: 'block', fontSize: '0.8rem' }}>Nacionalidad:</span><strong>{selectedCase.nationality}</strong></div>
-                <div><span style={{ opacity: 0.6, display: 'block', fontSize: '0.8rem' }}>Fecha de Nacimiento:</span><strong>{formatDate(selectedCase.birth_date)}</strong></div>
-                <div><span style={{ opacity: 0.6, display: 'block', fontSize: '0.8rem' }}>Comuna Residencia:</span><strong>{selectedCase.commune}</strong></div>
-                <div><span style={{ opacity: 0.6, display: 'block', fontSize: '0.8rem' }}>Celular Contacto:</span><strong>{selectedCase.mobile}</strong></div>
-                <div><span style={{ opacity: 0.6, display: 'block', fontSize: '0.8rem' }}>Correo Electrónico:</span><strong>{selectedCase.email || '-'}</strong></div>
-              </div>
-            </div>
-
-            {/* Case Details */}
-            <div>
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, opacity: 0.6, borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Detalles de la Solicitud Social
-              </h4>
-              <div 
-                className="glass-panel" 
-                style={{ 
-                  padding: '16px', 
-                  backgroundColor: 'rgba(255, 255, 255, 0.02)', 
-                  border: '1px solid var(--glass-border)',
-                  fontSize: '0.95rem',
-                  lineHeight: '1.6'
-                }}
-              >
-                {selectedCase.dental_diagnosis ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div><strong>Centro Médico:</strong> {selectedCase.medical_center}</div>
-                    <div><strong>Convenio:</strong> {selectedCase.agreement_type}</div>
-                    <div><strong>Diagnóstico Odontológico:</strong> {selectedCase.dental_diagnosis}</div>
-                    <div><strong>Prestación a Realizar:</strong> {selectedCase.treatment_needed}</div>
-                    {selectedCase.description && (
-                      <div><strong>Observaciones Generales:</strong> {selectedCase.description}</div>
-                    )}
-                    <div><strong>Profesional Derivador:</strong> {selectedCase.professional_name}</div>
-                  </div>
-                ) : (
-                  <div style={{ whiteSpace: 'pre-wrap' }}>
-                    {selectedCase.description}
-                  </div>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: '20px', marginTop: '10px', fontSize: '0.8rem', opacity: 0.6 }}>
-                <span>Inscrito el: {formatDate(selectedCase.created_at)}</span>
-                <span>Registrado por: {selectedCase.registered_by_name || 'Admin Semilla'}</span>
-              </div>
-            </div>
-
-            {/* Review and observations block */}
-            <div>
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, opacity: 0.6, borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Evaluación Administrativa / Convenio
-              </h4>
-
-              {/* Show-only panel for External Admins (who cannot edit statuses) */}
-              {user.role === 'external' ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>Estado actual del caso:</span>
-                    <span className={`badge badge-${selectedCase.status}`}>
-                      {selectedCase.status.replace('_', ' ')}
-                    </span>
-                  </div>
-                  {selectedCase.observations ? (
-                    <div className="glass-panel" style={{ padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                      <strong>Observaciones Internas:</strong>
-                      <p style={{ marginTop: '8px', whiteSpace: 'pre-wrap' }}>{selectedCase.observations}</p>
-                    </div>
-                  ) : (
-                    <span style={{ fontStyle: 'italic', fontSize: '0.85rem', opacity: 0.5 }}>No hay observaciones registradas aún.</span>
-                  )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>RUT</span>
+                  <strong style={{ fontSize: '0.95rem' }}>{formatRUT(selectedCase.rut)}</strong>
                 </div>
-              ) : (
-                /* Editable form for Admins and Internals */
-                <form onSubmit={handleSaveEvaluation} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                  
-                  {error && (
-                    <div className="badge-rechazado" style={{ padding: '10px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600 }}>
-                      {error}
-                    </div>
-                  )}
-
-                  {success && (
-                    <div className="badge-aprobado" style={{ padding: '10px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600 }}>
-                      {success}
-                    </div>
-                  )}
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="eval_status">Asignar Estado del Caso</label>
-                    <select 
-                      className="form-select"
-                      id="eval_status"
-                      value={evalStatus}
-                      onChange={(e) => setEvalStatus(e.target.value as any)}
-                      disabled={loading}
-                      style={{ backgroundColor: 'hsl(var(--card-hsl))' }}
-                    >
-                      <option value="pendiente">Pendiente (Sin Evaluación)</option>
-                      <option value="en_revision">En Revisión Administrativa</option>
-                      <option value="aprobado">Aprobado (Convenio Vigente)</option>
-                      <option value="rechazado">Rechazado (No Aplica)</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="eval_obs">Observaciones y Diagnóstico Social *</label>
-                    <textarea 
-                      className="form-textarea"
-                      id="eval_obs"
-                      value={evalObs}
-                      onChange={(e) => setEvalObs(e.target.value)}
-                      required
-                      rows={4}
-                      placeholder="Ingrese los motivos clínicos/sociales de la aprobación, rechazo o detalles técnicos del convenio aplicado..."
-                      disabled={loading}
-                    />
-                  </div>
-
-                  {selectedCase.evaluator_name && (
-                    <div style={{ fontSize: '0.75rem', opacity: 0.5, fontStyle: 'italic' }}>
-                      Última evaluación realizada por: {selectedCase.evaluator_name}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>
-                    <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary" disabled={loading}>
-                      Cerrar
-                    </button>
-                    <button type="submit" className="btn-accent" disabled={loading}>
-                      {loading ? 'Guardando...' : 'Guardar Evaluación'}
-                    </button>
-                  </div>
-
-                </form>
-              )}
+                <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Nacionalidad</span>
+                  <strong style={{ fontSize: '0.95rem' }}>{selectedCase.nationality}</strong>
+                </div>
+                <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Fecha de Nacimiento</span>
+                  <strong style={{ fontSize: '0.95rem' }}>{formatDate(selectedCase.birth_date)}</strong>
+                </div>
+                <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Comuna Residencia</span>
+                  <strong style={{ fontSize: '0.95rem' }}>{selectedCase.commune}</strong>
+                </div>
+                <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Celular Contacto</span>
+                  <strong style={{ fontSize: '0.95rem' }}>{selectedCase.mobile}</strong>
+                </div>
+                <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Correo Electrónico</span>
+                  <strong style={{ fontSize: '0.95rem' }}>{selectedCase.email || '-'}</strong>
+                </div>
+              </div>
             </div>
+ 
+             {/* Case Details */}
+             <div>
+               <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                 Detalles de la Solicitud Social
+               </h4>
+               <div 
+                 className="glass-panel" 
+                 style={{ 
+                   padding: '20px', 
+                   backgroundColor: 'rgba(255, 255, 255, 0.01)', 
+                   border: '1px solid var(--glass-border)',
+                   fontSize: '0.95rem',
+                   lineHeight: '1.6',
+                   borderRadius: 'var(--radius-md)'
+                 }}
+               >
+                 {selectedCase.dental_diagnosis ? (
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                     <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
+                       <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Centro Médico:</span>
+                       <span style={{ fontWeight: 600 }}>{selectedCase.medical_center}</span>
+                     </div>
+                     <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
+                       <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Convenio Solicitado:</span>
+                       <span style={{ fontWeight: 700, color: 'hsl(var(--accent-hsl))' }}>{selectedCase.agreement_type}</span>
+                     </div>
+                     <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
+                       <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Diagnóstico Odontológico:</span>
+                       <span style={{ fontStyle: 'italic', opacity: 0.95 }}>"{selectedCase.dental_diagnosis}"</span>
+                     </div>
+                     <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
+                       <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Prestación Requerida:</span>
+                       <span>{selectedCase.treatment_needed}</span>
+                     </div>
+                     {selectedCase.description && (
+                       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
+                         <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Observaciones Generales:</span>
+                         <span style={{ opacity: 0.85 }}>{selectedCase.description}</span>
+                       </div>
+                     )}
+                     <div style={{ display: 'flex' }}>
+                       <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Profesional Derivador:</span>
+                       <span style={{ fontWeight: 600, color: 'hsl(var(--primary-hsl))' }}>{selectedCase.professional_name}</span>
+                     </div>
+                   </div>
+                 ) : (
+                   <div style={{ whiteSpace: 'pre-wrap', opacity: 0.9 }}>
+                     {selectedCase.description}
+                   </div>
+                 )}
+               </div>
+               <div style={{ display: 'flex', gap: '20px', marginTop: '12px', fontSize: '0.8rem', opacity: 0.5, paddingLeft: '4px' }}>
+                 <span>Inscrito el: {formatDate(selectedCase.created_at)}</span>
+                 <span>Registrado por: {selectedCase.registered_by_name || 'Admin Semilla'}</span>
+               </div>
+             </div>
+ 
+             {/* Review and observations block */}
+             <div>
+               <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                 Evaluación Administrativa / Convenio
+               </h4>
+ 
+               {/* Show-only panel for External Admins (who cannot edit statuses) */}
+               {user.role === 'external' ? (
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                     <span style={{ fontSize: '0.9rem', opacity: 0.7, fontWeight: 600 }}>Estado actual:</span>
+                     <span className={`badge badge-${selectedCase.status}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+                       {selectedCase.status.replace('_', ' ')}
+                     </span>
+                   </div>
+                   {selectedCase.observations ? (
+                     <div className="glass-panel" style={{ padding: '18px', backgroundColor: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)', fontSize: '0.95rem', lineHeight: '1.6', borderRadius: 'var(--radius-md)' }}>
+                       <strong style={{ display: 'block', fontSize: '0.85rem', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Observaciones del Evaluador</strong>
+                       <p style={{ margin: 0, whiteSpace: 'pre-wrap', opacity: 0.95 }}>{selectedCase.observations}</p>
+                     </div>
+                   ) : (
+                     <span style={{ fontStyle: 'italic', fontSize: '0.85rem', opacity: 0.5, paddingLeft: '4px' }}>No hay observaciones registradas aún.</span>
+                   )}
+                 </div>
+               ) : (
+                 /* Editable form for Admins and Internals */
+                 <form onSubmit={handleSaveEvaluation} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                   
+                   {error && (
+                     <div className="badge-rechazado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                       {error}
+                     </div>
+                   )}
+ 
+                   {success && (
+                     <div className="badge-aprobado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                       {success}
+                     </div>
+                   )}
+ 
+                   <div className="form-group">
+                     <label className="form-label" htmlFor="eval_status" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Asignar Estado del Caso</label>
+                     <select 
+                       className="form-select"
+                       id="eval_status"
+                       value={evalStatus}
+                       onChange={(e) => setEvalStatus(e.target.value as any)}
+                       disabled={loading}
+                       style={{ backgroundColor: 'hsl(var(--card-hsl))', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
+                     >
+                       <option value="pendiente">Pendiente (Sin Evaluación)</option>
+                       <option value="en_revision">En Revisión Administrativa</option>
+                       <option value="aprobado">Aprobado (Convenio Vigente)</option>
+                       <option value="rechazado">Rechazado (No Aplica)</option>
+                     </select>
+                   </div>
+ 
+                   <div className="form-group">
+                     <label className="form-label" htmlFor="eval_obs" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Observaciones y Diagnóstico Social *</label>
+                     <textarea 
+                       className="form-textarea"
+                       id="eval_obs"
+                       value={evalObs}
+                       onChange={(e) => setEvalObs(e.target.value)}
+                       required
+                       rows={4}
+                       placeholder="Ingrese los motivos clínicos/sociales de la aprobación, rechazo o detalles técnicos del convenio aplicado..."
+                       disabled={loading}
+                       style={{ border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', resize: 'vertical' }}
+                     />
+                   </div>
+ 
+                   {selectedCase.evaluator_name && (
+                     <div style={{ fontSize: '0.75rem', opacity: 0.5, fontStyle: 'italic', paddingLeft: '4px' }}>
+                       Última evaluación realizada por: {selectedCase.evaluator_name}
+                     </div>
+                   )}
+ 
+                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>
+                     <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary" disabled={loading} style={{ borderRadius: 'var(--radius-sm)', padding: '10px 20px' }}>
+                       Cerrar
+                     </button>
+                     <button type="submit" className="btn-accent" disabled={loading} style={{ borderRadius: 'var(--radius-sm)', padding: '10px 20px', fontWeight: 700, boxShadow: '0 4px 15px rgba(20, 184, 166, 0.25)' }}>
+                       {loading ? 'Guardando...' : 'Guardar Evaluación'}
+                     </button>
+                   </div>
+ 
+                 </form>
+               )}
+             </div>
 
           </div>
         </Modal>

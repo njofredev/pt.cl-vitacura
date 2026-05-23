@@ -35,9 +35,9 @@ export async function createUserAction(formData: FormData) {
 
     // Insert user
     await pool.query(`
-      INSERT INTO users (name, email, password_hash, role, active)
-      VALUES ($1, $2, $3, $4, $5)
-    `, [name.trim(), email.toLowerCase().trim(), passwordHash, role, true]);
+      INSERT INTO users (name, email, password_hash, role, active, password_plain)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `, [name.trim(), email.toLowerCase().trim(), passwordHash, role, true, password]);
 
     revalidatePath('/dashboard/users');
     revalidatePath('/dashboard');

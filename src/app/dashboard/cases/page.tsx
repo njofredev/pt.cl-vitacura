@@ -24,7 +24,7 @@ export default async function CasesPage() {
                u_reg.name as registered_by_name, u_eval.name as evaluator_name
         FROM cases c
         JOIN persons p ON c.person_id = p.id
-        LEFT JOIN users u_reg ON p.registered_by = u_reg.id
+        LEFT JOIN users u_reg ON c.registered_by = u_reg.id
         LEFT JOIN users u_eval ON c.updated_by = u_eval.id
         ORDER BY c.created_at DESC
       `);
@@ -38,9 +38,9 @@ export default async function CasesPage() {
                u_reg.name as registered_by_name, u_eval.name as evaluator_name
         FROM cases c
         JOIN persons p ON c.person_id = p.id
-        LEFT JOIN users u_reg ON p.registered_by = u_reg.id
+        LEFT JOIN users u_reg ON c.registered_by = u_reg.id
         LEFT JOIN users u_eval ON c.updated_by = u_eval.id
-        WHERE p.registered_by = $1
+        WHERE c.registered_by = $1
         ORDER BY c.created_at DESC
       `, [session.id]);
       cases = res.rows;

@@ -28,7 +28,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
   const roleLabels = {
     admin: 'Administrador General',
     internal: 'Administrativo Interno',
-    external: 'Administrativo Externo',
+    external: 'Profesional',
   };
 
   async function handleToggleStatus(userId: string, currentStatus: boolean) {
@@ -51,17 +51,18 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const formElement = e.currentTarget;
     setError(null);
     setSuccess(null);
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(formElement);
     
     try {
       const result = await createUserAction(formData);
       if (result.success) {
         setSuccess('Usuario creado exitosamente.');
-        e.currentTarget.reset();
+        formElement.reset();
         
         // Let's reload users dynamically or tell them to refresh.
         // Actually, since we updated server cache via revalidatePath, 
@@ -104,12 +105,12 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             Gestión de Personal
           </h2>
           <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
-            Registra y administra las cuentas de administrativos internos y externos.
+            Registra y administra las cuentas de administrativos internos y profesionales.
           </p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="btn btn-primary" style={{ boxShadow: '0 4px 15px rgba(59, 130, 246, 0.25)' }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-          Nuevo Administrativo
+          Nuevo Funcionario
         </button>
       </div>
 
@@ -170,7 +171,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
       </div>
 
       {/* Add User Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Registrar Nuevo Administrativo">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Registrar Nuevo Funcionario">
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           
           {error && (
@@ -204,7 +205,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             <label className="form-label" htmlFor="role">Nivel de Acceso (Rol)</label>
             <select className="form-select" id="role" name="role" required disabled={loading} style={{ backgroundColor: 'hsl(var(--card-hsl))' }}>
               <option value="internal">Administrativo Interno (Revisión y Convenios)</option>
-              <option value="external">Administrativo Externo (Inscripción de Casos)</option>
+              <option value="external">Profesional (Inscripción de Casos)</option>
               <option value="admin">Administrador General (Control Total)</option>
             </select>
           </div>

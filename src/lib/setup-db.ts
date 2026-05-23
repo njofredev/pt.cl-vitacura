@@ -81,6 +81,7 @@ async function setup() {
         professional_address VARCHAR(255),
         status VARCHAR(20) DEFAULT 'pendiente' CHECK (status IN ('pendiente', 'en_revision', 'aprobado', 'rechazado')),
         observations TEXT,
+        registered_by UUID REFERENCES users(id) ON DELETE SET NULL,
         updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
@@ -94,13 +95,14 @@ async function setup() {
     if (adminCheck.rows.length === 0) {
       console.log('Seeding initial admin user (admin@tabancura.cl)...');
       const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash('admin123', salt);
+      const adminPassword = process.env.INITIAL_ADMIN_PASSWORD || 'admin123';
+      const passwordHash = await bcrypt.hash(adminPassword, salt);
       
       await client.query(`
         INSERT INTO users (name, email, password_hash, role, active)
         VALUES ($1, $2, $3, $4, $5)
       `, ['Administrador General', 'admin@tabancura.cl', passwordHash, 'admin', true]);
-      console.log('Admin user seeded successfully with password "admin123"!');
+      console.log(`Admin user seeded successfully with password "${adminPassword}"!`);
     } else {
       console.log('Admin user already exists.');
     }

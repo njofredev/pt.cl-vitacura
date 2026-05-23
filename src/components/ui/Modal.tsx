@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -11,7 +12,10 @@ interface ModalProps {
 }
 
 export default function Modal({ isOpen, onClose, title, children, maxWidth = '600px' }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -23,19 +27,20 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '60
   }, [isOpen]);
 
   if (!isOpen) return null;
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <div 
       className="animate-fade-in"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
         backdropFilter: 'blur(8px)',
-        zIndex: 1000,
+        zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -44,7 +49,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '60
       onClick={onClose}
     >
       <div 
-        className="glass-panel"
+        className="glass-panel animate-fade-in"
         style={{
           width: '100%',
           maxWidth: maxWidth,
@@ -68,7 +73,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '60
           padding: '20px 24px',
           borderBottom: '1px solid var(--glass-border)'
         }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, fontFamily: 'var(--font-display)' }}>
             {title}
           </h3>
           <button 
@@ -77,17 +82,18 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '60
             style={{
               padding: '6px',
               borderRadius: '50%',
-              backgroundColor: 'transparent',
-              border: 'none',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--glass-border)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               width: '32px',
-              height: '32px'
+              height: '32px',
+              transition: 'all 0.2s ease'
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
@@ -113,6 +119,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '60
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }

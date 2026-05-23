@@ -20,11 +20,9 @@ export default async function DashboardLayout({
       <Sidebar user={user} />
 
       {/* Main Content Area */}
-      <div style={{
+      <div className="main-content" style={{
         padding: '30px',
-        maxWidth: '1400px',
-        margin: '0 auto',
-        width: '100%'
+        boxSizing: 'border-box'
       }}>
         {children}
       </div>

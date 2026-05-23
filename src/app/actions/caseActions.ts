@@ -100,9 +100,10 @@ export async function registerPersonAndCaseAction(formData: FormData) {
           person_id, description, status, observations,
           medical_center, agreement_type, dental_diagnosis, treatment_needed,
           professional_name, professional_title, professional_position,
-          professional_email, professional_phone, professional_website, professional_address
+          professional_email, professional_phone, professional_website, professional_address,
+          registered_by
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       `, [
         personId, 
         description ? description.trim() : '', 
@@ -118,7 +119,8 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         professionalEmail?.trim() || null,
         professionalPhone?.trim() || null,
         professionalWebsite?.trim() || null,
-        professionalAddress?.trim() || null
+        professionalAddress?.trim() || null,
+        session.id
       ]);
 
       await client.query('COMMIT');

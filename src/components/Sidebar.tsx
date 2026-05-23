@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { handleLogout } from '@/app/actions/authActions';
 import { UserSession } from '@/lib/auth';
 
@@ -14,9 +14,81 @@ export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
 
+  // Theme Toggle State
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+  // Dynamic Clock and greeting states
+  const [timeStr, setTimeStr] = useState('');
+  const [dateStr, setDateStr] = useState('');
+  const [saludo, setSaludo] = useState('Buenos tardes');
+
+  useEffect(() => {
+    // Sincronizar el tema inicial desde localStorage o preferencia de sistema
+    const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (storedTheme) {
+      setTheme(storedTheme);
+      document.documentElement.classList.remove('light', 'dark');
+      document.documentElement.classList.add(storedTheme);
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialTheme = prefersDark ? 'dark' : 'light';
+      setTheme(initialTheme);
+      document.documentElement.classList.remove('light', 'dark');
+      document.documentElement.classList.add(initialTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(nextTheme);
+  };
+
+  useEffect(() => {
+    function updateClock() {
+      const now = new Date();
+      
+      // Hour format: hh:mm:ss p.m.
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
+      
+      // Determine greeting based on time of day
+      if (hours >= 6 && hours < 12) {
+        setSaludo('Buenos días');
+      } else if (hours >= 12 && hours < 20) {
+        setSaludo('Buenas tardes');
+      } else {
+        setSaludo('Buenas noches');
+      }
+      
+      hours = hours % 12;
+      hours = hours ? hours : 12; // '0' becomes '12'
+      const formattedHours = hours.toString().padStart(2, '0');
+      
+      setTimeStr(`${formattedHours}:${minutes}:${seconds} ${ampm}`);
+      
+      // Date format: VIERNES, 22 MAY
+      const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+      const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+      const diaSemana = dias[now.getDay()];
+      const diaMes = now.getDate();
+      const mes = meses[now.getMonth()];
+      
+      setDateStr(`${diaSemana}, ${diaMes} ${mes}`);
+    }
+    
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const menuItems = [
     {
-      name: 'Panel de Control',
+      name: 'Dashboard',
       path: '/dashboard',
       roles: ['admin', 'internal', 'external'],
       icon: (
@@ -54,7 +126,7 @@ export default function Sidebar({ user }: SidebarProps) {
   const roleLabels = {
     admin: 'Administrador General',
     internal: 'Administrativo Interno',
-    external: 'Administrativo Externo',
+    external: 'Profesional',
   };
 
   return (
@@ -96,7 +168,7 @@ export default function Sidebar({ user }: SidebarProps) {
         }}
       >
         {/* Top Branding Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -105,43 +177,126 @@ export default function Sidebar({ user }: SidebarProps) {
             overflow: 'hidden'
           }}>
             <div style={{
-              minWidth: '40px',
-              height: '40px',
-              borderRadius: 'var(--radius-sm)',
-              background: 'linear-gradient(135deg, hsl(var(--primary-hsl)) 0%, hsl(var(--accent-hsl)) 100%)',
+              minWidth: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              backgroundColor: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
-              fontWeight: 800,
-              fontSize: '1.2rem',
-              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+              border: '2px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 0 15px rgba(255, 255, 255, 0.1)',
+              flexShrink: 0,
+              padding: '6px',
+              boxSizing: 'border-box'
             }}>
-              PT
+              <img 
+                src="/logo.svg" 
+                alt="Logo Policlínico Tabancura" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain' 
+                }} 
+              />
             </div>
             {isOpen && (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ 
                   fontFamily: 'var(--font-display)', 
                   fontWeight: 800, 
-                  fontSize: '1.1rem',
+                  fontSize: '1.05rem',
                   letterSpacing: '-0.02em',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  color: '#fff'
                 }}>
-                  Tabancura
+                  Policlínico Tabancura
                 </span>
                 <span style={{ 
-                  fontSize: '0.65rem', 
-                  fontWeight: 700, 
+                  fontSize: '0.62rem', 
+                  fontWeight: 800, 
                   textTransform: 'uppercase',
                   color: 'hsl(var(--accent-hsl))',
-                  letterSpacing: '0.05em'
+                  letterSpacing: '0.08em',
+                  opacity: 0.95
                 }}>
-                  Portal Social
+                  REGISTRO DIGITAL SOCIAL
                 </span>
               </div>
             )}
           </div>
+
+          {/* Simulated Search Bar */}
+          {isOpen ? (
+            <div style={{
+              padding: '0 4px',
+              marginBottom: '2px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid var(--glass-border)',
+                fontSize: '0.82rem',
+                color: 'hsl(var(--foreground-hsl))',
+                opacity: 0.65,
+                cursor: 'text'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <span>Buscar en la app...</span>
+                </div>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 600,
+                  opacity: 0.8,
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid var(--glass-border)',
+                  whiteSpace: 'nowrap'
+                }}>
+                  Alt + K
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid var(--glass-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: 0.6,
+                cursor: 'pointer'
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+            </div>
+          )}
+
+          {/* Menu Section Label */}
+          {isOpen && (
+            <span style={{ 
+              fontSize: '0.68rem', 
+              fontWeight: 700, 
+              opacity: 0.4, 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.1em',
+              paddingLeft: '12px',
+              marginTop: '4px',
+              marginBottom: '-6px'
+            }}>
+              Menú Principal
+            </span>
+          )}
 
           {/* Navigation Links */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -155,15 +310,15 @@ export default function Sidebar({ user }: SidebarProps) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '14px',
-                    padding: '12px 14px',
-                    borderRadius: 'var(--radius-sm)',
-                    color: isActive ? 'hsl(var(--primary-foreground-hsl))' : 'hsl(var(--foreground-hsl))',
-                    backgroundColor: isActive ? 'hsl(var(--primary-hsl))' : 'transparent',
+                    padding: '12px 16px',
+                    borderRadius: '9999px',
+                    color: isActive ? '#022c22' : 'hsl(var(--foreground-hsl))',
+                    backgroundColor: isActive ? '#10b981' : 'transparent',
                     textDecoration: 'none',
-                    fontWeight: isActive ? 600 : 500,
+                    fontWeight: isActive ? 700 : 500,
                     fontSize: '0.95rem',
                     transition: 'all 0.2s ease',
-                    boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.25)' : 'none',
+                    boxShadow: isActive ? '0 4px 15px rgba(16, 185, 129, 0.3)' : 'none',
                     opacity: isActive ? 1 : 0.8
                   }}
                   onMouseEnter={(e) => {
@@ -189,8 +344,10 @@ export default function Sidebar({ user }: SidebarProps) {
           </nav>
         </div>
 
-        {/* Bottom User Account Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Bottom User & Clock Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* User Account Badge */}
           <div style={{ 
             padding: '12px 8px', 
             borderTop: '1px solid var(--glass-border)',
@@ -203,14 +360,16 @@ export default function Sidebar({ user }: SidebarProps) {
               minWidth: '36px',
               height: '36px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
               fontSize: '0.9rem',
-              color: 'hsl(var(--accent-hsl))',
-              border: '1px solid var(--glass-border)'
+              color: '#10b981',
+              boxShadow: '0 0 10px rgba(16, 185, 129, 0.05)',
+              flexShrink: 0
             }}>
               {user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
             </div>
@@ -218,7 +377,7 @@ export default function Sidebar({ user }: SidebarProps) {
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <span style={{ 
                   fontSize: '0.85rem', 
-                  fontWeight: 600,
+                  fontWeight: 700,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis'
@@ -238,6 +397,155 @@ export default function Sidebar({ user }: SidebarProps) {
             )}
           </div>
 
+          {/* Dynamic Clock Widget */}
+          {isOpen ? (
+            <div style={{
+              padding: '14px 16px',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'rgba(255, 255, 255, 0.01)',
+              border: '1px solid var(--glass-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, opacity: 0.6 }}>
+                  {saludo}
+                </span>
+                <div style={{
+                  color: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                  padding: '6px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '26px',
+                  height: '26px'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+              </div>
+              <strong style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                {timeStr || '00:00:00 a.m.'}
+              </strong>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, opacity: 0.5, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                {dateStr || 'Cargando fecha...'}
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                border: '1px solid var(--glass-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#10b981',
+                cursor: 'pointer'
+              }} title={timeStr}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+            </div>
+          )}
+
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: isOpen ? 'space-between' : 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '9999px',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid var(--glass-border)',
+              color: 'hsl(var(--foreground-hsl))',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxSizing: 'border-box'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+              e.currentTarget.style.borderColor = 'var(--glass-border)';
+              e.currentTarget.style.transform = 'none';
+            }}
+            title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: theme === 'dark' ? 'hsl(var(--accent-hsl))' : 'hsl(var(--primary-hsl))',
+                transition: 'transform 0.5s ease',
+                transform: theme === 'dark' ? 'rotate(0deg)' : 'rotate(360deg)',
+                flexShrink: 0
+              }}>
+                {theme === 'dark' ? (
+                  /* Sun Icon (light mode trigger) */
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                ) : (
+                  /* Moon Icon (dark mode trigger) */
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </div>
+              {isOpen && (
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+                </span>
+              )}
+            </div>
+            {isOpen && (
+              <div style={{
+                width: '38px',
+                height: '20px',
+                borderRadius: '9999px',
+                backgroundColor: theme === 'dark' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                border: theme === 'dark' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(0, 0, 0, 0.15)',
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                flexShrink: 0
+              }}>
+                <div style={{
+                  width: '14px',
+                  height: '14px',
+                  borderRadius: '50%',
+                  backgroundColor: theme === 'dark' ? '#10b981' : 'hsl(var(--primary-hsl))',
+                  position: 'absolute',
+                  top: '2px',
+                  left: theme === 'dark' ? '20px' : '2px',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }} />
+              </div>
+            )}
+          </button>
+
+          {/* Logout Button */}
           <button 
             onClick={() => handleLogout()}
             className="btn-secondary"
@@ -248,7 +556,7 @@ export default function Sidebar({ user }: SidebarProps) {
               justifyContent: isOpen ? 'flex-start' : 'center',
               gap: '14px',
               padding: '12px 14px',
-              borderRadius: 'var(--radius-sm)',
+              borderRadius: '9999px',
               fontSize: '0.9rem',
               fontWeight: 600,
               color: 'hsl(var(--danger-hsl))',
@@ -273,9 +581,9 @@ export default function Sidebar({ user }: SidebarProps) {
 
       {/* CSS injected to handle responsiveness and collapse margins */}
       <style jsx global>{`
-        body {
-          padding-left: ${isOpen ? '310px' : '110px'};
-          transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .main-content {
+          margin-left: ${isOpen ? '310px' : '110px'};
+          transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         @media (max-width: 768px) {
           .mobile-nav-toggle {
@@ -288,8 +596,8 @@ export default function Sidebar({ user }: SidebarProps) {
             height: 100vh !important;
             border-radius: 0 !important;
           }
-          body {
-            padding-left: 0 !important;
+          .main-content {
+            margin-left: 0 !important;
           }
         }
       `}</style>

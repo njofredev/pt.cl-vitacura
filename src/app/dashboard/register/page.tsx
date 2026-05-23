@@ -35,6 +35,7 @@ export default function RegisterCasePage() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const formElement = e.currentTarget;
     setError(null);
     setSuccess(null);
     
@@ -46,7 +47,7 @@ export default function RegisterCasePage() {
     }
 
     setLoading(true);
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(formElement);
     formData.set('rut', cleaned); // Send cleaned RUT to server
 
     try {
@@ -54,7 +55,7 @@ export default function RegisterCasePage() {
       
       if (result.success) {
         setSuccess('¡Caso social e inscripción registrados exitosamente! Redireccionando...');
-        e.currentTarget.reset();
+        formElement.reset();
         setRut('');
         
         setTimeout(() => {
