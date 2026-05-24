@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Derivación Digital | Policlínico Tabancura",
-  description: "Diseñado y desarrollador en Policlínico Tabancura",
+  description: "Diseñado y desarrollado en Policlínico Tabancura",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({
