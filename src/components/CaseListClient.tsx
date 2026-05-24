@@ -496,35 +496,35 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Nombres</label>
-                      <input type="text" className="form-input" value={editFirstNames} onChange={e => setEditFirstNames(e.target.value)} required style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }} />
+                      <input type="text" className="form-input" value={editFirstNames} onChange={e => setEditFirstNames(e.target.value)} required style={{ width: '100%' }} />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Apellidos</label>
-                      <input type="text" className="form-input" value={editLastNames} onChange={e => setEditLastNames(e.target.value)} required style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }} />
+                      <input type="text" className="form-input" value={editLastNames} onChange={e => setEditLastNames(e.target.value)} required style={{ width: '100%' }} />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>RUT</label>
-                      <input type="text" className="form-input" value={editRut} onChange={e => setEditRut(e.target.value)} required style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }} />
+                      <input type="text" className="form-input" value={editRut} onChange={e => setEditRut(e.target.value)} required style={{ width: '100%' }} />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Nacionalidad</label>
-                      <input type="text" className="form-input" value={editNationality} onChange={e => setEditNationality(e.target.value)} required style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }} />
+                      <input type="text" className="form-input" value={editNationality} onChange={e => setEditNationality(e.target.value)} required style={{ width: '100%' }} />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Fecha de Nacimiento</label>
-                      <input type="date" className="form-input" value={editBirthDate} onChange={e => setEditBirthDate(e.target.value)} required style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }} />
+                      <input type="date" className="form-input" value={editBirthDate} onChange={e => setEditBirthDate(e.target.value)} required style={{ width: '100%' }} />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Comuna Residencia</label>
-                      <input type="text" className="form-input" value={editCommune} onChange={e => setEditCommune(e.target.value)} required style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }} />
+                      <input type="text" className="form-input" value={editCommune} onChange={e => setEditCommune(e.target.value)} required style={{ width: '100%' }} />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Celular Contacto</label>
-                      <input type="text" className="form-input" value={editMobile} onChange={e => setEditMobile(e.target.value)} required style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }} />
+                      <input type="text" className="form-input" value={editMobile} onChange={e => setEditMobile(e.target.value)} required style={{ width: '100%' }} />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Correo Electrónico</label>
-                      <input type="email" className="form-input" value={editEmail} onChange={e => setEditEmail(e.target.value)} style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: 'var(--radius-sm)' }} />
+                      <input type="email" className="form-input" value={editEmail} onChange={e => setEditEmail(e.target.value)} style={{ width: '100%' }} />
                     </div>
                   </div>
                 </div>
@@ -539,27 +539,27 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Centro Médico</label>
-                        <input type="text" className="form-input" value={editMedicalCenter} onChange={e => setEditMedicalCenter(e.target.value)} style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }} />
+                        <input type="text" className="form-input" value={editMedicalCenter} onChange={e => setEditMedicalCenter(e.target.value)} style={{ width: '100%' }} />
                       </div>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Convenio Solicitado</label>
-                        <input type="text" className="form-input" value={editAgreementType} onChange={e => setEditAgreementType(e.target.value)} style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }} />
+                        <input type="text" className="form-input" value={editAgreementType} onChange={e => setEditAgreementType(e.target.value)} style={{ width: '100%' }} />
                       </div>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Diagnóstico Odontológico</label>
-                        <input type="text" className="form-input" value={editDentalDiagnosis} onChange={e => setEditDentalDiagnosis(e.target.value)} style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }} />
+                        <input type="text" className="form-input" value={editDentalDiagnosis} onChange={e => setEditDentalDiagnosis(e.target.value)} style={{ width: '100%' }} />
                       </div>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Prestación Requerida</label>
-                        <input type="text" className="form-input" value={editTreatmentNeeded} onChange={e => setEditTreatmentNeeded(e.target.value)} style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }} />
+                        <input type="text" className="form-input" value={editTreatmentNeeded} onChange={e => setEditTreatmentNeeded(e.target.value)} style={{ width: '100%' }} />
                       </div>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Observaciones Generales / Descripción</label>
-                        <textarea className="form-textarea" rows={3} value={editDescription} onChange={e => setEditDescription(e.target.value)} style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px 14px', borderRadius: 'var(--radius-sm)', resize: 'vertical' }} />
+                        <textarea className="form-textarea" rows={3} value={editDescription} onChange={e => setEditDescription(e.target.value)} style={{ width: '100%', resize: 'vertical' }} />
                       </div>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Profesional Derivador</label>
-                        <input type="text" className="form-input" value={editProfessionalName} onChange={e => setEditProfessionalName(e.target.value)} style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }} />
+                        <input type="text" className="form-input" value={editProfessionalName} onChange={e => setEditProfessionalName(e.target.value)} style={{ width: '100%' }} />
                       </div>
                     </div>
                   </div>

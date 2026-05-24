@@ -14,6 +14,21 @@ export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
 
+  // Detect screen size to close sidebar on mobile by default
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setIsOpen(false);
+      } else {
+        setIsOpen(true);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Theme Toggle State
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
@@ -141,15 +156,40 @@ export default function Sidebar({ user }: SidebarProps) {
         style={{
           position: 'fixed',
           top: '15px',
-          left: '15px',
+          left: isOpen ? '230px' : '15px',
           zIndex: 100,
           display: 'none',
           padding: '8px',
-          borderRadius: 'var(--radius-sm)'
+          borderRadius: 'var(--radius-sm)',
+          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        {isOpen ? (
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        )}
       </button>
+
+      {/* Backdrop overlay on mobile when sidebar is open */}
+      {isOpen && (
+        <div 
+          className="mobile-sidebar-backdrop"
+          onClick={() => setIsOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 85,
+            display: 'none'
+          }}
+        />
+      )}
 
       {/* Sidebar Container */}
       <aside 
@@ -206,7 +246,7 @@ export default function Sidebar({ user }: SidebarProps) {
                   fontSize: '1.05rem',
                   letterSpacing: '-0.02em',
                   whiteSpace: 'nowrap',
-                  color: '#fff'
+                  color: 'hsl(var(--foreground-hsl))'
                 }}>
                   Policlínico Tabancura
                 </span>
@@ -261,7 +301,7 @@ export default function Sidebar({ user }: SidebarProps) {
                       background: 'transparent',
                       border: 'none',
                       outline: 'none',
-                      color: '#fff',
+                      color: 'hsl(var(--foreground-hsl))',
                       fontSize: '0.82rem',
                       width: '100%',
                       padding: 0
@@ -452,7 +492,7 @@ export default function Sidebar({ user }: SidebarProps) {
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
               </div>
-              <strong style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+              <strong style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 800, color: 'hsl(var(--foreground-hsl))', letterSpacing: '-0.02em' }}>
                 {timeStr || '00:00:00 a.m.'}
               </strong>
               <span style={{ fontSize: '0.65rem', fontWeight: 800, opacity: 0.5, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
@@ -613,12 +653,16 @@ export default function Sidebar({ user }: SidebarProps) {
           .mobile-nav-toggle {
             display: inline-flex !important;
           }
+          .mobile-sidebar-backdrop {
+            display: block !important;
+          }
           aside {
             transform: translateX(${isOpen ? '0' : '-300px'}) !important;
             width: 280px !important;
             margin: 0 !important;
             height: 100vh !important;
             border-radius: 0 !important;
+            background: hsl(var(--card-hsl)) !important;
           }
           .main-content {
             margin-left: 0 !important;

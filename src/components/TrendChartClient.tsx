@@ -160,7 +160,7 @@ export default function TrendChartClient({ caseDates, isDemoData }: TrendChartCl
     <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: '#fff' }}>
+          <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))' }}>
             Tendencia Temporal de Ingresos
           </h3>
           <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
@@ -195,7 +195,8 @@ export default function TrendChartClient({ caseDates, isDemoData }: TrendChartCl
                 cursor: 'pointer',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 backgroundColor: activeFilter === opt ? '#10b981' : 'transparent',
-                color: activeFilter === opt ? '#022c22' : 'rgba(255, 255, 255, 0.7)',
+                color: activeFilter === opt ? '#022c22' : 'hsl(var(--foreground-hsl))',
+                opacity: activeFilter === opt ? 1 : 0.7,
                 boxShadow: activeFilter === opt ? '0 2px 10px rgba(16, 185, 129, 0.3)' : 'none',
               }}
             >
@@ -225,16 +226,16 @@ export default function TrendChartClient({ caseDates, isDemoData }: TrendChartCl
           </defs>
 
           {/* Horizontal Grid lines */}
-          <line x1="50" y1="40" x2="550" y2="40" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 4" />
-          <line x1="50" y1="80" x2="550" y2="80" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 4" />
-          <line x1="50" y1="120" x2="550" y2="120" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 4" />
-          <line x1="50" y1="160" x2="550" y2="160" stroke="rgba(255, 255, 255, 0.03)" strokeDasharray="4 4" />
-          <line x1="50" y1="200" x2="550" y2="200" stroke="rgba(255, 255, 255, 0.1)" />
+          <line x1="50" y1="40" x2="550" y2="40" stroke="var(--glass-border)" strokeDasharray="4 4" />
+          <line x1="50" y1="80" x2="550" y2="80" stroke="var(--glass-border)" strokeDasharray="4 4" />
+          <line x1="50" y1="120" x2="550" y2="120" stroke="var(--glass-border)" strokeDasharray="4 4" />
+          <line x1="50" y1="160" x2="550" y2="160" stroke="var(--glass-border)" strokeDasharray="4 4" />
+          <line x1="50" y1="200" x2="550" y2="200" stroke="var(--glass-border)" />
 
           {/* Y-axis Ticks */}
-          <text x="25" y="44" textAnchor="end" fontSize="9" fill="rgba(255, 255, 255, 0.4)" fontWeight="700" fontFamily="var(--font-sans)">{maxCount}</text>
-          <text x="25" y="124" textAnchor="end" fontSize="9" fill="rgba(255, 255, 255, 0.4)" fontWeight="700" fontFamily="var(--font-sans)">{Math.round(maxCount / 2)}</text>
-          <text x="25" y="204" textAnchor="end" fontSize="9" fill="rgba(255, 255, 255, 0.4)" fontWeight="700" fontFamily="var(--font-sans)">0</text>
+          <text x="25" y="44" textAnchor="end" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.4" fontWeight="700" fontFamily="var(--font-sans)">{maxCount}</text>
+          <text x="25" y="124" textAnchor="end" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.4" fontWeight="700" fontFamily="var(--font-sans)">{Math.round(maxCount / 2)}</text>
+          <text x="25" y="204" textAnchor="end" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.4" fontWeight="700" fontFamily="var(--font-sans)">0</text>
 
           {/* Area under the line */}
           {areaPath && <path d={areaPath} fill="url(#neonGlowGrad)" style={{ transition: 'd 0.3s ease' }} />}
@@ -318,7 +319,8 @@ export default function TrendChartClient({ caseDates, isDemoData }: TrendChartCl
                   y="222" 
                   textAnchor="middle" 
                   fontSize="9" 
-                  fill={isHovered ? '#fff' : 'rgba(255, 255, 255, 0.5)'} 
+                  fill="hsl(var(--foreground-hsl))" 
+                  opacity={isHovered ? 1 : 0.5} 
                   fontWeight={isHovered ? '800' : '700'} 
                   fontFamily="var(--font-sans)"
                   style={{ transition: 'all 0.15s ease' }}

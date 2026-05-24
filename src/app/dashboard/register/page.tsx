@@ -225,7 +225,7 @@ export default function RegisterCasePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.88rem', lineHeight: '1.45' }}>
           <strong style={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.78rem' }}>Información Importante</strong>
           <span style={{ fontWeight: 500, opacity: 0.95 }}>
-            Una vez ingresado el caso, el registro quedará bloqueado para edición. Si necesitas corregir o modificar algún dato posterior al envío, por favor escribe directamente a <a href="mailto:soporte@policlinicotabancura.cl" style={{ color: '#fff', textDecoration: 'underline', fontWeight: 700 }}>soporte@policlinicotabancura.cl</a>.
+            Una vez ingresado el caso, el registro quedará bloqueado para edición. Si necesitas corregir o modificar algún dato posterior al envío, por favor escribe directamente a <a href="mailto:soporte@policlinicotabancura.cl" style={{ color: 'currentColor', textDecoration: 'underline', fontWeight: 700 }}>soporte@policlinicotabancura.cl</a>.
           </span>
         </div>
       </div>
@@ -671,7 +671,6 @@ export default function RegisterCasePage() {
               </div>
             </div>
 
-            {/* Warning Banner for Professional Fields */}
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
@@ -680,10 +679,11 @@ export default function RegisterCasePage() {
               borderRadius: '12px',
               backgroundColor: 'rgba(217, 119, 6, 0.05)',
               border: '1px solid rgba(217, 119, 6, 0.2)',
+              color: '#d97706',
               marginTop: '24px'
             }}>
               <div style={{
-                color: '#f59e0b',
+                color: '#d97706',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -697,19 +697,19 @@ export default function RegisterCasePage() {
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   textTransform: 'uppercase',
-                  color: '#f59e0b',
+                  color: '#d97706',
                   letterSpacing: '0.05em'
                 }}>
                   Información Importante
                 </span>
                 <p style={{
                   fontSize: '0.85rem',
-                  color: 'rgba(255, 255, 255, 0.7)',
                   margin: 0,
-                  lineHeight: '1.4'
+                  lineHeight: '1.4',
+                  opacity: 0.95
                 }}>
                   Si quieres modificar tus datos registrados, debes enviar un correo a{' '}
-                  <a href="mailto:derivaciones@policlinicotabancura.cl" style={{ fontWeight: 700, textDecoration: 'underline', color: '#fbbf24' }}>
+                  <a href="mailto:derivaciones@policlinicotabancura.cl" style={{ fontWeight: 700, textDecoration: 'underline', color: 'currentColor' }}>
                     derivaciones@policlinicotabancura.cl
                   </a>.
                 </p>

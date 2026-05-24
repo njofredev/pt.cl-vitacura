@@ -427,7 +427,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '2.4rem', fontWeight: 850, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', color: '#fff' }}>
+                <span style={{ fontSize: '2.4rem', fontWeight: 850, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', color: 'hsl(var(--foreground-hsl))' }}>
                   {stats.totalCases}
                 </span>
                 <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 600 }}>
@@ -451,7 +451,7 @@ export default async function DashboardPage() {
                   fontSize: '1.45rem',
                   fontWeight: 800,
                   fontFamily: 'var(--font-display)',
-                  color: '#fff',
+                  color: 'hsl(var(--foreground-hsl))',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -481,7 +481,7 @@ export default async function DashboardPage() {
                   fontSize: '1.45rem',
                   fontWeight: 800,
                   fontFamily: 'var(--font-display)',
-                  color: '#fff',
+                  color: 'hsl(var(--foreground-hsl))',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -511,7 +511,7 @@ export default async function DashboardPage() {
                   fontSize: '1.45rem',
                   fontWeight: 800,
                   fontFamily: 'var(--font-display)',
-                  color: '#fff',
+                  color: 'hsl(var(--foreground-hsl))',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -534,7 +534,7 @@ export default async function DashboardPage() {
           {/* Left Sub-panel: Flujo de Trabajo por Estado */}
           <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: '#fff' }}>
+              <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))' }}>
                 Flujo de Trabajo por Estado
               </h3>
               <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
@@ -545,27 +545,27 @@ export default async function DashboardPage() {
             <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
               <svg viewBox="0 0 320 200" width="100%" height="200" style={{ display: 'block', maxWidth: '320px' }}>
                 {/* Baseline axis */}
-                <line x1="30" y1="160" x2="290" y2="160" stroke="rgba(255, 255, 255, 0.1)" />
+                <line x1="30" y1="160" x2="290" y2="160" stroke="var(--glass-border)" />
 
                 {/* Bar 1: Pendiente */}
                 <rect x="42" y={160 - barHeights.pending} width="28" height={barHeights.pending} rx="4" fill="#f59e0b" fillOpacity="0.85" stroke="#f59e0b" strokeWidth="1" />
                 <text x="56" y={150 - barHeights.pending} textAnchor="middle" fontSize="10" fill="#f59e0b" fontWeight="800">{stateCounts.pending}</text>
-                <text x="56" y="176" textAnchor="middle" fontSize="9" fill="rgba(255, 255, 255, 0.5)" fontWeight="700">PENDIENTE</text>
+                <text x="56" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">PENDIENTE</text>
 
                 {/* Bar 2: En Revisión */}
                 <rect x="106" y={160 - barHeights.inRevision} width="28" height={barHeights.inRevision} rx="4" fill="#3b82f6" fillOpacity="0.85" stroke="#3b82f6" strokeWidth="1" />
                 <text x="120" y={150 - barHeights.inRevision} textAnchor="middle" fontSize="10" fill="#3b82f6" fontWeight="800">{stateCounts.inRevision}</text>
-                <text x="120" y="176" textAnchor="middle" fontSize="9" fill="rgba(255, 255, 255, 0.5)" fontWeight="700">REVISIÓN</text>
+                <text x="120" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">REVISIÓN</text>
 
                 {/* Bar 3: Aprobado */}
                 <rect x="170" y={160 - barHeights.approved} width="28" height={barHeights.approved} rx="4" fill="#10b981" fillOpacity="0.85" stroke="#10b981" strokeWidth="1" />
                 <text x="184" y={150 - barHeights.approved} textAnchor="middle" fontSize="10" fill="#10b981" fontWeight="800">{stateCounts.approved}</text>
-                <text x="184" y="176" textAnchor="middle" fontSize="9" fill="rgba(255, 255, 255, 0.5)" fontWeight="700">APROBADO</text>
+                <text x="184" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">APROBADO</text>
 
                 {/* Bar 4: Rechazado */}
                 <rect x="234" y={160 - barHeights.rejected} width="28" height={barHeights.rejected} rx="4" fill="#ef4444" fillOpacity="0.85" stroke="#ef4444" strokeWidth="1" />
                 <text x="248" y={150 - barHeights.rejected} textAnchor="middle" fontSize="10" fill="#ef4444" fontWeight="800">{stateCounts.rejected}</text>
-                <text x="248" y="176" textAnchor="middle" fontSize="9" fill="rgba(255, 255, 255, 0.5)" fontWeight="700">RECHAZADO</text>
+                <text x="248" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">RECHAZADO</text>
               </svg>
             </div>
           </div>
@@ -573,7 +573,7 @@ export default async function DashboardPage() {
           {/* Recent Registrations Table */}
           <div className="glass-panel" style={{ padding: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: '#fff' }}>
+              <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))' }}>
                 {user.role === 'internal' ? 'Casos Pendientes Recientes' : 'Inscripciones Recientes'}
               </h3>
               <Link href="/dashboard/cases" className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.82rem', borderRadius: '9999px' }}>
@@ -590,17 +590,17 @@ export default async function DashboardPage() {
                 <table className="custom-table clinical-table">
                   <thead>
                     <tr>
-                      <th style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 800 }}>PERSONA</th>
-                      <th style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 800 }}>CONVENIO</th>
-                      <th style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 800 }}>FECHA REGISTRO</th>
-                      {user.role !== 'external' && <th style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 800 }}>REGISTRADO POR</th>}
-                      <th style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 800 }}>ESTADO</th>
+                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>PERSONA</th>
+                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>CONVENIO</th>
+                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>FECHA REGISTRO</th>
+                      {user.role !== 'external' && <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>REGISTRADO POR</th>}
+                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>ESTADO</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentCases.map((c) => (
                       <tr key={c.id}>
-                        <td style={{ fontWeight: 700, color: '#fff' }}>
+                        <td style={{ fontWeight: 700, color: 'hsl(var(--foreground-hsl))' }}>
                           {c.first_names} {c.last_names}
                         </td>
                         <td style={{
@@ -642,7 +642,7 @@ export default async function DashboardPage() {
           {/* Quick Actions Panel at the very top of column 2 */}
           <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: '#fff' }}>
+              <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))' }}>
                 Accesos Rápidos
               </h3>
               <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
@@ -665,7 +665,7 @@ export default async function DashboardPage() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>Nueva Inscripción</span>
+                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--foreground-hsl))' }}>Nueva Inscripción</span>
                     <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 500 }}>Registrar persona y crear caso social</span>
                   </div>
                 </Link>
@@ -684,7 +684,7 @@ export default async function DashboardPage() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>Bandeja de Casos</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--foreground-hsl))' }}>Bandeja de Casos</span>
                   <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 500 }}>
                     {user.role === 'external' ? 'Monitorear mis inscripciones' : 'Buscar y administrar casos sociales'}
                   </span>
@@ -705,7 +705,7 @@ export default async function DashboardPage() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>Administrar Personal</span>
+                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--foreground-hsl))' }}>Administrar Personal</span>
                     <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 500 }}>Crear y gestionar cuentas de usuarios</span>
                   </div>
                 </Link>
@@ -716,7 +716,7 @@ export default async function DashboardPage() {
           {/* Distribución de Casos por Comuna inside column 2 */}
           <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: '#fff' }}>
+              <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))' }}>
                 Distribución por Comuna
               </h3>
               <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
@@ -741,8 +741,8 @@ export default async function DashboardPage() {
                   }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                   </div>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>Sin datos de procedencia</span>
-                  <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', maxWidth: '240px', lineHeight: '1.25rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'hsl(var(--foreground-hsl))' }}>Sin datos de procedencia</span>
+                  <span style={{ fontSize: '0.78rem', color: 'hsl(var(--foreground-hsl))', opacity: 0.5, maxWidth: '240px', lineHeight: '1.25rem' }}>
                     Una vez ingresados los primeros casos, se graficará automáticamente la distribución por comuna.
                   </span>
                 </div>
@@ -769,10 +769,10 @@ export default async function DashboardPage() {
 
                     {/* Inner Label */}
                     <circle cx="120" cy="120" r="56" fill="hsl(var(--card-hsl))" />
-                    <text x="120" y="123" textAnchor="middle" fill="#fff" fontSize="20" fontWeight="900" fontFamily="var(--font-display)">
+                    <text x="120" y="123" textAnchor="middle" fill="hsl(var(--foreground-hsl))" fontSize="20" fontWeight="900" fontFamily="var(--font-display)">
                       {communeTotalVal}
                     </text>
-                    <text x="120" y="140" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="9" fontWeight="800" letterSpacing="0.05em">
+                    <text x="120" y="140" textAnchor="middle" fill="hsl(var(--foreground-hsl))" opacity="0.4" fontSize="9" fontWeight="800" letterSpacing="0.05em">
                       CASOS
                     </text>
                   </svg>
@@ -783,7 +783,7 @@ export default async function DashboardPage() {
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: seg.color }} />
-                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff' }}>{seg.label}</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--foreground-hsl))' }}>{seg.label}</span>
                         </div>
                         <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 600 }}>{seg.count} ({Math.round(seg.percent)}%)</span>
                       </div>
