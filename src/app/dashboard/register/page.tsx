@@ -28,20 +28,20 @@ export default function RegisterCasePage() {
   // States for dynamic "Other" selects
   const [selectedNationality, setSelectedNationality] = useState('Chilena');
   const [customNationality, setCustomNationality] = useState('');
-  
+
   const [selectedCommune, setSelectedCommune] = useState('Vitacura');
   const [customCommune, setCustomCommune] = useState('');
-  
+
   const [selectedMedicalCenter, setSelectedMedicalCenter] = useState('');
   const [customMedicalCenter, setCustomMedicalCenter] = useState('');
-  
+
   const [selectedAgreementType, setSelectedAgreementType] = useState('');
   const [customAgreementType, setCustomAgreementType] = useState('');
 
   function handleBirthDateChange(e: React.ChangeEvent<HTMLInputElement>) {
     let value = e.target.value.replace(/\D/g, ''); // keep digits only
     if (value.length > 8) value = value.slice(0, 8);
-    
+
     let formatted = '';
     if (value.length > 0) {
       formatted += value.slice(0, 2);
@@ -85,9 +85,9 @@ export default function RegisterCasePage() {
     if (!rut) return;
     const formatted = formatRUT(rut);
     const cleaned = cleanRUT(rut);
-    
+
     setRut(formatted);
-    
+
     if (!validateRUT(cleaned)) {
       setRutError('RUT inválido. Verifique el dígito verificador.');
     } else {
@@ -100,7 +100,7 @@ export default function RegisterCasePage() {
     const formElement = e.currentTarget;
     setError(null);
     setSuccess(null);
-    
+
     // Final RUT validation check
     const cleaned = cleanRUT(rut);
     if (!validateRUT(cleaned)) {
@@ -117,7 +117,7 @@ export default function RegisterCasePage() {
     const day = parseInt(dateParts[0], 10);
     const month = parseInt(dateParts[1], 10);
     const year = parseInt(dateParts[2], 10);
-    
+
     if (isNaN(day) || isNaN(month) || isNaN(year) || month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > new Date().getFullYear()) {
       setError('Por favor ingrese una fecha de nacimiento válida.');
       return;
@@ -147,12 +147,12 @@ export default function RegisterCasePage() {
 
     try {
       const result = await registerPersonAndCaseAction(formData);
-      
+
       if (result.success) {
         setSuccess('¡Caso social e inscripción registrados exitosamente! Redireccionando...');
         formElement.reset();
         setRut('');
-        
+
         setTimeout(() => {
           router.push('/dashboard/cases');
         }, 2000);
@@ -168,7 +168,7 @@ export default function RegisterCasePage() {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
+
       {/* Page Title with Glowing Lucide Icon Container */}
       <div
         className="glass-panel"
@@ -195,7 +195,7 @@ export default function RegisterCasePage() {
           border: '1px solid rgba(16, 185, 129, 0.2)',
           flexShrink: 0
         }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></svg>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
@@ -220,12 +220,12 @@ export default function RegisterCasePage() {
         boxShadow: '0 4px 15px rgba(245, 158, 11, 0.02)'
       }}>
         <div style={{ flexShrink: 0, marginTop: '2px' }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.88rem', lineHeight: '1.45' }}>
           <strong style={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.78rem' }}>Información Importante</strong>
           <span style={{ fontWeight: 500, opacity: 0.95 }}>
-            Una vez ingresado el caso, el registro quedará bloqueado para edición. Si necesitas corregir o modificar algún dato posterior al envío, por favor escribe directamente a <a href="mailto:soporte@policlinicotabancura.cl" style={{ color: 'currentColor', textDecoration: 'underline', fontWeight: 700 }}>soporte@policlinicotabancura.cl</a>.
+            Una vez ingresado el caso, el registro quedará bloqueado para edición. Si necesitas corregir o modificar algún dato posterior al envío, por favor escribe directamente a <a href="mailto:derivaciones@policlinicotabancura.cl" style={{ color: 'currentColor', textDecoration: 'underline', fontWeight: 700 }}>derivaciones@policlinicotabancura.cl</a>.
           </span>
         </div>
       </div>
@@ -233,7 +233,7 @@ export default function RegisterCasePage() {
       {/* Main Glassmorphic Form Container */}
       <div className="glass-panel" style={{ padding: '40px' }}>
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-          
+
           {error && (
             <div className="badge-rechazado" style={{ padding: '14px', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', fontWeight: 600 }}>
               {error}
@@ -248,10 +248,10 @@ export default function RegisterCasePage() {
 
           {/* Section 1: Personal Data */}
           <div>
-            <h3 style={{ 
-              fontSize: '1.1rem', 
-              fontFamily: 'var(--font-display)', 
-              fontWeight: 700, 
+            <h3 style={{
+              fontSize: '1.1rem',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
               borderBottom: '1px solid var(--glass-border)',
               paddingBottom: '10px',
               marginBottom: '20px',
@@ -260,7 +260,7 @@ export default function RegisterCasePage() {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
               1. Datos Personales
             </h3>
 
@@ -269,20 +269,20 @@ export default function RegisterCasePage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '20px'
             }}>
-              
+
               {/* RUT field */}
               <div className="form-group">
                 <label className="form-label" htmlFor="rut">RUT del Beneficiario *</label>
-                <input 
-                  className="form-input" 
-                  type="text" 
-                  id="rut" 
-                  name="rut" 
-                  required 
+                <input
+                  className="form-input"
+                  type="text"
+                  id="rut"
+                  name="rut"
+                  required
                   value={rut}
                   onChange={handleRutChange}
                   onBlur={handleRutBlur}
-                  placeholder="Ej: 12.345.678-K" 
+                  placeholder="Ej: 12.345.678-K"
                   disabled={loading}
                   style={{
                     borderColor: rutError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)'
@@ -298,40 +298,40 @@ export default function RegisterCasePage() {
               {/* First Names */}
               <div className="form-group">
                 <label className="form-label" htmlFor="first_names">Nombres *</label>
-                <input 
-                  className="form-input" 
-                  type="text" 
-                  id="first_names" 
-                  name="first_names" 
-                  required 
-                  placeholder="Nombres completos" 
-                  disabled={loading} 
+                <input
+                  className="form-input"
+                  type="text"
+                  id="first_names"
+                  name="first_names"
+                  required
+                  placeholder="Nombres completos"
+                  disabled={loading}
                 />
               </div>
 
               {/* Last Names */}
               <div className="form-group">
                 <label className="form-label" htmlFor="last_names">Apellidos *</label>
-                <input 
-                  className="form-input" 
-                  type="text" 
-                  id="last_names" 
-                  name="last_names" 
-                  required 
-                  placeholder="Apellidos paterno y materno" 
-                  disabled={loading} 
+                <input
+                  className="form-input"
+                  type="text"
+                  id="last_names"
+                  name="last_names"
+                  required
+                  placeholder="Apellidos paterno y materno"
+                  disabled={loading}
                 />
               </div>
 
               {/* Nationality */}
               <div className="form-group">
                 <label className="form-label" htmlFor="nationality_select">Nacionalidad *</label>
-                <select 
-                  className="form-select" 
-                  id="nationality_select" 
+                <select
+                  className="form-select"
+                  id="nationality_select"
                   value={selectedNationality}
                   onChange={(e) => setSelectedNationality(e.target.value)}
-                  required 
+                  required
                   disabled={loading}
                 >
                   <option value="Chilena">Chilena</option>
@@ -360,20 +360,20 @@ export default function RegisterCasePage() {
                   </div>
                 )}
 
-                <input 
-                  type="hidden" 
-                  name="nationality" 
-                  value={selectedNationality === 'Otra' ? customNationality : selectedNationality} 
+                <input
+                  type="hidden"
+                  name="nationality"
+                  value={selectedNationality === 'Otra' ? customNationality : selectedNationality}
                 />
               </div>
 
               {/* Birth Date */}
               <div className="form-group">
                 <label className="form-label" htmlFor="birth_date_input">Fecha de Nacimiento *</label>
-                <input 
-                  className="form-input" 
-                  type="text" 
-                  id="birth_date_input" 
+                <input
+                  className="form-input"
+                  type="text"
+                  id="birth_date_input"
                   value={birthDateInput}
                   onChange={handleBirthDateChange}
                   placeholder="DD/MM/AAAA"
@@ -383,8 +383,8 @@ export default function RegisterCasePage() {
                 />
                 <input type="hidden" name="birth_date" value={(() => {
                   const parts = birthDateInput.split('/');
-                  return parts.length === 3 && parts[2].length === 4 
-                    ? `${parts[2]}-${parts[1]}-${parts[0]}` 
+                  return parts.length === 3 && parts[2].length === 4
+                    ? `${parts[2]}-${parts[1]}-${parts[0]}`
                     : '';
                 })()} />
               </div>
@@ -392,12 +392,12 @@ export default function RegisterCasePage() {
               {/* Commune */}
               <div className="form-group">
                 <label className="form-label" htmlFor="commune_select">Comuna de Residencia *</label>
-                <select 
-                  className="form-select" 
-                  id="commune_select" 
+                <select
+                  className="form-select"
+                  id="commune_select"
                   value={selectedCommune}
                   onChange={(e) => setSelectedCommune(e.target.value)}
-                  required 
+                  required
                   disabled={loading}
                 >
                   <option value="Vitacura">Vitacura</option>
@@ -414,7 +414,7 @@ export default function RegisterCasePage() {
                   <option value="Maipú">Maipú</option>
                   <option value="Otra Comuna">Otra Comuna</option>
                 </select>
-                
+
                 {selectedCommune === 'Otra Comuna' && (
                   <div className="animate-fade-in" style={{ marginTop: '10px' }}>
                     <label className="form-label" htmlFor="custom_commune" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique la Comuna *</label>
@@ -430,38 +430,38 @@ export default function RegisterCasePage() {
                     />
                   </div>
                 )}
-                
-                <input 
-                  type="hidden" 
-                  name="commune" 
-                  value={selectedCommune === 'Otra Comuna' ? customCommune : selectedCommune} 
+
+                <input
+                  type="hidden"
+                  name="commune"
+                  value={selectedCommune === 'Otra Comuna' ? customCommune : selectedCommune}
                 />
               </div>
 
               {/* Email */}
               <div className="form-group">
                 <label className="form-label" htmlFor="email">Correo Electrónico</label>
-                <input 
-                  className="form-input" 
-                  type="email" 
-                  id="email" 
-                  name="email" 
-                  placeholder="ejemplo@correo.com (Opcional)" 
-                  disabled={loading} 
+                <input
+                  className="form-input"
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="ejemplo@correo.com (Opcional)"
+                  disabled={loading}
                 />
               </div>
 
               {/* Mobile Phone */}
               <div className="form-group">
                 <label className="form-label" htmlFor="mobile">Celular de Contacto *</label>
-                <input 
-                  className="form-input" 
-                  type="tel" 
-                  id="mobile" 
-                  name="mobile" 
-                  required 
-                  placeholder="+56 9 1234 5678" 
-                  disabled={loading} 
+                <input
+                  className="form-input"
+                  type="tel"
+                  id="mobile"
+                  name="mobile"
+                  required
+                  placeholder="+56 9 1234 5678"
+                  disabled={loading}
                 />
               </div>
 
@@ -470,10 +470,10 @@ export default function RegisterCasePage() {
 
           {/* Section 2: Case Details */}
           <div>
-            <h3 style={{ 
-              fontSize: '1.1rem', 
-              fontFamily: 'var(--font-display)', 
-              fontWeight: 700, 
+            <h3 style={{
+              fontSize: '1.1rem',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
               borderBottom: '1px solid var(--glass-border)',
               paddingBottom: '10px',
               marginBottom: '20px',
@@ -482,7 +482,7 @@ export default function RegisterCasePage() {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
               2. Detalle del Caso o Convenio
             </h3>
 
@@ -491,16 +491,16 @@ export default function RegisterCasePage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '20px'
             }}>
-              
+
               {/* Medical Center */}
               <div className="form-group">
                 <label className="form-label" htmlFor="medical_center_select">Centro Médico de Origen *</label>
-                <select 
-                  className="form-select" 
-                  id="medical_center_select" 
+                <select
+                  className="form-select"
+                  id="medical_center_select"
                   value={selectedMedicalCenter}
                   onChange={(e) => setSelectedMedicalCenter(e.target.value)}
-                  required 
+                  required
                   disabled={loading}
                 >
                   <option value="">Seleccione un Centro</option>
@@ -526,22 +526,22 @@ export default function RegisterCasePage() {
                   </div>
                 )}
 
-                <input 
-                  type="hidden" 
-                  name="medical_center" 
-                  value={selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter} 
+                <input
+                  type="hidden"
+                  name="medical_center"
+                  value={selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter}
                 />
               </div>
 
               {/* Agreement Type */}
               <div className="form-group">
                 <label className="form-label" htmlFor="agreement_type_select">Convenio sin Costo de *</label>
-                <select 
-                  className="form-select" 
-                  id="agreement_type_select" 
+                <select
+                  className="form-select"
+                  id="agreement_type_select"
                   value={selectedAgreementType}
                   onChange={(e) => setSelectedAgreementType(e.target.value)}
-                  required 
+                  required
                   disabled={loading}
                 >
                   <option value="">Seleccione el tipo de convenio</option>
@@ -568,10 +568,10 @@ export default function RegisterCasePage() {
                   </div>
                 )}
 
-                <input 
-                  type="hidden" 
-                  name="agreement_type" 
-                  value={selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType} 
+                <input
+                  type="hidden"
+                  name="agreement_type"
+                  value={selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType}
                 />
               </div>
             </div>
@@ -581,13 +581,13 @@ export default function RegisterCasePage() {
                 <label className="form-label" htmlFor="dental_diagnosis">
                   Diagnóstico Odontológico *
                 </label>
-                <textarea 
-                  className="form-textarea" 
-                  id="dental_diagnosis" 
-                  name="dental_diagnosis" 
-                  required 
+                <textarea
+                  className="form-textarea"
+                  id="dental_diagnosis"
+                  name="dental_diagnosis"
+                  required
                   rows={2}
-                  placeholder="Ej: Desdentado parcial superior e inferior..." 
+                  placeholder="Ej: Desdentado parcial superior e inferior..."
                   disabled={loading}
                 />
               </div>
@@ -596,13 +596,13 @@ export default function RegisterCasePage() {
                 <label className="form-label" htmlFor="treatment_needed">
                   Por favor, realizar (Prestación a realizar) *
                 </label>
-                <textarea 
-                  className="form-textarea" 
-                  id="treatment_needed" 
-                  name="treatment_needed" 
-                  required 
+                <textarea
+                  className="form-textarea"
+                  id="treatment_needed"
+                  name="treatment_needed"
+                  required
                   rows={2}
-                  placeholder="Ej: Prótesis parcial superior e inferior..." 
+                  placeholder="Ej: Prótesis parcial superior e inferior..."
                   disabled={loading}
                 />
               </div>
@@ -612,21 +612,21 @@ export default function RegisterCasePage() {
               <label className="form-label" htmlFor="description">
                 Observaciones Generales de la Derivación (Opcional)
               </label>
-              <textarea 
-                className="form-textarea" 
-                id="description" 
-                name="description" 
+              <textarea
+                className="form-textarea"
+                id="description"
+                name="description"
                 rows={3}
-                placeholder="Detalles adicionales relevantes sobre el paciente o el caso..." 
+                placeholder="Detalles adicionales relevantes sobre el paciente o el caso..."
                 disabled={loading}
               />
             </div>
 
             {/* Section 3: Professional Details */}
-            <h3 style={{ 
-              fontSize: '1.1rem', 
-              fontFamily: 'var(--font-display)', 
-              fontWeight: 700, 
+            <h3 style={{
+              fontSize: '1.1rem',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
               borderBottom: '1px solid var(--glass-border)',
               paddingBottom: '10px',
               marginTop: '40px',
@@ -636,7 +636,7 @@ export default function RegisterCasePage() {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
               3. Firma del Profesional Derivador
             </h3>
 
@@ -690,7 +690,7 @@ export default function RegisterCasePage() {
                 flexShrink: 0,
                 marginTop: '2px'
               }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span style={{
@@ -718,25 +718,25 @@ export default function RegisterCasePage() {
           </div>
 
           {/* Buttons */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-            gap: '15px', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '15px',
             borderTop: '1px solid var(--glass-border)',
             paddingTop: '25px',
             marginTop: '10px'
           }}>
-            <button 
-              type="button" 
-              onClick={() => router.back()} 
-              className="btn-secondary" 
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="btn-secondary"
               disabled={loading}
             >
               Cancelar
             </button>
-            <button 
-              type="submit" 
-              className="btn-primary" 
+            <button
+              type="submit"
+              className="btn-primary"
               style={{ padding: '12px 28px' }}
               disabled={loading}
             >
