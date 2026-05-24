@@ -10,26 +10,30 @@ export default function ShowcaseInteractive() {
       <div className="glowing-orb orb-2"></div>
 
       {/* Hand-drawn Diagram Animated with High Fidelity SVGs - Clean, enlarged and natively integrated */}
-      <svg 
-        width="100%" 
-        height="450" 
-        viewBox="0 0 400 330" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg" 
+      <svg
+        width="100%"
+        height="450"
+        viewBox="0 0 400 330"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
         style={{ overflow: 'visible', zIndex: 5 }}
       >
         <defs>
           {/* Glow Filters for Premium Neon Highlight */}
-          <filter id="glow-teal" x="-30%" y="-30%" width="160%" height="160%">
+          <filter id="glow-teal" x="-100%" y="-100%" width="300%" height="300%">
             <feGaussianBlur stdDeviation="5" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
-          <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
+          <filter id="glow-blue" x="-100%" y="-100%" width="300%" height="300%">
             <feGaussianBlur stdDeviation="5" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
-          <filter id="glow-gold" x="-30%" y="-30%" width="160%" height="160%">
+          <filter id="glow-celeste" x="-100%" y="-100%" width="300%" height="300%">
             <feGaussianBlur stdDeviation="7" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <filter id="glow-yellow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
 
@@ -38,32 +42,32 @@ export default function ShowcaseInteractive() {
             <stop offset="0%" stopColor="#14b8a6" />
             <stop offset="100%" stopColor="#3b82f6" />
           </linearGradient>
-          <linearGradient id="grad-gold" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fbbf24" />
-            <stop offset="100%" stopColor="#f59e0b" />
+          <linearGradient id="grad-celeste" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#38bdf8" />
+            <stop offset="100%" stopColor="#0ea5e9" />
           </linearGradient>
         </defs>
 
         {/* BACKGROUND DOTTED Y-SHAPE PATHWAY (DERIVACIÓN) */}
-        {/* Left fork to intersection */}
+        {/* Top-left fork to intersection */}
         <path
-          d="M 90,80 Q 145,145 200,170"
+          d="M 108,85 Q 145,155 185,155"
           stroke="rgba(255, 255, 255, 0.12)"
           strokeWidth="2.5"
           strokeDasharray="6,6"
           fill="none"
         />
-        {/* Right fork to intersection */}
+        {/* Bottom-left fork to intersection */}
         <path
-          d="M 310,80 Q 255,145 200,170"
+          d="M 108,225 Q 145,155 185,155"
           stroke="rgba(255, 255, 255, 0.12)"
           strokeWidth="2.5"
           strokeDasharray="6,6"
           fill="none"
         />
-        {/* Stem to bottom circle */}
+        {/* Stem to right circle */}
         <path
-          d="M 200,170 L 200,232"
+          d="M 185,155 L 260,155"
           stroke="rgba(255, 255, 255, 0.12)"
           strokeWidth="2.5"
           strokeDasharray="6,6"
@@ -72,24 +76,24 @@ export default function ShowcaseInteractive() {
 
         {/* Glowing background flow tracks */}
         <path
-          d="M 90,80 Q 145,145 200,170 L 200,232"
+          d="M 108,85 Q 145,155 185,155 L 260,155"
           stroke="url(#grad-teal-blue)"
           strokeWidth="2"
           fill="none"
           opacity="0.15"
         />
         <path
-          d="M 310,80 Q 255,145 200,170 L 200,232"
+          d="M 108,225 Q 145,155 185,155 L 260,155"
           stroke="url(#grad-teal-blue)"
           strokeWidth="2"
           fill="none"
           opacity="0.15"
         />
 
-        {/* UPPER COMMUNICATION CURVES (BI-DIRECTIONAL) */}
+        {/* LEFT SIDE VERTICAL COMMUNICATION CURVES (BI-DIRECTIONAL) */}
         {/* Poli -> Vitacura */}
         <path
-          d="M 90,65 Q 200,25 310,65"
+          d="M 65,80 L 65,230"
           stroke="rgba(20, 184, 166, 0.25)"
           strokeWidth="2"
           strokeDasharray="4,4"
@@ -97,7 +101,7 @@ export default function ShowcaseInteractive() {
         />
         {/* Vitacura -> Poli */}
         <path
-          d="M 310,75 Q 200,115 90,75"
+          d="M 85,230 L 85,80"
           stroke="rgba(59, 130, 246, 0.25)"
           strokeWidth="2"
           strokeDasharray="4,4"
@@ -105,120 +109,188 @@ export default function ShowcaseInteractive() {
         />
 
         {/* ANIMATED MOTIONS (LASER SPARKS / DATA PACKETS) */}
-        {/* 1. Upper curve: Left-to-Right data flow */}
+        {/* 1. Left curve: Top-to-Bottom data flow */}
         <g>
-          <animateMotion dur="3.5s" repeatCount="indefinite" path="M 90,65 Q 200,25 310,65" />
+          <animateMotion dur="7s" repeatCount="indefinite" path="M 65,80 L 65,230" />
           <circle cx="0" cy="0" r="9" fill="#14b8a6" opacity="0.15" />
           <circle cx="0" cy="0" r="6" fill="#14b8a6" opacity="0.4" />
           <circle cx="0" cy="0" r="3.5" fill="#ffffff" />
         </g>
 
-        {/* 2. Lower curve: Right-to-Left feedback loop */}
+        {/* 2. Right curve: Bottom-to-Top feedback loop */}
         <g>
-          <animateMotion dur="3.5s" repeatCount="indefinite" path="M 310,75 Q 200,115 90,75" />
+          <animateMotion dur="7s" repeatCount="indefinite" path="M 85,230 L 85,80" />
           <circle cx="0" cy="0" r="9" fill="#3b82f6" opacity="0.15" />
           <circle cx="0" cy="0" r="6" fill="#3b82f6" opacity="0.4" />
           <circle cx="0" cy="0" r="3.5" fill="#ffffff" />
         </g>
 
-        {/* 3. Left Derivación flow: Poli -> Intersection -> Happy Patient */}
+        {/* 3. Top Derivación flow: Poli -> Intersection */}
         <g>
-          <animateMotion dur="4.5s" repeatCount="indefinite" begin="0s" path="M 90,80 Q 145,145 200,170 L 200,232" />
-          <circle cx="0" cy="0" r="8" fill="#10b981" opacity="0.15" />
-          <circle cx="0" cy="0" r="5.5" fill="#10b981" opacity="0.4" />
-          <circle cx="0" cy="0" r="3" fill="#ffffff" />
+          <animateMotion begin="0s" dur="10s" repeatCount="indefinite" path="M 108,85 Q 145,155 185,155" keyTimes="0;0.35;1" keyPoints="0;1;1" calcMode="linear" />
+          {/* Outer glow */}
+          <circle cx="0" cy="0" r="8" fill="#38bdf8">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0.15;0.15;0;0" keyTimes="0;0.35;0.36;1" />
+          </circle>
+          {/* Middle glow */}
+          <circle cx="0" cy="0" r="5.5" fill="#38bdf8">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0.4;0.4;0;0" keyTimes="0;0.35;0.36;1" />
+          </circle>
+          {/* Inner core */}
+          <circle cx="0" cy="0" r="3" fill="#ffffff">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="1;1;0;0" keyTimes="0;0.35;0.36;1" />
+          </circle>
         </g>
 
-        {/* 4. Right Derivación flow: Vitacura -> Intersection -> Happy Patient */}
+        {/* 4. Bottom Derivación flow: Vitacura -> Intersection */}
         <g>
-          <animateMotion dur="4.5s" repeatCount="indefinite" begin="2.25s" path="M 310,80 Q 255,145 200,170 L 200,232" />
-          <circle cx="0" cy="0" r="8" fill="#3b82f6" opacity="0.15" />
-          <circle cx="0" cy="0" r="5.5" fill="#3b82f6" opacity="0.4" />
-          <circle cx="0" cy="0" r="3" fill="#ffffff" />
+          <animateMotion begin="0s" dur="10s" repeatCount="indefinite" path="M 108,225 Q 145,155 185,155" keyTimes="0;0.35;1" keyPoints="0;1;1" calcMode="linear" />
+          {/* Outer glow */}
+          <circle cx="0" cy="0" r="8" fill="#38bdf8">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0.15;0.15;0;0" keyTimes="0;0.35;0.36;1" />
+          </circle>
+          {/* Middle glow */}
+          <circle cx="0" cy="0" r="5.5" fill="#38bdf8">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0.4;0.4;0;0" keyTimes="0;0.35;0.36;1" />
+          </circle>
+          {/* Inner core */}
+          <circle cx="0" cy="0" r="3" fill="#ffffff">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="1;1;0;0" keyTimes="0;0.35;0.36;1" />
+          </circle>
         </g>
 
-        {/* LEFT NODE: POLICLÍNICO TABANCURA */}
-        <g transform="translate(90, 70)">
-          <circle r="36" fill="rgba(10, 30, 25, 0.85)" stroke="#14b8a6" strokeWidth="2" filter="url(#glow-teal)" />
-          <circle r="31" fill="rgba(15, 23, 42, 0.92)" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
+        {/* 5. Merged stem flow: Intersection -> Happy Patient */}
+        <g>
+          <animateMotion begin="0s" dur="10s" repeatCount="indefinite" path="M 185,155 L 260,155" keyTimes="0;0.35;0.45;1" keyPoints="0;0;1;1" calcMode="linear" />
+          {/* Outer glow */}
+          <circle cx="0" cy="0" r="8" fill="#38bdf8">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0;0;0.15;0.15;0;0" keyTimes="0;0.34;0.35;0.45;0.46;1" />
+          </circle>
+          {/* Middle glow */}
+          <circle cx="0" cy="0" r="5.5" fill="#38bdf8">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0;0;0.4;0.4;0;0" keyTimes="0;0.34;0.35;0.45;0.46;1" />
+          </circle>
+          {/* Inner core */}
+          <circle cx="0" cy="0" r="3" fill="#ffffff">
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;0.34;0.35;0.45;0.46;1" />
+          </circle>
+        </g>
+
+        {/* TOP-LEFT NODE: POLICLÍNICO TABANCURA */}
+        <g transform="translate(75, 75)">
+          <circle r="36" fill="#0a1e19" stroke="#14b8a6" strokeWidth="2" filter="url(#glow-teal)" />
+          <circle r="31" fill="#0f172a" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
           {/* Policlínico Logo Image - Vector, transparent & larger! */}
-          <image href="/logo.svg" x="-24" y="-24" width="48" height="48" />
+          <image href="/logo.svg" x="-24" y="-24" width="48" height="48" style={{ filter: 'brightness(0) invert(1)' }} />
         </g>
-        <text x="90" y="124" fill="rgba(255,255,255,0.75)" fontSize="10.5" fontWeight="700" textAnchor="middle" letterSpacing="0.04em">
+        <text x="122" y="72" fill="rgba(255,255,255,0.75)" fontSize="10" fontWeight="700" textAnchor="start" letterSpacing="0.04em">
           POLICLÍNICO
         </text>
-        <text x="90" y="137" fill="#14b8a6" fontSize="9.5" fontWeight="800" textAnchor="middle" letterSpacing="0.06em">
+        <text x="122" y="85" fill="#14b8a6" fontSize="9" fontWeight="800" textAnchor="start" letterSpacing="0.06em">
           TABANCURA
         </text>
 
-        {/* RIGHT NODE: MUNICIPALIDAD DE VITACURA */}
-        <g transform="translate(310, 70)">
-          <circle r="36" fill="rgba(10, 22, 38, 0.85)" stroke="#3b82f6" strokeWidth="2" filter="url(#glow-blue)" />
-          <circle r="31" fill="rgba(15, 23, 42, 0.92)" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
+        {/* BOTTOM-LEFT NODE: MUNICIPALIDAD DE VITACURA */}
+        <g transform="translate(75, 235)">
+          <circle r="36" fill="#0a1626" stroke="#3b82f6" strokeWidth="2" filter="url(#glow-blue)" />
+          <circle r="31" fill="#0f172a" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
           {/* Vector Vitacura Logo - Clean, centered, transparent & larger! */}
           <g transform="translate(0, -4)">
-            {/* Left leg (Cyan) */}
-            <line x1="-10" y1="-10" x2="0" y2="5" stroke="#0ea5e9" strokeWidth="5.5" strokeLinecap="round" />
-            {/* Right leg (Green) */}
-            <line x1="0" y1="5" x2="10" y2="-10" stroke="#10b981" strokeWidth="5.5" strokeLinecap="round" />
-            {/* Magenta Center-Top Dot */}
-            <circle cx="0" cy="-6" r="3.2" fill="#f43f5e" />
+            {/* Left leg (White) */}
+            <line x1="-10" y1="-10" x2="0" y2="5" stroke="#ffffff" strokeWidth="5.5" strokeLinecap="round" />
+            {/* Right leg (White) */}
+            <line x1="0" y1="5" x2="10" y2="-10" stroke="#ffffff" strokeWidth="5.5" strokeLinecap="round" />
+            {/* Center-Top Dot (White) */}
+            <circle cx="0" cy="-6" r="3.2" fill="#ffffff" />
           </g>
           {/* Text "vitacura" inside the circle */}
           <text x="0" y="19" fill="#ffffff" fontSize="8.5" fontWeight="800" fontFamily="sans-serif" textAnchor="middle" letterSpacing="0.05em">
             vitacura
           </text>
         </g>
+        <text x="28" y="232" fill="rgba(255,255,255,0.75)" fontSize="10" fontWeight="700" textAnchor="end" letterSpacing="0.04em">
+          MUNICIPALIDAD
+        </text>
+        <text x="28" y="245" fill="#3b82f6" fontSize="9" fontWeight="800" textAnchor="end" letterSpacing="0.06em">
+          DE VITACURA
+        </text>
 
-        {/* BOTTOM NODE: HAPPY PATIENT / DENTAL RESULT */}
-        <g transform="translate(200, 252)">
-          {/* Golden Outer Rotating Gear Ring */}
-          <circle r="44" fill="none" stroke="rgba(251, 191, 36, 0.18)" strokeWidth="1.5" strokeDasharray="4,6">
-            <animate attributeName="transform" type="rotate" from="0" to="360" dur="25s" repeatCount="indefinite" />
-          </circle>
-          {/* Solid glow container */}
-          <circle r="36" fill="rgba(28, 22, 10, 0.9)" stroke="url(#grad-gold)" strokeWidth="2.5" filter="url(#glow-gold)" />
-          <circle r="30" fill="rgba(15, 23, 42, 0.96)" />
+        {/* RIGHT NODE: HAPPY PATIENT / DENTAL RESULT */}
+        <g transform="translate(285, 155)">
 
-          {/* FADING ICON CYCLING SYSTEM (TOOTH <-> HAPPY FACE) */}
-          {/* Icon A: Happy Face (Smile) */}
-          <g className="icon-smile">
-            <circle cx="0" cy="0" r="13" fill="rgba(251, 191, 36, 0.12)" stroke="#fbbf24" strokeWidth="1.5" />
-            <circle cx="-4" cy="-2.5" r="1.5" fill="#fbbf24" />
-            <circle cx="4" cy="-2.5" r="1.5" fill="#fbbf24" />
-            <path d="M -6,2.5 Q 0,8.5 6,2.5" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" fill="none" />
-            <circle cx="-6" cy="2.5" r="1" fill="#f59e0b" />
-            <circle cx="6" cy="2.5" r="1" fill="#f59e0b" />
+          {/* 1. SAD STATE NODE GROUP (YELLOW) - Visible 0s to 4.2s, smoothly cross-fading back at 8.5s */}
+          <g>
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="1;1;0;0;1" keyTimes="0;0.42;0.45;0.85;1" />
+
+            {/* Yellow Outer Rotating Gear Ring */}
+            <circle r="41" fill="none" stroke="rgba(234, 179, 8, 0.25)" strokeWidth="1.5" strokeDasharray="4,6">
+              <animate attributeName="transform" type="rotate" from="0" to="360" dur="25s" repeatCount="indefinite" />
+            </circle>
+
+            {/* Solid glow container (Yellow/Amber) */}
+            <circle r="36" fill="#0a141e" stroke="#eab308" strokeWidth="2" filter="url(#glow-yellow)" />
+            <circle r="31" fill="#0f172a" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
+
+            {/* Sad Face Group (Yellow) */}
+            <g>
+              <circle cx="0" cy="0" r="14" fill="rgba(234, 179, 8, 0.06)" stroke="#eab308" strokeWidth="1.5" />
+              <circle cx="-4.5" cy="-3" r="1.5" fill="#eab308" />
+              <circle cx="4.5" cy="-3" r="1.5" fill="#eab308" />
+              <path d="M -6.5,5 Q 0,0.5 6.5,5" stroke="#eab308" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+            </g>
           </g>
 
-          {/* Icon B: Dental Logo Image - Beautiful Vector Tooth! */}
-          <g className="icon-tooth">
-            <circle cx="0" cy="0" r="13" fill="rgba(251, 191, 36, 0.12)" stroke="#fbbf24" strokeWidth="1.5" />
-            {/* Custom Vector Tooth Shape */}
-            <path d="M 0,-4 
-                     C -2,-7 -7,-7 -8,-3 
-                     C -9,1 -7,5 -4,8 
-                     C -3.3,9 -2.3,9 -2.3,7.5 
-                     C -2.3,5.3 -3,3.5 -1.2,2.8 
-                     C -0.3,2.5 0.3,2.5 1.2,2.8 
-                     C 3,3.5 2.3,5.3 2.3,7.5 
-                     C 2.3,9 3.3,9 4,8 
-                     C 7,5 9,1 8,-3 
-                     C 7,-7 2,-7 0,-4 Z" 
-                  fill="#fbbf24" 
-                  stroke="#fbbf24" 
-                  strokeWidth="0.8" 
-                  strokeLinejoin="round" />
+          {/* 2. HAPPY STATE NODE GROUP (CELESTE) - Visible 4.5s to 8.5s, smoothly cross-fading back */}
+          <g>
+            <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0;0;1;1;0" keyTimes="0;0.42;0.45;0.85;1" />
+
+            {/* Celeste Outer Rotating Gear Ring */}
+            <circle r="41" fill="none" stroke="rgba(56, 189, 248, 0.25)" strokeWidth="1.5" strokeDasharray="4,6">
+              <animate attributeName="transform" type="rotate" from="0" to="360" dur="25s" repeatCount="indefinite" />
+            </circle>
+
+            {/* Solid glow container matching upper nodes perfectly (Celeste with Impact pulse at 0.45) */}
+            <circle r="36" fill="#0a1826" stroke="#38bdf8" strokeWidth="2" filter="url(#glow-celeste)">
+              <animate attributeName="stroke-width" begin="0s" dur="10s" repeatCount="indefinite" values="2;2;4;2;2" keyTimes="0;0.448;0.45;0.47;1" />
+              <animate attributeName="r" begin="0s" dur="10s" repeatCount="indefinite" values="36;36;38;36;36" keyTimes="0;0.448;0.45;0.47;1" />
+            </circle>
+            <circle r="31" fill="#0f172a" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
+
+            {/* Happy Face Group (Celeste with Beautiful Fixed Wide Smile) */}
+            <g>
+              <circle cx="0" cy="0" r="14" fill="rgba(56, 189, 248, 0.12)" stroke="#38bdf8" strokeWidth="1.5" />
+              <circle cx="-4.5" cy="-3.5" r="1.5" fill="#38bdf8" />
+              <circle cx="4.5" cy="-3.5" r="1.5" fill="#38bdf8" />
+              {/* Perfectly curved wide smile */}
+              <path d="M -7,1 Q 0,7.5 7,1" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+              <circle cx="-7.5" cy="1.2" r="1" fill="#38bdf8" opacity="0.6" />
+              <circle cx="7.5" cy="1.2" r="1" fill="#38bdf8" opacity="0.6" />
+            </g>
           </g>
         </g>
 
-        {/* Bottom titles */}
-        <text x="200" y="312" fill="#fbbf24" fontSize="11" fontWeight="800" textAnchor="middle" letterSpacing="0.08em" filter="url(#glow-gold)">
-          ¡PACIENTE FELIZ! 😊
-        </text>
-        <text x="200" y="324" fill="rgba(255,255,255,0.4)" fontSize="8.5" fontWeight="600" textAnchor="middle" letterSpacing="0.04em">
-          RESULTADO DE DERIVACIÓN DENTAL
-        </text>
+        {/* Bottom titles - Switch dynamically at 4.5s with smooth fade */}
+        {/* Waiting state titles */}
+        <g>
+          <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0.6;0.6;0;0;0.6" keyTimes="0;0.42;0.45;0.85;1" />
+          <text x="285" y="218" fill="#eab308" fontSize="10.5" fontWeight="800" textAnchor="middle" letterSpacing="0.08em" filter="url(#glow-yellow)">
+            ESPERANDO DERIVACIÓN...
+          </text>
+          <text x="285" y="232" fill="rgba(255, 255, 255, 0.35)" fontSize="8" fontWeight="600" textAnchor="middle" letterSpacing="0.04em">
+            CONVENIO EN PROCESO DE VALIDACIÓN
+          </text>
+        </g>
+
+        {/* Happy state titles */}
+        <g>
+          <animate attributeName="opacity" begin="0s" dur="10s" repeatCount="indefinite" values="0;0;1;1;0" keyTimes="0;0.42;0.45;0.85;1" />
+          <text x="285" y="218" fill="#38bdf8" fontSize="10.5" fontWeight="800" textAnchor="middle" letterSpacing="0.08em" filter="url(#glow-celeste)">
+            ¡PACIENTE FELIZ! 🦷
+          </text>
+          <text x="285" y="232" fill="rgba(255, 255, 255, 0.4)" fontSize="8" fontWeight="600" textAnchor="middle" letterSpacing="0.04em">
+            RESULTADO DE DERIVACIÓN DENTAL
+          </text>
+        </g>
       </svg>
 
       <style jsx global>{`
@@ -268,27 +340,6 @@ export default function ShowcaseInteractive() {
           50% { opacity: 1; transform: scale(1.1); }
         }
 
-        /* FADING ICON CYCLING ANIMATIONS */
-        @keyframes crossfade-tooth {
-          0%, 45% { opacity: 1; transform: scale(1) rotate(0deg); }
-          50%, 95% { opacity: 0; transform: scale(0.7) rotate(10deg); }
-          100% { opacity: 1; transform: scale(1) rotate(0deg); }
-        }
-        @keyframes crossfade-smile {
-          0%, 45% { opacity: 0; transform: scale(0.7); }
-          50%, 95% { opacity: 1; transform: scale(1.05); }
-          100% { opacity: 0; transform: scale(0.7); }
-        }
-
-        .icon-tooth {
-          animation: crossfade-tooth 6s infinite ease-in-out;
-          transform-origin: 0px 0px;
-        }
-
-        .icon-smile {
-          animation: crossfade-smile 6s infinite ease-in-out;
-          transform-origin: 0px 0px;
-        }
 
         /* Showcase Responsiveness */
         @media (max-width: 1024px) {

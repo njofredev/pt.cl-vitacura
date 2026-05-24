@@ -18,6 +18,13 @@ export async function createUserAction(formData: FormData) {
   const password = formData.get('password') as string;
   const role = formData.get('role') as 'admin' | 'internal' | 'external';
 
+  const professionalTitle = formData.get('professional_title') as string;
+  const professionalPosition = formData.get('professional_position') as string;
+  const professionalEmail = formData.get('professional_email') as string;
+  const professionalAddress = formData.get('professional_address') as string;
+  const professionalWebsite = formData.get('professional_website') as string;
+  const professionalPhone = formData.get('professional_phone') as string;
+
   if (!name || !email || !password || !role) {
     return { error: 'Por favor complete todos los campos requeridos' };
   }
@@ -35,9 +42,26 @@ export async function createUserAction(formData: FormData) {
 
     // Insert user
     await pool.query(`
-      INSERT INTO users (name, email, password_hash, role, active, password_plain)
-      VALUES ($1, $2, $3, $4, $5, $6)
-    `, [name.trim(), email.toLowerCase().trim(), passwordHash, role, true, password]);
+      INSERT INTO users (
+        name, email, password_hash, role, active, password_plain,
+        professional_title, professional_position, professional_email,
+        professional_address, professional_website, professional_phone
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `, [
+      name.trim(), 
+      email.toLowerCase().trim(), 
+      passwordHash, 
+      role, 
+      true, 
+      password,
+      professionalTitle ? professionalTitle.trim() : null,
+      professionalPosition ? professionalPosition.trim() : null,
+      professionalEmail ? professionalEmail.toLowerCase().trim() : null,
+      professionalAddress ? professionalAddress.trim() : null,
+      professionalWebsite ? professionalWebsite.trim() : null,
+      professionalPhone ? professionalPhone.trim() : null
+    ]);
 
     revalidatePath('/dashboard/users');
     revalidatePath('/dashboard');
@@ -67,5 +91,132 @@ export async function toggleUserStatusAction(userId: string, currentStatus: bool
   } catch (error) {
     console.error('Error toggling user status:', error);
     return { error: 'Error del servidor al cambiar el estado del usuario' };
+  }
+}
+
+export async function getCurrentUserAction() {
+  const session = await getSession();
+  if (!session) {
+    return { error: 'No autenticado' };
+  }
+  try {
+    const res = await pool.query(
+      `SELECT id, name, email, role, active,
+              professional_title, professional_position, professional_email,
+              professional_address, professional_website, professional_phone
+       FROM users 
+       WHERE id = $1`,
+      [session.id]
+    );
+    if (res.rows.length === 0) {
+      return { error: 'Usuario no encontrado' };
+    }
+    return { success: true, user: res.rows[0] };
+  } catch (error) {
+    console.error('Error fetching current user:', error);
+    return { error: 'Error del servidor' };
+  }
+}
+
+export async function updateUserAction(userId: string, formData: FormData) {
+  const session = await getSession();
+  
+  if (!session || session.role !== 'admin') {
+    return { error: 'No autorizado para realizar esta acción' };
+  }
+
+  const name = formData.get('name') as string;
+  const email = formData.get('email') as string;
+  const role = formData.get('role') as 'admin' | 'internal' | 'external';
+  const password = formData.get('password') as string;
+
+  const professionalTitle = formData.get('professional_title') as string;
+  const professionalPosition = formData.get('professional_position') as string;
+  const professionalEmail = formData.get('professional_email') as string;
+  const professionalAddress = formData.get('professional_address') as string;
+  const professionalWebsite = formData.get('professional_website') as string;
+  const professionalPhone = formData.get('professional_phone') as string;
+
+  if (!name || !email || !role) {
+    return { error: 'Por favor complete todos los campos requeridos (Nombre, Correo, Rol)' };
+  }
+
+  try {
+    // Check if email already exists for another user
+    const emailCheck = await pool.query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email.toLowerCase().trim(), userId]);
+    if (emailCheck.rows.length > 0) {
+      return { error: 'El correo electrónico ya está registrado por otro usuario' };
+    }
+
+    if (password && password.trim() !== '') {
+      // Hash new password
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+
+      await pool.query(`
+        UPDATE users 
+        SET 
+          name = $1, 
+          email = $2, 
+          role = $3, 
+          password_hash = $4,
+          password_plain = $5,
+          professional_title = $6,
+          professional_position = $7,
+          professional_email = $8,
+          professional_address = $9,
+          professional_website = $10,
+          professional_phone = $11,
+          updated_at = NOW()
+        WHERE id = $12
+      `, [
+        name.trim(), 
+        email.toLowerCase().trim(), 
+        role, 
+        passwordHash, 
+        password,
+        professionalTitle ? professionalTitle.trim() : null,
+        professionalPosition ? professionalPosition.trim() : null,
+        professionalEmail ? professionalEmail.toLowerCase().trim() : null,
+        professionalAddress ? professionalAddress.trim() : null,
+        professionalWebsite ? professionalWebsite.trim() : null,
+        professionalPhone ? professionalPhone.trim() : null,
+        userId
+      ]);
+    } else {
+      await pool.query(`
+        UPDATE users 
+        SET 
+          name = $1, 
+          email = $2, 
+          role = $3, 
+          professional_title = $4,
+          professional_position = $5,
+          professional_email = $6,
+          professional_address = $7,
+          professional_website = $8,
+          professional_phone = $9,
+          updated_at = NOW()
+        WHERE id = $10
+      `, [
+        name.trim(), 
+        email.toLowerCase().trim(), 
+        role, 
+        professionalTitle ? professionalTitle.trim() : null,
+        professionalPosition ? professionalPosition.trim() : null,
+        professionalEmail ? professionalEmail.toLowerCase().trim() : null,
+        professionalAddress ? professionalAddress.trim() : null,
+        professionalWebsite ? professionalWebsite.trim() : null,
+        professionalPhone ? professionalPhone.trim() : null,
+        userId
+      ]);
+    }
+
+    revalidatePath('/dashboard/users');
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return { error: 'Error del servidor al actualizar el usuario' };
   }
 }

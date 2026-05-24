@@ -166,3 +166,117 @@ export async function updateCaseStatusAction(caseId: string, status: 'pendiente'
     return { error: 'Error del servidor al actualizar el caso social' };
   }
 }
+
+export async function deleteCaseAction(caseId: string) {
+  const session = await getSession();
+  
+  if (!session || session.role !== 'admin') {
+    return { error: 'No autorizado para eliminar casos. Esta acción está restringida a administradores.' };
+  }
+
+  if (!caseId) {
+    return { error: 'ID de caso inválido para eliminar' };
+  }
+
+  try {
+    await pool.query('DELETE FROM cases WHERE id = $1', [caseId]);
+
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/cases');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting case:', error);
+    return { error: 'Error del servidor al eliminar el caso social' };
+  }
+}
+
+export async function updateCaseDetailsAction(
+  caseId: string,
+  data: {
+    rut: string;
+    first_names: string;
+    last_names: string;
+    nationality: string;
+    birth_date: string;
+    commune: string;
+    email: string;
+    mobile: string;
+    description: string;
+    medical_center: string;
+    agreement_type: string;
+    dental_diagnosis: string;
+    treatment_needed: string;
+    professional_name: string;
+  }
+) {
+  const session = await getSession();
+  
+  if (!session || session.role !== 'admin') {
+    return { error: 'No autorizado para editar detalles de casos. Esta acción está restringida a administradores.' };
+  }
+
+  const cleanedRUT = cleanRUT(data.rut);
+  if (!validateRUT(cleanedRUT)) {
+    return { error: 'El RUT ingresado no es válido' };
+  }
+
+  try {
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+
+      const caseRes = await client.query('SELECT person_id FROM cases WHERE id = $1', [caseId]);
+      if (caseRes.rows.length === 0) {
+        throw new Error('Caso no encontrado');
+      }
+      const personId = caseRes.rows[0].person_id;
+
+      await client.query(`
+        UPDATE persons 
+        SET rut = $1, first_names = $2, last_names = $3, nationality = $4, birth_date = $5, commune = $6, email = $7, mobile = $8, updated_at = NOW()
+        WHERE id = $9
+      `, [
+        cleanedRUT,
+        data.first_names.trim(),
+        data.last_names.trim(),
+        data.nationality.trim(),
+        data.birth_date,
+        data.commune.trim(),
+        data.email ? data.email.toLowerCase().trim() : null,
+        data.mobile.trim(),
+        personId
+      ]);
+
+      await client.query(`
+        UPDATE cases 
+        SET description = $1, medical_center = $2, agreement_type = $3, dental_diagnosis = $4, treatment_needed = $5, professional_name = $6, updated_at = NOW(), updated_by = $7
+        WHERE id = $8
+      `, [
+        data.description ? data.description.trim() : '',
+        data.medical_center ? data.medical_center.trim() : null,
+        data.agreement_type ? data.agreement_type.trim() : null,
+        data.dental_diagnosis ? data.dental_diagnosis.trim() : null,
+        data.treatment_needed ? data.treatment_needed.trim() : null,
+        data.professional_name ? data.professional_name.trim() : null,
+        session.id,
+        caseId
+      ]);
+
+      await client.query('COMMIT');
+      
+      revalidatePath('/dashboard');
+      revalidatePath('/dashboard/cases');
+      return { success: true };
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error updating case details:', error);
+    return { error: 'Error del servidor al actualizar los detalles del caso' };
+  }
+}
+

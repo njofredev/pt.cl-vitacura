@@ -40,32 +40,36 @@
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.08);
   --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border: rgba(0, 0, 0, 0.1);
   --glass-blur: 16px;
   --input-bg: rgba(255, 255, 255, 0.85);
+  --input-border: rgba(0, 0, 0, 0.14);
+  --input-border-hover: rgba(0, 0, 0, 0.28);
+  --select-option-bg: #ffffff;
+  --select-option-fg: #0f172a;
 }
 
 /* Explicit Dark Theme overrides */
 :root.dark {
-  --background-hsl: 224 71% 4%;
+  --background-hsl: 225 57% 5%;
   --foreground-hsl: 220 33% 98%;
   
-  --card-hsl: 224 71% 7%;
-  --card-border-hsl: 224 71% 12%;
+  --card-hsl: 224 56% 9%;
+  --card-border-hsl: 224 50% 15%;
   
   --primary-hsl: 217 91% 60%;
   --primary-hover-hsl: 217 91% 54%;
   --primary-foreground-hsl: 0 0% 100%;
   
-  --secondary-hsl: 224 71% 12%;
-  --secondary-hover-hsl: 224 71% 18%;
+  --secondary-hsl: 225 67% 4%;
+  --secondary-hover-hsl: 224 50% 12%;
   --secondary-foreground-hsl: 220 33% 98%;
 
   --accent-hsl: 172 66% 50%;
-  --accent-foreground-hsl: 224 71% 4%;
+  --accent-foreground-hsl: 225 57% 5%;
 
   --muted-hsl: 217 12% 70%;
-  --muted-background-hsl: 224 71% 10%;
+  --muted-background-hsl: 225 67% 4%;
 
   --success-hsl: 142 70% 45%;
   --warning-hsl: 48 96% 53%;
@@ -75,33 +79,37 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
-  --glass-bg: rgba(10, 12, 18, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --input-bg: rgba(255, 255, 255, 0.02);
+  --glass-bg: rgba(10, 17, 36, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --input-bg: rgba(3, 6, 15, 0.95);
+  --input-border: rgba(255, 255, 255, 0.18);
+  --input-border-hover: rgba(255, 255, 255, 0.32);
+  --select-option-bg: #0a1124;
+  --select-option-fg: #ffffff;
 }
 
 /* System-based Auto Dark Theme fallback */
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background-hsl: 224 71% 4%;
+    --background-hsl: 225 57% 5%;
     --foreground-hsl: 220 33% 98%;
     
-    --card-hsl: 224 71% 7%;
-    --card-border-hsl: 224 71% 12%;
+    --card-hsl: 224 56% 9%;
+    --card-border-hsl: 224 50% 15%;
     
     --primary-hsl: 217 91% 60%;
     --primary-hover-hsl: 217 91% 54%;
     --primary-foreground-hsl: 0 0% 100%;
     
-    --secondary-hsl: 224 71% 12%;
-    --secondary-hover-hsl: 224 71% 18%;
+    --secondary-hsl: 225 67% 4%;
+    --secondary-hover-hsl: 224 50% 12%;
     --secondary-foreground-hsl: 220 33% 98%;
 
     --accent-hsl: 172 66% 50%;
-    --accent-foreground-hsl: 224 71% 4%;
+    --accent-foreground-hsl: 225 57% 5%;
 
     --muted-hsl: 217 12% 70%;
-    --muted-background-hsl: 224 71% 10%;
+    --muted-background-hsl: 225 67% 4%;
 
     --success-hsl: 142 70% 45%;
     --warning-hsl: 48 96% 53%;
@@ -111,9 +119,13 @@
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
-    --glass-bg: rgba(10, 12, 18, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.07);
-    --input-bg: rgba(255, 255, 255, 0.02);
+    --glass-bg: rgba(10, 17, 36, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --input-bg: rgba(3, 6, 15, 0.95);
+    --input-border: rgba(255, 255, 255, 0.18);
+    --input-border-hover: rgba(255, 255, 255, 0.32);
+    --select-option-bg: #0a1124;
+    --select-option-fg: #ffffff;
   }
 }
 
@@ -189,6 +201,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Interactive elements */
+a {
+  text-decoration: none;
+}
+
 button, .btn {
   font-family: var(--font-sans);
   font-weight: 600;
@@ -196,11 +212,12 @@ button, .btn {
   align-items: center;
   justify-content: center;
   padding: 10px 18px;
-  border-radius: var(--radius-sm);
+  border-radius: 9999px;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   gap: 8px;
+  text-decoration: none !important;
 }
 
 button:active, .btn:active {
@@ -261,19 +278,23 @@ button:active, .btn:active {
 .form-input, .form-select, .form-textarea {
   font-family: var(--font-sans);
   padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
   color: hsl(var(--foreground-hsl));
   font-size: 0.95rem;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.form-input:hover, .form-select:hover, .form-textarea:hover {
+  border-color: var(--input-border-hover);
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   border-color: hsl(var(--primary-hsl));
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 /* Beautiful Custom Scrollbar */
@@ -396,7 +417,7 @@ button:active, .btn:active {
   flex-direction: column;
   justify-content: space-between;
   padding: 60px 48px;
-  background: linear-gradient(135deg, #022c22 0%, #0f172a 100%);
+  background: linear-gradient(135deg, #050915 0%, #0a1124 100%);
   position: relative;
   overflow: hidden;
 }
@@ -429,11 +450,110 @@ button:active, .btn:active {
 
 @media (min-width: 1024px) {
   .login-form-panel {
-    flex: 0 0 42%;
-    max-width: 520px;
+    flex: 0 0 56%;
+    max-width: 780px;
+    padding: 60px 64px;
   }
   .login-sidebar-panel {
     display: flex;
   }
 }
+
+/* Premium Custom Button - As requested by user */
+.premium-action-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 60px 0 32px;
+  height: 52px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(30, 58, 138, 0.3);
+  text-decoration: none;
+  overflow: visible;
+  outline: none;
+}
+
+.premium-action-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 25px rgba(37, 99, 235, 0.45);
+}
+
+.premium-action-btn:active {
+  transform: translateY(1px);
+}
+
+.premium-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.premium-action-btn .btn-badge {
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #10b981; /* Teal */
+  border: 3.5px solid hsl(var(--background-hsl)); /* adapts to theme background automatically */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-action-btn:hover .btn-badge {
+  background: #059669; /* Darker teal on hover */
+  transform: translateY(-50%) rotate(15deg);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5);
+}
+
+/* Premium Dropdown (Select) Listbox Improvements */
+.form-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 16px !important;
+  padding-right: 44px !important;
+  cursor: pointer !important;
+}
+
+/* Override background colors and padding for options globally */
+.form-select option {
+  background-color: var(--select-option-bg, #0a1124) !important;
+  color: var(--select-option-fg, #ffffff) !important;
+  padding: 14px !important;
+  font-family: var(--font-sans) !important;
+}
+
+/* Beautiful custom calendar picker indicator styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(5) hue-rotate(130deg) !important;
+  opacity: 0.8 !important;
+  cursor: pointer !important;
+  transition: opacity 0.2s !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1 !important;
+}
+
 

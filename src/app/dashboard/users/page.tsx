@@ -17,11 +17,12 @@ export default async function UsersPage() {
     redirect('/dashboard');
   }
 
-  // Fetch all administrative users from PostgreSQL
   let users: any[] = [];
   try {
     const res = await pool.query(`
-      SELECT id, name, email, role, active, created_at 
+      SELECT id, name, email, role, active, created_at,
+             professional_title, professional_position, professional_email,
+             professional_address, professional_website, professional_phone 
       FROM users 
       ORDER BY created_at DESC
     `);

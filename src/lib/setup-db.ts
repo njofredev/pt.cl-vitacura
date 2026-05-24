@@ -37,6 +37,13 @@ async function setup() {
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'internal', 'external')),
         active BOOLEAN DEFAULT TRUE,
+        password_plain VARCHAR(255),
+        professional_title VARCHAR(255),
+        professional_position VARCHAR(255),
+        professional_email VARCHAR(255),
+        professional_address VARCHAR(255),
+        professional_website VARCHAR(255),
+        professional_phone VARCHAR(255),
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );

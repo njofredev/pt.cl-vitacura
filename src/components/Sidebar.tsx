@@ -17,6 +17,9 @@ export default function Sidebar({ user }: SidebarProps) {
   // Theme Toggle State
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
+  // Search State
+  const [searchVal, setSearchVal] = useState('');
+
   // Dynamic Clock and greeting states
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
@@ -179,15 +182,10 @@ export default function Sidebar({ user }: SidebarProps) {
             <div style={{
               minWidth: '42px',
               height: '42px',
-              borderRadius: '50%',
-              backgroundColor: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '2px solid rgba(255, 255, 255, 0.2)',
-              boxShadow: '0 0 15px rgba(255, 255, 255, 0.1)',
               flexShrink: 0,
-              padding: '6px',
               boxSizing: 'border-box'
             }}>
               <img 
@@ -196,7 +194,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 style={{ 
                   width: '100%', 
                   height: '100%', 
-                  objectFit: 'contain' 
+                  objectFit: 'contain'
                 }} 
               />
             </div>
@@ -228,10 +226,18 @@ export default function Sidebar({ user }: SidebarProps) {
 
           {/* Simulated Search Bar */}
           {isOpen ? (
-            <div style={{
-              padding: '0 4px',
-              marginBottom: '2px'
-            }}>
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchVal.trim()) {
+                  window.location.href = `/dashboard/cases?search=${encodeURIComponent(searchVal.trim())}`;
+                }
+              }}
+              style={{
+                padding: '0 4px',
+                marginBottom: '2px'
+              }}
+            >
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -242,12 +248,25 @@ export default function Sidebar({ user }: SidebarProps) {
                 border: '1px solid var(--glass-border)',
                 fontSize: '0.82rem',
                 color: 'hsl(var(--foreground-hsl))',
-                opacity: 0.65,
-                cursor: 'text'
+                opacity: 0.85
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  <span>Buscar en la app...</span>
+                  <input 
+                    type="text" 
+                    placeholder="Buscar en la app..." 
+                    value={searchVal}
+                    onChange={(e) => setSearchVal(e.target.value)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#fff',
+                      fontSize: '0.82rem',
+                      width: '100%',
+                      padding: 0
+                    }}
+                  />
                 </div>
                 <span style={{
                   fontSize: '0.68rem',
@@ -259,24 +278,29 @@ export default function Sidebar({ user }: SidebarProps) {
                   border: '1px solid var(--glass-border)',
                   whiteSpace: 'nowrap'
                 }}>
-                  Alt + K
+                  Enter
                 </span>
               </div>
-            </div>
+            </form>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0' }}>
-              <div style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid var(--glass-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: 0.6,
-                cursor: 'pointer'
-              }}>
+              <div 
+                onClick={() => {
+                  window.location.href = '/dashboard/cases';
+                }}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid var(--glass-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: 0.6,
+                  cursor: 'pointer'
+                }}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </div>
             </div>
@@ -411,8 +435,8 @@ export default function Sidebar({ user }: SidebarProps) {
               overflow: 'hidden'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 600, opacity: 0.6 }}>
-                  {saludo}
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, opacity: 0.75, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {saludo} <span style={{ fontSize: '0.85rem' }}>{saludo === 'Buenos días' ? '☀️' : saludo === 'Buenas tardes' ? '🌤️' : '🌙'}</span>
                 </span>
                 <div style={{
                   color: '#10b981',

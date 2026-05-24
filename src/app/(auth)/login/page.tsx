@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { handleLogin, checkEmailExists } from '@/app/actions/authActions';
 import ShowcaseInteractive from '@/components/ShowcaseInteractive';
@@ -110,7 +110,11 @@ export default function LoginPage() {
       if (result && result.error) {
         setError(result.error);
       }
-    } catch (err) {
+    } catch (err: any) {
+      // Evitar capturar redirecciones internas de Next.js que causan mensajes de error falsos
+      if (err.message?.includes('NEXT_REDIRECT') || err.digest?.includes('NEXT_REDIRECT')) {
+        throw err;
+      }
       setError('Algo salió mal. Por favor intente nuevamente.');
     } finally {
       setLoading(false);
@@ -195,7 +199,7 @@ export default function LoginPage() {
           textAlign: 'center',
           gap: '16px',
           width: '100%',
-          maxWidth: '420px',
+          maxWidth: '460px',
           margin: '0 auto'
         }}>
           <div style={{
@@ -216,7 +220,7 @@ export default function LoginPage() {
             <h1 style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 800,
-              fontSize: '1.8rem',
+              fontSize: '1.45rem',
               letterSpacing: '-0.02em',
               margin: 0,
               color: 'hsl(var(--foreground-hsl))',
@@ -225,7 +229,7 @@ export default function LoginPage() {
               Policlínico Tabancura
             </h1>
             <p style={{
-              fontSize: '0.85rem',
+              fontSize: '0.75rem',
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
@@ -238,41 +242,56 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Bloque Central: Bienvenida y Formulario */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
+        {/* Título de Bienvenida (Fuera de la tarjeta, arriba) */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '8px', 
+          alignItems: 'center', 
+          textAlign: 'center',
           width: '100%',
-          maxWidth: '420px',
-          margin: '0 auto',
-          gap: '24px'
+          maxWidth: '460px',
+          margin: '24px auto 16px auto'
         }}>
-          {/* Título de Bienvenida */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center', textAlign: 'center' }}>
-            <h2 style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 800,
-              fontSize: '2.1rem',
-              letterSpacing: '-0.03em',
-              margin: 0,
-              color: 'hsl(var(--foreground-hsl))',
-              lineHeight: '1.2'
-            }}>
-              ¡Bienvenido! 👋
-            </h2>
-            <p style={{
-              fontSize: '0.95rem',
-              opacity: 0.7,
-              margin: 0,
-              lineHeight: '1.5',
-              fontWeight: 500,
-              textAlign: 'center'
-            }}>
-              Ingrese su correo institucional. Si coincide con una cuenta activa, el sistema solicitará su contraseña para ingresar.
-            </p>
-          </div>
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 800,
+            fontSize: '2.1rem',
+            letterSpacing: '-0.03em',
+            margin: 0,
+            color: 'hsl(var(--foreground-hsl))',
+            lineHeight: '1.2'
+          }}>
+            👋 ¡Bienvenid@!
+          </h2>
+          <p style={{
+            fontSize: '0.95rem',
+            opacity: 0.7,
+            margin: 0,
+            lineHeight: '1.5',
+            fontWeight: 500,
+            textAlign: 'center'
+          }}>
+            Ingrese su correo institucional para iniciar sesión.
+          </p>
+        </div>
 
+        {/* Bloque Central: Tarjeta de Formulario (Glassmorphic Container) */}
+        <div 
+          className="glass-card animate-fade-in"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            width: '100%',
+            maxWidth: '460px',
+            margin: '0 auto',
+            padding: '36px 32px',
+            borderRadius: '24px',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--shadow-lg)'
+          }}
+        >
           {/* Formulario */}
           <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
@@ -327,9 +346,8 @@ export default function LoginPage() {
 
             {!emailChecked ? (
               <>
-                {/* Email Input Step */}
                 <div className="form-group" style={{ gap: '8px' }}>
-                  <label className="form-label" htmlFor="email" style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'center', width: '100%' }}>
+                  <label className="form-label" htmlFor="email" style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'center', width: '100%', marginBottom: '12px' }}>
                     Correo Electrónico de funcionario
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -338,7 +356,7 @@ export default function LoginPage() {
                       type="email"
                       id="email"
                       name="email"
-                      placeholder="ejemplo@tabancura.cl"
+                      placeholder="ejemplo@vitacura.cl"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -347,10 +365,8 @@ export default function LoginPage() {
                       style={{
                         width: '100%',
                         paddingLeft: '44px',
-                        borderRadius: '10px',
-                        height: '48px',
-                        background: 'var(--input-bg)',
-                        borderColor: 'var(--glass-border)'
+                        borderRadius: '12px',
+                        height: '50px'
                       }}
                     />
                     <span style={{
@@ -374,47 +390,35 @@ export default function LoginPage() {
                 {/* Verify / Search Button */}
                 <button
                   type="submit"
-                  className="btn-accent"
+                  className="premium-action-btn"
                   style={{
                     marginTop: '10px',
-                    padding: '14px 18px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    borderRadius: '10px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 15px rgba(20, 184, 166, 0.25)'
+                    width: '100%'
                   }}
                   disabled={checking}
                 >
-                  {checking ? (
-                    <>
+                  {checking ? 'Buscando cuenta...' : 'Buscar cuenta'}
+                  <div className="btn-badge">
+                    {checking ? (
                       <div style={{
-                        width: '18px',
-                        height: '18px',
-                        border: '2px solid rgba(255, 255, 255, 0.2)',
-                        borderTop: '2px solid white',
+                        width: '16px',
+                        height: '16px',
+                        border: '2.5px solid rgba(255, 255, 255, 0.2)',
+                        borderTop: '2.5px solid white',
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite'
                       }} />
-                      Buscando cuenta...
-                    </>
-                  ) : (
-                    <>
+                    ) : (
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                      Buscar cuenta
-                    </>
-                  )}
+                    )}
+                  </div>
                 </button>
               </>
             ) : (
               <>
                 {/* Email Read-only Display with Change Link */}
                 <div className="form-group" style={{ gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', width: '100%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', width: '100%', marginBottom: '12px' }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8, textAlign: 'center' }}>
                       Correo Electrónico de funcionario
                     </span>
@@ -437,9 +441,9 @@ export default function LoginPage() {
                   </div>
                   <div style={{
                     padding: '12px 16px',
-                    borderRadius: '10px',
+                    borderRadius: '12px',
                     background: 'var(--input-bg)',
-                    border: '1px solid var(--glass-border)',
+                    border: '1.5px solid var(--input-border)',
                     fontSize: '0.95rem',
                     fontWeight: 600,
                     color: 'hsl(var(--foreground-hsl))',
@@ -479,10 +483,8 @@ export default function LoginPage() {
                         width: '100%',
                         paddingLeft: '44px',
                         paddingRight: '44px',
-                        borderRadius: '10px',
-                        height: '48px',
-                        background: 'var(--input-bg)',
-                        borderColor: 'var(--glass-border)'
+                        borderRadius: '12px',
+                        height: '50px'
                       }}
                     />
                     <span style={{
@@ -542,37 +544,28 @@ export default function LoginPage() {
                 {/* Final Submit Button */}
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="premium-action-btn"
                   style={{
                     marginTop: '10px',
-                    padding: '14px 18px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    borderRadius: '10px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+                    width: '100%'
                   }}
                   disabled={loading}
                 >
-                  {loading ? (
-                    <>
+                  {loading ? 'Iniciando sesión...' : 'Ingresar al Portal'}
+                  <div className="btn-badge">
+                    {loading ? (
                       <div style={{
-                        width: '18px',
-                        height: '18px',
-                        border: '2px solid rgba(255, 255, 255, 0.2)',
-                        borderTop: '2px solid white',
+                        width: '16px',
+                        height: '16px',
+                        border: '2.5px solid rgba(255, 255, 255, 0.2)',
+                        borderTop: '2.5px solid white',
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite'
                       }} />
-                      Iniciando sesión...
-                    </>
-                  ) : (
-                    'Ingresar al Portal'
-                  )}
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
+                    )}
+                  </div>
                 </button>
               </>
             )}
@@ -633,8 +626,8 @@ export default function LoginPage() {
           paddingTop: '24px',
           fontWeight: 500,
           width: '100%',
-          maxWidth: '420px',
-          margin: '0 auto'
+          maxWidth: '460px',
+          margin: '24px auto 0 auto'
         }}>
           Acceso privado restringido a personal autorizado.
         </div>
@@ -642,7 +635,6 @@ export default function LoginPage() {
 
       {/* Panel Derecho: Gradiente y Cita Testimonial */}
       <div className="login-sidebar-panel animate-fade-in" style={{ zIndex: 2 }}>
-
 
         {/* Componente Interactivo de Demostración Clínica */}
         <ShowcaseInteractive />
@@ -658,10 +650,16 @@ export default function LoginPage() {
           }}>
             ¿Conoces nuestras alianzas y previsiones?
           </span>
-          <div className="marquee-container">
+          <div
+            className="marquee-container"
+          >
             <div className="marquee-track">
               {partnerLogos.map((logo, idx) => (
-                <div key={`logo-1-${idx}`} className="marquee-item" title={logo.name}>
+                <div
+                  key={`logo-1-${idx}`}
+                  className="marquee-item"
+                  title={logo.name}
+                >
                   <img
                     src={logo.path}
                     alt={logo.name}
@@ -672,7 +670,11 @@ export default function LoginPage() {
               ))}
               {/* Duplicar para efecto infinito continuo */}
               {partnerLogos.map((logo, idx) => (
-                <div key={`logo-2-${idx}`} className="marquee-item" title={logo.name}>
+                <div
+                  key={`logo-2-${idx}`}
+                  className="marquee-item"
+                  title={logo.name}
+                >
                   <img
                     src={logo.path}
                     alt={logo.name}
@@ -691,15 +693,6 @@ export default function LoginPage() {
           padding-left: 0 !important; /* Anula el padding del sidebar en la pantalla de login */
         }
 
-        @keyframes marquee {
-          0% {
-            transform: translate3d(0, 0, 0);
-          }
-          100% {
-            transform: translate3d(-50%, 0, 0);
-          }
-        }
-
         .marquee-container {
           overflow: hidden;
           user-select: none;
@@ -715,16 +708,21 @@ export default function LoginPage() {
           align-items: center;
           gap: 48px;
           width: max-content;
-          animation: marquee 30s linear infinite;
+          animation: marquee-scroll 55s linear infinite;
         }
 
-        .marquee-container:hover .marquee-track {
-          animation-play-state: paused;
+        @keyframes marquee-scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
         }
 
         .marquee-item {
           flex-shrink: 0;
-          height: 48px;
+          height: 58px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -732,18 +730,17 @@ export default function LoginPage() {
 
         .marquee-img {
           max-height: 100%;
-          max-width: 150px;
+          max-width: 175px;
           width: auto;
           object-fit: contain;
-          opacity: 0.55;
+          opacity: 0.45;
           filter: grayscale(100%) brightness(1.8) contrast(0.8);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .marquee-img:hover {
-          opacity: 1;
-          filter: none;
-          transform: scale(1.08);
+          opacity: 0.85;
+          filter: grayscale(0%) brightness(1.2);
         }
       `}</style>
     </main>
