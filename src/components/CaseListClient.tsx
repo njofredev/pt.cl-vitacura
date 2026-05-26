@@ -265,22 +265,23 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Page Title with Action Button on the same row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
-        <div
-          className="glass-panel"
-          style={{
-            padding: '24px 30px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '20px',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
-            borderLeft: '4px solid #10b981',
-            borderRadius: 'var(--radius-md)',
-            flex: 1,
-            minWidth: '300px'
-          }}
-        >
+      {/* Page Title with Action Button on the same row inside the container */}
+      <div
+        className="glass-panel"
+        style={{
+          padding: '24px 30px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
+          borderLeft: '4px solid #10b981',
+          borderRadius: 'var(--radius-md)',
+          flexWrap: 'wrap',
+          gap: '20px',
+          width: '100%'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{
             width: '56px',
             height: '56px',
@@ -309,18 +310,11 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
         </div>
         
         {user.role !== 'internal' && (
-          <Link 
-            href="/dashboard/register" 
-            className="btn btn-primary" 
-            style={{ 
-              boxShadow: '0 4px 15px rgba(59, 130, 246, 0.25)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <Link href="/dashboard/register" className="premium-action-btn">
             Nueva Derivación
+            <div className="btn-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
+            </div>
           </Link>
         )}
       </div>
@@ -605,9 +599,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Celular Contacto</span>
                       <strong style={{ fontSize: '0.95rem' }}>{selectedCase.mobile}</strong>
                     </div>
-                    <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                    <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Correo Electrónico</span>
-                      <strong style={{ fontSize: '0.95rem' }}>{selectedCase.email || '-'}</strong>
+                      <strong style={{ fontSize: '0.95rem', wordBreak: 'break-all', display: 'block' }}>{selectedCase.email || '-'}</strong>
                     </div>
                   </div>
                 </div>
@@ -641,11 +635,11 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         </div>
                         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
                           <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Diagnóstico Odontológico:</span>
-                          <span style={{ fontStyle: 'italic', opacity: 0.95 }}>"{selectedCase.dental_diagnosis}"</span>
+                          <span style={{ fontStyle: 'italic', opacity: 0.95, whiteSpace: 'pre-wrap' }}>"{selectedCase.dental_diagnosis}"</span>
                         </div>
                         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
                           <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Prestación Requerida:</span>
-                          <span>{selectedCase.treatment_needed}</span>
+                          <span style={{ whiteSpace: 'pre-wrap' }}>{selectedCase.treatment_needed}</span>
                         </div>
                         {selectedCase.description && (
                           <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>

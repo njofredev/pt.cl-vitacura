@@ -5,6 +5,8 @@ import { formatRUT, validateRUT, cleanRUT } from '@/lib/utils';
 import { registerPersonAndCaseAction } from '@/app/actions/caseActions';
 import { getCurrentUserAction } from '@/app/actions/userActions';
 import { useRouter } from 'next/navigation';
+import Odontogram from '@/components/Odontogram';
+import Modal from '@/components/ui/Modal';
 
 export default function RegisterCasePage() {
   const router = useRouter();
@@ -13,6 +15,11 @@ export default function RegisterCasePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Pre-submission review summary states
+  const [showSummary, setShowSummary] = useState(false);
+  const [formDataObj, setFormDataObj] = useState<Record<string, string>>({});
+  const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
 
   // States for professional defaults
   const [profName, setProfName] = useState('');
@@ -24,6 +31,13 @@ export default function RegisterCasePage() {
 
   // State and mask for Birth Date text input optimization
   const [birthDateInput, setBirthDateInput] = useState('');
+  const [pickerDate, setPickerDate] = useState('');
+  const [odontogramType, setOdontogramType] = useState<'adult' | 'child'>('adult');
+  const [odontogramData, setOdontogramData] = useState({
+    dentalDiagnosis: '',
+    treatmentNeeded: '',
+    description: ''
+  });
 
   // States for dynamic "Other" selects
   const [selectedNationality, setSelectedNationality] = useState('Chilena');
@@ -39,20 +53,38 @@ export default function RegisterCasePage() {
   const [customAgreementType, setCustomAgreementType] = useState('');
 
   function handleBirthDateChange(e: React.ChangeEvent<HTMLInputElement>) {
-    let value = e.target.value.replace(/\D/g, ''); // keep digits only
-    if (value.length > 8) value = value.slice(0, 8);
-
-    let formatted = '';
-    if (value.length > 0) {
-      formatted += value.slice(0, 2);
+    const val = e.target.value; // YYYY-MM-DD
+    setPickerDate(val);
+    
+    if (!val) {
+      setBirthDateInput('');
+      return;
     }
-    if (value.length > 2) {
-      formatted += '/' + value.slice(2, 4);
+    
+    const parts = val.split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parts[1];
+      const day = parts[2];
+      
+      // Format as DD/MM/AAAA for existing validation
+      setBirthDateInput(`${day}/${month}/${year}`);
+      
+      // Calculate age to switch odontogram automatically
+      const today = new Date();
+      const birth = new Date(val);
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      
+      if (age < 12) {
+        setOdontogramType('child');
+      } else {
+        setOdontogramType('adult');
+      }
     }
-    if (value.length > 4) {
-      formatted += '/' + value.slice(4, 8);
-    }
-    setBirthDateInput(formatted);
   }
 
   useEffect(() => {
@@ -141,8 +173,38 @@ export default function RegisterCasePage() {
       return;
     }
 
-    setLoading(true);
+    // Intercept submission to show confirmation summary modal
     const formData = new FormData(formElement);
+    const data: Record<string, string> = {
+      rut: formatRUT(rut),
+      firstNames: formData.get('first_names') as string || '',
+      lastNames: formData.get('last_names') as string || '',
+      nationality: selectedNationality === 'Otra' ? customNationality : selectedNationality,
+      birthDate: birthDateInput,
+      commune: selectedCommune === 'Otra Comuna' ? customCommune : selectedCommune,
+      email: formData.get('email') as string || 'No especificado',
+      mobile: formData.get('mobile') as string || '',
+      medicalCenter: selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter,
+      agreementType: selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType,
+      dentalDiagnosis: odontogramData.dentalDiagnosis || 'Sin patologías registradas en odontograma.',
+      treatmentNeeded: odontogramData.treatmentNeeded || 'Sin prestaciones asignadas.',
+      description: odontogramData.description || 'Derivación ingresada mediante odontograma interactivo.'
+    };
+
+    setFormDataObj(data);
+    setFormRef(formElement);
+    setShowSummary(true);
+  }
+
+  async function confirmRegistration() {
+    if (!formRef) return;
+    setShowSummary(false);
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const cleaned = cleanRUT(rut);
+    const formData = new FormData(formRef);
     formData.set('rut', cleaned); // Send cleaned RUT to server
 
     try {
@@ -150,8 +212,10 @@ export default function RegisterCasePage() {
 
       if (result.success) {
         setSuccess('¡Caso social e inscripción registrados exitosamente! Redireccionando...');
-        formElement.reset();
+        formRef.reset();
         setRut('');
+        setBirthDateInput('');
+        setPickerDate('');
 
         setTimeout(() => {
           router.push('/dashboard/cases');
@@ -367,19 +431,17 @@ export default function RegisterCasePage() {
                 />
               </div>
 
-              {/* Birth Date */}
+              {/* Birth Date Picker */}
               <div className="form-group">
-                <label className="form-label" htmlFor="birth_date_input">Fecha de Nacimiento *</label>
+                <label className="form-label" htmlFor="birth_date_picker">Fecha de Nacimiento *</label>
                 <input
                   className="form-input"
-                  type="text"
-                  id="birth_date_input"
-                  value={birthDateInput}
+                  type="date"
+                  id="birth_date_picker"
+                  value={pickerDate}
                   onChange={handleBirthDateChange}
-                  placeholder="DD/MM/AAAA"
                   required
                   disabled={loading}
-                  maxLength={10}
                 />
                 <input type="hidden" name="birth_date" value={(() => {
                   const parts = birthDateInput.split('/');
@@ -576,50 +638,21 @@ export default function RegisterCasePage() {
               </div>
             </div>
 
-            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="dental_diagnosis">
-                  Diagnóstico Odontológico *
-                </label>
-                <textarea
-                  className="form-textarea"
-                  id="dental_diagnosis"
-                  name="dental_diagnosis"
-                  required
-                  rows={2}
-                  placeholder="Ej: Desdentado parcial superior e inferior..."
-                  disabled={loading}
-                />
+            {/* Interactive Odontogram Integration */}
+            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span className="form-label">Detalle Odontológico Clínico *</span>
+                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                  Diagnostique piezas y caras dentales, y asigne las prestaciones necesarias usando el odontograma interactivo.
+                </span>
               </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="treatment_needed">
-                  Por favor, realizar (Prestación a realizar) *
-                </label>
-                <textarea
-                  className="form-textarea"
-                  id="treatment_needed"
-                  name="treatment_needed"
-                  required
-                  rows={2}
-                  placeholder="Ej: Prótesis parcial superior e inferior..."
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="form-group" style={{ marginTop: '20px' }}>
-              <label className="form-label" htmlFor="description">
-                Observaciones Generales de la Derivación (Opcional)
-              </label>
-              <textarea
-                className="form-textarea"
-                id="description"
-                name="description"
-                rows={3}
-                placeholder="Detalles adicionales relevantes sobre el paciente o el caso..."
-                disabled={loading}
-              />
+              
+              <Odontogram initialType={odontogramType} onChange={setOdontogramData} />
+              
+              {/* Hidden Fields for backwards compatibility with DB schema and Case Actions validation */}
+              <input type="hidden" name="dental_diagnosis" value={odontogramData.dentalDiagnosis || 'Sin patologías registradas en odontograma.'} />
+              <input type="hidden" name="treatment_needed" value={odontogramData.treatmentNeeded || 'Sin tratamientos asignados.'} />
+              <input type="hidden" name="description" value={odontogramData.description || 'Derivación ingresada mediante odontograma interactivo.'} />
             </div>
 
             {/* Section 3: Professional Details */}
@@ -761,6 +794,171 @@ export default function RegisterCasePage() {
 
         </form>
       </div>
+
+      {/* Confirmation Summary Modal */}
+      <Modal
+        isOpen={showSummary}
+        onClose={() => setShowSummary(false)}
+        title="🔍 Revisión y Confirmación de Inscripción"
+        maxWidth="750px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Banner */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            padding: '14px 18px',
+            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+            border: '1px solid rgba(59, 130, 246, 0.25)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'hsl(var(--primary-hsl))'
+          }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.86rem', lineHeight: '1.4' }}>
+              <strong style={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.76rem' }}>Revisión de Ficha Clínica y Social</strong>
+              <span style={{ opacity: 0.9 }}>
+                Por favor, verifique detalladamente los datos a continuación. Si la información es correcta, haga clic en **"Confirmar y Enviar Registro"** para guardar la inscripción de forma definitiva.
+              </span>
+            </div>
+          </div>
+
+          {/* Grid de Datos del Paciente */}
+          <div>
+            <h4 style={{ fontSize: '0.86rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', color: 'hsla(var(--foreground-hsl) / 0.8)' }}>
+              👥 Datos del Beneficiario
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Nombre del Paciente</span>
+                <strong style={{ fontSize: '0.92rem' }}>{formDataObj.firstNames} {formDataObj.lastNames}</strong>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>RUT</span>
+                <strong style={{ fontSize: '0.92rem' }}>{formDataObj.rut}</strong>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Fecha de Nacimiento</span>
+                <strong style={{ fontSize: '0.92rem' }}>{formDataObj.birthDate}</strong>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Nacionalidad</span>
+                <strong style={{ fontSize: '0.92rem' }}>{formDataObj.nationality}</strong>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Comuna de Residencia</span>
+                <strong style={{ fontSize: '0.92rem' }}>{formDataObj.commune}</strong>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Contacto Celular</span>
+                <strong style={{ fontSize: '0.92rem' }}>{formDataObj.mobile}</strong>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', gridColumn: '1 / -1' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Correo Electrónico</span>
+                <strong style={{ fontSize: '0.92rem', wordBreak: 'break-all', display: 'block' }}>{formDataObj.email}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Convenio y Origen */}
+          <div>
+            <h4 style={{ fontSize: '0.86rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', color: 'hsla(var(--foreground-hsl) / 0.8)' }}>
+              🏥 Información del Convenio y Origen
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Centro Médico de Origen</span>
+                <strong style={{ fontSize: '0.92rem' }}>{formDataObj.medicalCenter}</strong>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Tipo de Convenio Solicitado</span>
+                <strong style={{ fontSize: '0.92rem', color: 'hsl(var(--accent-hsl))' }}>{formDataObj.agreementType}</strong>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', gridColumn: '1 / -1' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Profesional Derivador</span>
+                <strong style={{ fontSize: '0.92rem' }}>{profName}</strong>
+                <span style={{ display: 'block', fontSize: '0.75rem', opacity: 0.7, marginTop: '2px' }}>{profTitle} • {profPosition} • {profEmail}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Diagnóstico Odontológico */}
+          <div>
+            <h4 style={{ fontSize: '0.86rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', color: 'hsla(var(--foreground-hsl) / 0.8)' }}>
+              🦷 Detalle Diagnóstico Odontológico (Odontograma)
+            </h4>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              padding: '16px',
+              background: 'rgba(255, 255, 255, 0.01)',
+              border: '1px solid var(--glass-border)',
+              borderRadius: 'var(--radius-md)'
+            }}>
+              <div>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Diagnósticos Registrados</span>
+                <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', fontStyle: 'italic', opacity: 0.9, lineHeight: '1.4' }}>
+                  {formDataObj.dentalDiagnosis}
+                </p>
+              </div>
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', paddingTop: '10px' }}>
+                <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Prestaciones Requeridas</span>
+                <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4' }}>
+                  {formDataObj.treatmentNeeded}
+                </p>
+              </div>
+              {formDataObj.description && formDataObj.description !== 'Derivación ingresada mediante odontograma interactivo.' && (
+                <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', paddingTop: '10px' }}>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Observaciones Generales de la Derivación</span>
+                  <p style={{ margin: 0, fontSize: '0.88rem', opacity: 0.8, lineHeight: '1.4' }}>
+                    {formDataObj.description}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Modal Footer Buttons */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px',
+            borderTop: '1px solid var(--glass-border)',
+            paddingTop: '20px',
+            marginTop: '10px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setShowSummary(false)}
+              className="btn-secondary"
+              style={{ padding: '10px 20px', borderRadius: '8px' }}
+            >
+              Volver a Editar
+            </button>
+            <button
+              type="button"
+              onClick={confirmRegistration}
+              className="btn-primary"
+              style={{
+                padding: '10px 24px',
+                borderRadius: '8px',
+                fontWeight: 750,
+                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.25)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Confirmar y Enviar Registro
+            </button>
+          </div>
+
+        </div>
+      </Modal>
+
     </div>
   );
 }

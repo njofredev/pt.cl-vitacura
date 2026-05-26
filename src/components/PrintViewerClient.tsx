@@ -31,7 +31,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
   const [showLogoHeader, setShowLogoHeader] = useState(true);
   const [showSignature, setShowSignature] = useState(true);
   const [showWatermark, setShowWatermark] = useState(false);
-  const [watermarkText, setWatermarkText] = useState('CONVENIO VITACURA');
+  const [watermarkText, setWatermarkText] = useState('DERIVACIÓN DIGITAL');
   const [zoomPercent, setZoomPercent] = useState(100);
 
   // Notification Toast States
@@ -161,32 +161,23 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
             Imprimir / Guardar PDF
           </button>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <button 
-              onClick={handleCopyLink} 
-              className="btn-secondary"
-              style={{ padding: '10px', height: '40px', borderRadius: '10px', fontSize: '0.82rem', fontWeight: 600, display: 'flex', gap: '6px', justifyContent: 'center' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-              Copiar Enlace
-            </button>
-            <button 
-              onClick={handleSendEmail} 
-              className="btn-secondary"
-              style={{ padding: '10px', height: '40px', borderRadius: '10px', fontSize: '0.82rem', fontWeight: 600, display: 'flex', gap: '6px', justifyContent: 'center' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-              Enviar Digital
-            </button>
-          </div>
-
           <button 
-            onClick={handleExportJSON} 
+            onClick={handleSendEmail} 
             className="btn-secondary"
-            style={{ width: '100%', height: '40px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', gap: '6px', justifyContent: 'center', borderColor: 'var(--glass-border)', background: 'rgba(255, 255, 255, 0.02)' }}
+            style={{ 
+              width: '100%', 
+              height: '44px', 
+              borderRadius: '12px', 
+              fontSize: '0.9rem', 
+              fontWeight: 700, 
+              display: 'flex', 
+              gap: '8px', 
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Exportar Ficha (JSON)
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Enviar Comprobante Digital
           </button>
         </div>
 
@@ -207,7 +198,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
                 width: '100%',
                 height: '6px',
                 borderRadius: '3px',
-                background: 'rgba(255, 255, 255, 0.1)',
+                background: 'var(--glass-border)',
                 outline: 'none',
                 cursor: 'pointer',
                 accentColor: 'hsl(var(--accent-hsl))'
@@ -221,40 +212,11 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Toggle 1: Municipal Logo Membrete */}
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'hsl(var(--foreground-hsl))' }}>Membrete de Vitacura</span>
-                <span style={{ fontSize: '0.72rem', opacity: 0.5 }}>Ocultar si usas papel preimpreso</span>
-              </div>
-              <input 
-                type="checkbox" 
-                checked={showLogoHeader} 
-                onChange={(e) => setShowLogoHeader(e.target.checked)}
-                className="ios-switch"
-                style={{ cursor: 'pointer', accentColor: 'hsl(var(--accent-hsl))', width: '18px', height: '18px' }}
-              />
-            </label>
-
-            {/* Toggle 2: Signatures */}
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'hsl(var(--foreground-hsl))' }}>Firma Profesional</span>
-                <span style={{ fontSize: '0.72rem', opacity: 0.5 }}>Muestra firma manuscrita y cargo</span>
-              </div>
-              <input 
-                type="checkbox" 
-                checked={showSignature} 
-                onChange={(e) => setShowSignature(e.target.checked)}
-                style={{ cursor: 'pointer', accentColor: 'hsl(var(--accent-hsl))', width: '18px', height: '18px' }}
-              />
-            </label>
-
-            {/* Toggle 3: Watermark */}
+            {/* Toggle: Watermark only */}
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'hsl(var(--foreground-hsl))' }}>Marca de Agua</span>
-                <span style={{ fontSize: '0.72rem', opacity: 0.5 }}>Proyectar un sello en el fondo</span>
+                <span style={{ fontSize: '0.72rem', opacity: 0.5 }}>Habilitar marca "DERIVACIÓN DIGITAL" en fondo</span>
               </div>
               <input 
                 type="checkbox" 
@@ -263,29 +225,6 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
                 style={{ cursor: 'pointer', accentColor: 'hsl(var(--accent-hsl))', width: '18px', height: '18px' }}
               />
             </label>
-
-            {/* Watermark custom text input */}
-            {showWatermark && (
-              <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, opacity: 0.7 }}>Sello de Marca de Agua:</span>
-                <input 
-                  type="text" 
-                  value={watermarkText} 
-                  onChange={(e) => setWatermarkText(e.target.value.toUpperCase())}
-                  placeholder="CONVENIO VITACURA"
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--glass-border)',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    color: 'hsl(var(--foreground-hsl))',
-                    fontSize: '0.82rem',
-                    outline: 'none',
-                    fontWeight: 600
-                  }}
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -379,14 +318,14 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
               <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#1e293b' }}>
                 Diagnóstico Odontológico:
               </p>
-              <p style={{ margin: 0, fontStyle: 'italic', color: '#334155' }}>
+              <p style={{ margin: 0, fontStyle: 'italic', color: '#334155', whiteSpace: 'pre-wrap' }}>
                 "{caseData.dental_diagnosis || 'No especificado en el registro.'}"
               </p>
             </div>
 
-            <p style={{ marginBottom: '40px', fontWeight: 700, color: '#0f172a' }}>
-              Procedimiento Solicitado: {caseData.treatment_needed || 'Evaluación y tratamiento según diagnóstico.'}
-            </p>
+            <div style={{ marginBottom: '40px', fontWeight: 700, color: '#0f172a' }}>
+              Procedimiento Solicitado: <span style={{ whiteSpace: 'pre-wrap', fontWeight: 'normal', display: 'inline-block', verticalAlign: 'top' }}>{caseData.treatment_needed || 'Evaluación y tratamiento según diagnóstico.'}</span>
+            </div>
           </div>
 
           {/* Signature and Professional stamps */}
@@ -449,7 +388,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
           display: flex;
           height: calc(100vh - 60px);
           width: 100%;
-          background-color: #0b0f19;
+          background-color: hsl(var(--background-hsl));
           position: relative;
           overflow: hidden;
           border-radius: var(--radius-lg);
@@ -459,7 +398,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
         .control-sidebar {
           width: 350px;
           height: 100%;
-          background: rgba(15, 23, 42, 0.6);
+          background: var(--glass-bg);
           border-right: 1px solid var(--glass-border);
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
@@ -468,6 +407,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
           flex-direction: column;
           overflow-y: auto;
           flex-shrink: 0;
+          color: hsl(var(--foreground-hsl));
         }
         
         .preview-workspace {
@@ -478,7 +418,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
           align-items: flex-start;
           padding: 40px 24px;
           overflow-y: auto;
-          background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+          background: radial-gradient(circle at center, var(--input-bg) 0%, hsl(var(--background-hsl)) 100%);
         }
         
         .a4-document-preview {
@@ -486,7 +426,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
           width: 210mm;
           min-height: 297mm;
           padding: 25mm 20mm;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
           box-sizing: border-box;
           position: relative;
           color: #000;

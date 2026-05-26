@@ -162,23 +162,23 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Top Title Bar */}
-      {/* Top Title Bar with Glowing Lucide Icon Container */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-        <div
-          className="glass-panel"
-          style={{
-            padding: '24px 30px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '20px',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
-            borderLeft: '4px solid #10b981',
-            borderRadius: 'var(--radius-md)',
-            flex: 1,
-            minWidth: '300px'
-          }}
-        >
+      {/* Top Title Bar with Glowing Lucide Icon Container and Button inside */}
+      <div
+        className="glass-panel"
+        style={{
+          padding: '24px 30px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
+          borderLeft: '4px solid #10b981',
+          borderRadius: 'var(--radius-md)',
+          flexWrap: 'wrap',
+          gap: '20px',
+          width: '100%'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{
             width: '56px',
             height: '56px',
@@ -203,9 +203,11 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             </p>
           </div>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn btn-primary" style={{ boxShadow: '0 4px 15px rgba(59, 130, 246, 0.25)' }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        <button onClick={() => setIsModalOpen(true)} className="premium-action-btn">
           Nuevo Funcionario
+          <div className="btn-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </div>
         </button>
       </div>
 

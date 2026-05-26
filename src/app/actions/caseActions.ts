@@ -5,6 +5,7 @@ import pool from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { validateRUT, cleanRUT } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
+import { sendAutomaticReferralEmail } from '@/lib/mail';
 
 export async function registerPersonAndCaseAction(formData: FormData) {
   const session = await getSession();
@@ -124,6 +125,20 @@ export async function registerPersonAndCaseAction(formData: FormData) {
       ]);
 
       await client.query('COMMIT');
+      
+      // Dispatch automatic SMTP email notification asynchronously (non-blocking)
+      sendAutomaticReferralEmail({
+        rut: cleanedRUT,
+        firstNames: firstNames.trim(),
+        lastNames: lastNames.trim(),
+        medicalCenter: medicalCenter?.trim() || 'CESFAM Vitacura',
+        agreementType: agreementType?.trim() || 'Atención Dental Básica',
+        dentalDiagnosis: dentalDiagnosis?.trim() || 'Sin patologías especificadas.',
+        treatmentNeeded: treatmentNeeded?.trim() || 'No especificada.',
+        professionalName: professionalName?.trim() || session.name || 'Profesional Derivador'
+      }).catch(err => {
+        console.error('Error al iniciar el envío automático de correo:', err);
+      });
       
       revalidatePath('/dashboard');
       revalidatePath('/dashboard/cases');

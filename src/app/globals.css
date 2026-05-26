@@ -556,4 +556,158 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1 !important;
 }
 
+/* Premium Odontogram Option Buttons Styles */
+.odont-option-btn {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: hsla(var(--foreground-hsl) / 0.02);
+  color: hsla(var(--foreground-hsl) / 0.7);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  user-select: none;
+  text-decoration: none !important;
+}
+
+.odont-option-btn:hover {
+  transform: translateY(-1.5px);
+  background: hsla(var(--foreground-hsl) / 0.05);
+  color: hsla(var(--foreground-hsl) / 0.9);
+  border-color: hsla(var(--foreground-hsl) / 0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.odont-option-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Specific Condition States */
+.odont-option-btn.btn-ausente.active {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.16) 0%, rgba(239, 68, 68, 0.06) 100%) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-ausente:hover:not(.active) {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.03) !important;
+}
+
+.odont-option-btn.btn-implante.active {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.06) 100%) !important;
+  color: #f59e0b !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-implante:hover:not(.active) {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.03) !important;
+}
+
+.odont-option-btn.btn-corona.active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.16) 0%, rgba(168, 85, 247, 0.06) 100%) !important;
+  color: #a855f7 !important;
+  border-color: rgba(168, 85, 247, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-corona:hover:not(.active) {
+  border-color: rgba(168, 85, 247, 0.4) !important;
+  color: #a855f7 !important;
+  background: rgba(168, 85, 247, 0.03) !important;
+}
+
+.odont-option-btn.btn-limpiar {
+  border-color: rgba(239, 68, 68, 0.15) !important;
+  background: hsla(var(--foreground-hsl) / 0.01) !important;
+  color: #ef4444 !important;
+}
+.odont-option-btn.btn-limpiar:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08) !important;
+}
+
+/* Face Buttons States */
+.odont-face-btn {
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: hsla(var(--foreground-hsl) / 0.02);
+  color: hsla(var(--foreground-hsl) / 0.65);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none !important;
+}
+.odont-face-btn:hover:not(.active) {
+  transform: translateY(-1px);
+  background: hsla(var(--foreground-hsl) / 0.05);
+  color: hsla(var(--foreground-hsl) / 0.85);
+  border-color: hsla(var(--foreground-hsl) / 0.15);
+}
+.odont-face-btn.active {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.16) 0%, rgba(20, 184, 166, 0.06) 100%) !important;
+  color: #14b8a6 !important;
+  border-color: rgba(20, 184, 166, 0.45) !important;
+  box-shadow: 0 4px 10px rgba(20, 184, 166, 0.1) !important;
+  font-weight: 700 !important;
+}
+.odont-face-btn:active {
+  transform: scale(0.97);
+}
+
+/* Interactive Odontogram Mouseover / Hover Pre-selection Styles */
+.odont-tooth-svg {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.odont-tooth-svg:hover {
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.65)) drop-shadow(0 0 2px rgba(20, 184, 166, 0.35)) !important;
+}
+.odont-tooth-svg:hover path {
+  stroke: hsl(var(--primary-hsl)) !important;
+  stroke-width: 2.2px !important;
+}
+
+/* Face Selector Sector Mouseover Pre-selection */
+.odont-face-sector {
+  transition: all 0.2s ease !important;
+  cursor: pointer;
+}
+.odont-face-sector:hover {
+  fill: rgba(20, 184, 166, 0.45) !important;
+  stroke: #14b8a6 !important;
+  stroke-width: 1.2px !important;
+}
+
+/* Circle Selector hover */
+.odont-circle-svg {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.odont-circle-svg:hover {
+  transform: scale(1.1) !important;
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.5)) !important;
+}
+.odont-circle-svg:hover circle[cx="20"][cy="20"][r="21"] {
+  stroke: hsl(var(--primary-hsl)) !important;
+  stroke-width: 2px !important;
+}
+
+
+
 
