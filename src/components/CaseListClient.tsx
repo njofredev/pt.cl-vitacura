@@ -6,6 +6,8 @@ import { formatRUT, formatDate, formatDateTime } from '@/lib/utils';
 import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction } from '@/app/actions/caseActions';
 import { UserSession } from '@/lib/auth';
 import Link from 'next/link';
+import CustomSelect from '@/components/ui/CustomSelect';
+import CustomDatePicker from '@/components/ui/CustomDatePicker';
 
 interface CaseRecord {
   id: string;
@@ -346,18 +348,19 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.7, textTransform: 'uppercase' }}>Estado:</span>
-          <select 
-            className="form-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{ backgroundColor: 'hsl(var(--card-hsl))', minWidth: '150px' }}
-          >
-            <option value="todos">Todos los Estados</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="en_revision">En Revisión</option>
-            <option value="aprobado">Aprobados</option>
-            <option value="rechazado">Rechazados</option>
-          </select>
+          <div style={{ minWidth: '180px' }}>
+            <CustomSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: 'todos', label: 'Todos los Estados' },
+                { value: 'pendiente', label: 'Pendientes' },
+                { value: 'en_revision', label: 'En Revisión' },
+                { value: 'aprobado', label: 'Aprobados' },
+                { value: 'rechazado', label: 'Rechazados' }
+              ]}
+            />
+          </div>
         </div>
       </div>
 
@@ -506,7 +509,11 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Fecha de Nacimiento</label>
-                      <input type="date" className="form-input" value={editBirthDate} onChange={e => setEditBirthDate(e.target.value)} required style={{ width: '100%' }} />
+                      <CustomDatePicker
+                        value={editBirthDate}
+                        onChange={setEditBirthDate}
+                        required
+                      />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Comuna Residencia</label>
@@ -706,22 +713,20 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                      </div>
                    )}
  
-                   <div className="form-group">
-                     <label className="form-label" htmlFor="eval_status" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Asignar Estado del Caso</label>
-                     <select 
-                       className="form-select"
-                       id="eval_status"
-                       value={evalStatus}
-                       onChange={(e) => setEvalStatus(e.target.value as any)}
-                       disabled={loading}
-                       style={{ backgroundColor: 'hsl(var(--card-hsl))', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
-                     >
-                       <option value="pendiente">Pendiente (Sin Evaluación)</option>
-                       <option value="en_revision">En Revisión Administrativa</option>
-                       <option value="aprobado">Aprobado (Convenio Vigente)</option>
-                       <option value="rechazado">Rechazado (No Aplica)</option>
-                     </select>
-                   </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="eval_status" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Asignar Estado del Caso</label>
+                      <CustomSelect
+                        value={evalStatus}
+                        onChange={(val) => setEvalStatus(val as any)}
+                        options={[
+                          { value: 'pendiente', label: 'Pendiente (Sin Evaluación)' },
+                          { value: 'en_revision', label: 'En Revisión Administrativa' },
+                          { value: 'aprobado', label: 'Aprobado (Convenio Vigente)' },
+                          { value: 'rechazado', label: 'Rechazado (No Aplica)' }
+                        ]}
+                        disabled={loading}
+                      />
+                    </div>
  
                    <div className="form-group">
                      <label className="form-label" htmlFor="eval_obs" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Observaciones y Diagnóstico Social *</label>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Modal from '@/components/ui/Modal';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { createUserAction, toggleUserStatusAction, updateUserAction } from '@/app/actions/userActions';
 
 interface User {
@@ -32,6 +33,9 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [newRole, setNewRole] = useState('internal');
+  const [editRole, setEditRole] = useState('internal');
 
   const roleLabels = {
     admin: 'Administrador General',
@@ -252,6 +256,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                       <button 
                         onClick={() => {
                           setEditingUser(u);
+                          setEditRole(u.role);
                           setIsEditModalOpen(true);
                         }}
                         className="btn btn-primary"
@@ -319,11 +324,17 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
 
           <div className="form-group">
             <label className="form-label" htmlFor="role">Nivel de Acceso (Rol) *</label>
-            <select className="form-select" id="role" name="role" required disabled={loading} style={{ backgroundColor: 'hsl(var(--card-hsl))' }}>
-              <option value="internal">Administrativo Interno (Revisión y Convenios)</option>
-              <option value="external">Profesional (Inscripción de Casos)</option>
-              <option value="admin">Administrador General (Control Total)</option>
-            </select>
+            <CustomSelect
+              value={newRole}
+              onChange={setNewRole}
+              options={[
+                { value: 'internal', label: 'Administrativo Interno (Revisión y Convenios)' },
+                { value: 'external', label: 'Profesional (Inscripción de Casos)' },
+                { value: 'admin', label: 'Administrador General (Control Total)' }
+              ]}
+              disabled={loading}
+            />
+            <input type="hidden" name="role" value={newRole} />
           </div>
 
           <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginTop: '8px', marginBottom: '4px' }}>
@@ -415,11 +426,17 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
 
             <div className="form-group">
               <label className="form-label" htmlFor="edit_role">Nivel de Acceso (Rol) *</label>
-              <select className="form-select" id="edit_role" name="role" required defaultValue={editingUser.role} disabled={loading} style={{ backgroundColor: 'hsl(var(--card-hsl))' }}>
-                <option value="internal">Administrativo Interno (Revisión y Convenios)</option>
-                <option value="external">Profesional (Inscripción de Casos)</option>
-                <option value="admin">Administrador General (Control Total)</option>
-              </select>
+              <CustomSelect
+                value={editRole}
+                onChange={setEditRole}
+                options={[
+                  { value: 'internal', label: 'Administrativo Interno (Revisión y Convenios)' },
+                  { value: 'external', label: 'Profesional (Inscripción de Casos)' },
+                  { value: 'admin', label: 'Administrador General (Control Total)' }
+                ]}
+                disabled={loading}
+              />
+              <input type="hidden" name="role" value={editRole} />
             </div>
 
             <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginTop: '8px', marginBottom: '4px' }}>

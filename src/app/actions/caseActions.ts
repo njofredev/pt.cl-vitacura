@@ -295,3 +295,44 @@ export async function updateCaseDetailsAction(
   }
 }
 
+export async function getPersonByRutAction(rutRaw: string) {
+  const session = await getSession();
+  
+  if (!session || (session.role !== 'admin' && session.role !== 'external')) {
+    return { error: 'No autorizado para consultar datos de postulantes' };
+  }
+
+  const cleaned = cleanRUT(rutRaw);
+  if (!validateRUT(cleaned)) {
+    return { error: 'El RUT ingresado no es válido' };
+  }
+
+  try {
+    const res = await pool.query(
+      'SELECT first_names, last_names, nationality, birth_date, commune, email, mobile FROM persons WHERE rut = $1',
+      [cleaned]
+    );
+
+    if (res.rows.length > 0) {
+      const p = res.rows[0];
+      return {
+        success: true,
+        person: {
+          firstNames: p.first_names,
+          lastNames: p.last_names,
+          nationality: p.nationality,
+          birthDate: p.birth_date ? new Date(p.birth_date).toISOString().split('T')[0] : '',
+          commune: p.commune,
+          email: p.email || '',
+          mobile: p.mobile
+        }
+      };
+    }
+    return { success: false, message: 'No se encontró registro para este RUT' };
+  } catch (err) {
+    console.error('Error in getPersonByRutAction:', err);
+    return { error: 'Error del servidor al consultar el RUT' };
+  }
+}
+
+

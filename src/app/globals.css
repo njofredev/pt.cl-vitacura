@@ -7,46 +7,46 @@
   --font-sans: 'Google Sans', 'Product Sans', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-display: 'Google Sans', 'Product Sans', 'Outfit', system-ui, -apple-system, sans-serif;
 
-  /* Colors (Light Mode - Default) */
-  --background-hsl: 220 33% 98%;
-  --foreground-hsl: 224 71% 4%;
+  /* Colors (Light Mode - Default - Premium Warm Cream & Sand Theme) */
+  --background-hsl: 38 24% 94%; /* Soft Warm Sand background (#f4f1ea) */
+  --foreground-hsl: 224 45% 10%; /* Rich Charcoal-Navy instead of stark black */
   
-  --card-hsl: 0 0% 100%;
-  --card-border-hsl: 220 13% 91%;
+  --card-hsl: 38 28% 98.5%; /* Warm paper-white (#fdfcf9) */
+  --card-border-hsl: 38 12% 86%; /* Soft warm linen border */
   
-  --primary-hsl: 224 89% 55%;
-  --primary-hover-hsl: 224 89% 48%;
+  --primary-hsl: 224 80% 48%; /* Deeper royal blue to contrast beautifully with cream */
+  --primary-hover-hsl: 224 80% 40%;
   --primary-foreground-hsl: 0 0% 100%;
   
-  --secondary-hsl: 220 14% 96%;
-  --secondary-hover-hsl: 220 14% 90%;
-  --secondary-foreground-hsl: 224 71% 4%;
+  --secondary-hsl: 38 20% 90%; /* Rich warm grey-cream */
+  --secondary-hover-hsl: 38 20% 84%;
+  --secondary-foreground-hsl: 224 45% 10%;
 
-  --accent-hsl: 172 66% 50%;
+  --accent-hsl: 172 66% 40%; /* Deeper teal accent for excellent legibility */
   --accent-foreground-hsl: 172 100% 5%;
 
-  --muted-hsl: 220 9% 46%;
-  --muted-background-hsl: 220 10% 95%;
+  --muted-hsl: 38 8% 44%; /* Soft muted warm brown-grey */
+  --muted-background-hsl: 38 18% 90%;
 
-  --success-hsl: 142 76% 36%;
-  --warning-hsl: 38 92% 50%;
-  --danger-hsl: 346 84% 61%;
+  --success-hsl: 142 76% 32%;
+  --warning-hsl: 38 92% 44%;
+  --danger-hsl: 346 84% 54%;
 
   /* Effects */
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.08);
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 2px 8px rgba(139, 131, 114, 0.08);
+  --shadow-md: 0 8px 30px rgba(139, 131, 114, 0.12);
+  --shadow-lg: 0 16px 40px rgba(139, 131, 114, 0.16);
+  --glass-bg: rgba(253, 252, 249, 0.72);
+  --glass-border: rgba(139, 131, 114, 0.18);
   --glass-blur: 16px;
-  --input-bg: rgba(255, 255, 255, 0.85);
-  --input-border: rgba(0, 0, 0, 0.14);
-  --input-border-hover: rgba(0, 0, 0, 0.28);
-  --select-option-bg: #ffffff;
-  --select-option-fg: #0f172a;
+  --input-bg: rgba(255, 255, 255, 0.95);
+  --input-border: rgba(139, 131, 114, 0.22);
+  --input-border-hover: rgba(139, 131, 114, 0.45);
+  --select-option-bg: #fdfcf9;
+  --select-option-fg: #0a1124;
 }
 
 /* Explicit Dark Theme overrides */
@@ -556,31 +556,32 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1 !important;
 }
 
-/* Premium Odontogram Option Buttons Styles */
+/* /* Premium Odontogram Option Buttons Styles */
 .odont-option-btn {
-  padding: 8px 16px;
-  font-size: 0.8rem;
+  padding: 9px 18px;
+  font-size: 0.82rem;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
-  background: hsla(var(--foreground-hsl) / 0.02);
-  color: hsla(var(--foreground-hsl) / 0.7);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  color: hsla(var(--foreground-hsl) / 0.85);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
   user-select: none;
   text-decoration: none !important;
 }
 
 .odont-option-btn:hover {
-  transform: translateY(-1.5px);
-  background: hsla(var(--foreground-hsl) / 0.05);
-  color: hsla(var(--foreground-hsl) / 0.9);
-  border-color: hsla(var(--foreground-hsl) / 0.2);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+  background: hsla(var(--foreground-hsl) / 0.04);
+  color: hsla(var(--foreground-hsl) / 0.95);
+  border-color: hsla(var(--foreground-hsl) / 0.25);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.06);
 }
 
 .odont-option-btn:active {
@@ -589,83 +590,85 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 /* Specific Condition States */
 .odont-option-btn.btn-ausente.active {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.16) 0%, rgba(239, 68, 68, 0.06) 100%) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, rgba(239, 68, 68, 0.05) 100%) !important;
   color: #ef4444 !important;
-  border-color: rgba(239, 68, 68, 0.4) !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.12) !important;
   font-weight: 700 !important;
 }
 .odont-option-btn.btn-ausente:hover:not(.active) {
   border-color: rgba(239, 68, 68, 0.4) !important;
   color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.03) !important;
+  background: rgba(239, 68, 68, 0.04) !important;
 }
 
 .odont-option-btn.btn-implante.active {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.06) 100%) !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.05) 100%) !important;
   color: #f59e0b !important;
-  border-color: rgba(245, 158, 11, 0.4) !important;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.12) !important;
   font-weight: 700 !important;
 }
 .odont-option-btn.btn-implante:hover:not(.active) {
   border-color: rgba(245, 158, 11, 0.4) !important;
   color: #f59e0b !important;
-  background: rgba(245, 158, 11, 0.03) !important;
+  background: rgba(245, 158, 11, 0.04) !important;
 }
 
 .odont-option-btn.btn-corona.active {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.16) 0%, rgba(168, 85, 247, 0.06) 100%) !important;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.14) 0%, rgba(168, 85, 247, 0.05) 100%) !important;
   color: #a855f7 !important;
-  border-color: rgba(168, 85, 247, 0.4) !important;
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.12) !important;
+  border-color: rgba(168, 85, 247, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.12) !important;
   font-weight: 700 !important;
 }
 .odont-option-btn.btn-corona:hover:not(.active) {
   border-color: rgba(168, 85, 247, 0.4) !important;
   color: #a855f7 !important;
-  background: rgba(168, 85, 247, 0.03) !important;
+  background: rgba(168, 85, 247, 0.04) !important;
 }
 
 .odont-option-btn.btn-limpiar {
-  border-color: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
   background: hsla(var(--foreground-hsl) / 0.01) !important;
   color: #ef4444 !important;
 }
 .odont-option-btn.btn-limpiar:hover {
   background: rgba(239, 68, 68, 0.08) !important;
-  border-color: rgba(239, 68, 68, 0.35) !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08) !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  box-shadow: 0 6px 15px rgba(239, 68, 68, 0.1) !important;
 }
 
 /* Face Buttons States */
 .odont-face-btn {
-  padding: 8px 14px;
-  font-size: 0.78rem;
+  padding: 9px 16px;
+  font-size: 0.8rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--glass-border);
-  background: hsla(var(--foreground-hsl) / 0.02);
-  color: hsla(var(--foreground-hsl) / 0.65);
+  background: var(--glass-bg);
+  color: hsla(var(--foreground-hsl) / 0.8);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   user-select: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.01);
   text-decoration: none !important;
 }
 .odont-face-btn:hover:not(.active) {
-  transform: translateY(-1px);
-  background: hsla(var(--foreground-hsl) / 0.05);
-  color: hsla(var(--foreground-hsl) / 0.85);
-  border-color: hsla(var(--foreground-hsl) / 0.15);
+  transform: translateY(-1.5px);
+  background: hsla(var(--foreground-hsl) / 0.04);
+  color: hsla(var(--foreground-hsl) / 0.95);
+  border-color: hsla(var(--foreground-hsl) / 0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
 }
 .odont-face-btn.active {
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.16) 0%, rgba(20, 184, 166, 0.06) 100%) !important;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.14) 0%, rgba(20, 184, 166, 0.05) 100%) !important;
   color: #14b8a6 !important;
   border-color: rgba(20, 184, 166, 0.45) !important;
-  box-shadow: 0 4px 10px rgba(20, 184, 166, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.12) !important;
   font-weight: 700 !important;
 }
 .odont-face-btn:active {
@@ -706,6 +709,76 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .odont-circle-svg:hover circle[cx="20"][cy="20"][r="21"] {
   stroke: hsl(var(--primary-hsl)) !important;
   stroke-width: 2px !important;
+}
+
+/* Premium Odontogram Treatments Selection Cards */
+.odont-treatment-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: hsla(var(--foreground-hsl) / 0.015);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.odont-treatment-card:hover {
+  transform: translateY(-2px);
+  background: hsla(var(--foreground-hsl) / 0.03);
+  border-color: hsla(var(--foreground-hsl) / 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.odont-treatment-card.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.02) 100%);
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.08);
+}
+
+.odont-treatment-card:active {
+  transform: translateY(-0.5px) scale(0.98);
+}
+
+/* Custom checkbox inside treatment card */
+.odont-treatment-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 2px solid rgba(120, 120, 120, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.odont-treatment-card:hover .odont-treatment-checkbox {
+  border-color: rgba(120, 120, 120, 0.6);
+}
+
+.odont-treatment-card.active .odont-treatment-checkbox {
+  background: hsl(var(--primary-hsl));
+  border-color: hsl(var(--primary-hsl));
+  color: white;
+}
+
+.odont-treatment-checkbox::after {
+  content: '✓';
+  font-size: 11px;
+  font-weight: 900;
+  color: white;
+  display: none;
+}
+
+.odont-treatment-card.active .odont-treatment-checkbox::after {
+  display: block;
 }
 
 

@@ -191,93 +191,8 @@ export default function LoginPage() {
             </svg>
           )}
         </button>
-        {/* Encabezado con Logo y Marca Centrado */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-          gap: '16px',
-          width: '100%',
-          maxWidth: '460px',
-          margin: '0 auto'
-        }}>
-          <div style={{
-            position: 'relative',
-            width: '64px',
-            height: '64px',
-            flexShrink: 0
-          }}>
-            <Image
-              src="/logo.svg"
-              alt="Policlínico Logo"
-              fill
-              style={{ objectFit: 'contain' }}
-              priority
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-            <h1 style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 800,
-              fontSize: '1.45rem',
-              letterSpacing: '-0.02em',
-              margin: 0,
-              color: 'hsl(var(--foreground-hsl))',
-              lineHeight: '1.2'
-            }}>
-              Policlínico Tabancura
-            </h1>
-            <p style={{
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              margin: 0,
-              opacity: 0.55,
-              color: 'hsl(var(--foreground-hsl))'
-            }}>
-              Portal de Derivación digital
-            </p>
-          </div>
-        </div>
-
-        {/* Título de Bienvenida (Fuera de la tarjeta, arriba) */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '8px', 
-          alignItems: 'center', 
-          textAlign: 'center',
-          width: '100%',
-          maxWidth: '460px',
-          margin: '24px auto 16px auto'
-        }}>
-          <h2 style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: '2.1rem',
-            letterSpacing: '-0.03em',
-            margin: 0,
-            color: 'hsl(var(--foreground-hsl))',
-            lineHeight: '1.2'
-          }}>
-            👋 ¡Bienvenid@!
-          </h2>
-          <p style={{
-            fontSize: '0.95rem',
-            opacity: 0.7,
-            margin: 0,
-            lineHeight: '1.5',
-            fontWeight: 500,
-            textAlign: 'center'
-          }}>
-            Ingrese su correo institucional para iniciar sesión.
-          </p>
-        </div>
-
         {/* Bloque Central: Tarjeta de Formulario (Glassmorphic Container) */}
-        <div 
+        <div
           className="glass-card animate-fade-in"
           style={{
             display: 'flex',
@@ -285,7 +200,7 @@ export default function LoginPage() {
             justifyContent: 'center',
             width: '100%',
             maxWidth: '460px',
-            margin: '0 auto',
+            margin: '40px auto 0 auto',
             padding: '36px 32px',
             borderRadius: '24px',
             border: '1px solid var(--glass-border)',
@@ -294,6 +209,59 @@ export default function LoginPage() {
         >
           {/* Formulario */}
           <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* Logo y Encabezado integrado dentro de la tarjeta (Centrado y ultra-limpio) */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: '14px',
+              width: '100%',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                position: 'relative',
+                width: '56px',
+                height: '56px',
+                flexShrink: 0
+              }}>
+                <Image
+                  src="/logo.svg"
+                  alt="Policlínico Logo"
+                  fill
+                  style={{
+                    objectFit: 'contain',
+                    filter: theme === 'dark' ? 'brightness(0) invert(1)' : 'none',
+                    transition: 'filter 0.3s ease'
+                  }}
+                  priority
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
+                <h1 style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: '1.45rem',
+                  letterSpacing: '-0.025em',
+                  margin: 0,
+                  color: 'hsl(var(--foreground-hsl))',
+                  lineHeight: '1.2'
+                }}>
+                  Portal de Derivación Digital
+                </h1>
+                <p style={{
+                  fontSize: '0.86rem',
+                  opacity: 0.65,
+                  margin: '2px 0 0 0',
+                  lineHeight: '1.45',
+                  fontWeight: 500,
+                  maxWidth: '340px'
+                }}>
+                  Realice derivaciones clínicas digitales de forma rápida, segura y 100% en línea.
+                </p>
+              </div>
+            </div>
 
             {error && (
               <div
@@ -347,8 +315,8 @@ export default function LoginPage() {
             {!emailChecked ? (
               <>
                 <div className="form-group" style={{ gap: '8px' }}>
-                  <label className="form-label" htmlFor="email" style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'center', width: '100%', marginBottom: '12px' }}>
-                    Correo Electrónico de funcionario
+                  <label className="form-label" htmlFor="email" style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'left', width: '100%', marginBottom: '12px' }}>
+                    Ingrese su correo electrónico
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
@@ -393,7 +361,8 @@ export default function LoginPage() {
                   className="premium-action-btn"
                   style={{
                     marginTop: '10px',
-                    width: '100%'
+                    width: '200px',
+                    margin: '10px auto 0 auto'
                   }}
                   disabled={checking}
                 >
@@ -464,7 +433,7 @@ export default function LoginPage() {
 
                 {/* Password Input for secure entry */}
                 <div className="form-group" style={{ gap: '8px' }}>
-                  <label className="form-label" htmlFor="password" style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'center', width: '100%' }}>
+                  <label className="form-label" htmlFor="password" style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'left', width: '100%' }}>
                     Contraseña de acceso
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -547,7 +516,8 @@ export default function LoginPage() {
                   className="premium-action-btn"
                   style={{
                     marginTop: '10px',
-                    width: '100%'
+                    width: '200px',
+                    margin: '10px auto 0 auto'
                   }}
                   disabled={loading}
                 >
@@ -570,45 +540,23 @@ export default function LoginPage() {
               </>
             )}
 
-            {/* Preguntas Minimalistas de Soporte y Acceso */}
+            {/* Pregunta de Soporte y Acceso Unificada (Solo derivaciones) */}
             <div style={{
               marginTop: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
               borderTop: '1px solid var(--glass-border)',
               paddingTop: '18px',
-              alignItems: 'center',
               textAlign: 'center'
             }}>
-              <p style={{ fontSize: '0.78rem', margin: 0, opacity: 0.7, color: 'hsl(var(--foreground-hsl))', lineHeight: '1.45' }}>
-                <span style={{ opacity: 0.55, marginRight: '4px' }}>¿Problemas con tu cuenta?</span> Escríbenos a{' '}
-                <a
-                  href="mailto:soporte@policlinicotabancura.cl"
-                  style={{
-                    color: 'hsl(var(--accent-hsl))',
-                    textDecoration: 'none',
-                    fontWeight: 600,
-                    transition: 'opacity 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                  onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-                >
-                  soporte@policlinicotabancura.cl
-                </a>
-              </p>
-              <p style={{ fontSize: '0.78rem', margin: 0, opacity: 0.7, color: 'hsl(var(--foreground-hsl))', lineHeight: '1.45' }}>
-                <span style={{ opacity: 0.55, marginRight: '4px' }}>¿Necesitas acceso?</span> Escríbenos a{' '}
+              <p style={{ fontSize: '0.78rem', margin: 0, opacity: 0.75, color: 'hsl(var(--foreground-hsl))', lineHeight: '1.5' }}>
+                ¿No tienes cuenta, necesitas acceso o tienes problemas con ella? <br />
+                Escríbenos a{' '}
                 <a
                   href="mailto:derivaciones@policlinicotabancura.cl"
                   style={{
                     color: 'hsl(var(--accent-hsl))',
-                    textDecoration: 'none',
-                    fontWeight: 600,
-                    transition: 'opacity 0.2s'
+                    textDecoration: 'underline',
+                    fontWeight: 700
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                  onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                 >
                   derivaciones@policlinicotabancura.cl
                 </a>
@@ -692,6 +640,39 @@ export default function LoginPage() {
         body {
           padding-left: 0 !important; /* Anula el padding del sidebar en la pantalla de login */
         }
+
+        .dark .login-form-panel {
+          background-color: #0c0e12 !important;
+        }
+
+        .light .login-form-panel {
+          background-color: #f7f5f0 !important;
+        }
+
+        .dark .glass-card {
+          background: rgba(18, 22, 28, 0.65) !important;
+          border: 1px solid rgba(255, 255, 255, 0.05) !important;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .light .glass-card {
+          background: rgba(255, 255, 255, 0.7) !important;
+          border: 1px solid rgba(139, 131, 114, 0.12) !important;
+          box-shadow: 0 10px 30px rgba(139, 131, 114, 0.05) !important;
+        }
+
+        .dark .form-input {
+          background-color: rgba(3, 6, 12, 0.8) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          color: #ffffff !important;
+        }
+
+        .dark .form-input:focus {
+          border-color: rgba(255, 255, 255, 0.25) !important;
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+        }
+
+
 
         .marquee-container {
           overflow: hidden;
