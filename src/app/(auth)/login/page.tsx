@@ -315,7 +315,7 @@ export default function LoginPage() {
             {!emailChecked ? (
               <>
                 <div className="form-group" style={{ gap: '8px' }}>
-                  <label className="form-label" htmlFor="email" style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'left', width: '100%', marginBottom: '12px' }}>
+                  <label className="form-label" htmlFor="email" style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'center', width: '100%', marginBottom: '12px' }}>
                     Ingrese su correo electrónico
                   </label>
                   <div style={{ position: 'relative' }}>
