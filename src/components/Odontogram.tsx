@@ -19,8 +19,10 @@ import {
   Layers,
   X,
   Save,
-  FileText
+  FileText,
+  Search
 } from 'lucide-react';
+import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 
 // Tooth structure for Universal Numbering System (1-32 for Adult, 1-20 for Child)
 interface ToothInfo {
@@ -96,7 +98,7 @@ const CHILD_TEETH: ToothInfo[] = [
 interface TreatmentOption {
   id: string;
   name: string;
-  category: 'prev' | 'rest' | 'endo' | 'surg' | 'prot';
+  category: string;
   color: string;
 }
 
@@ -149,16 +151,155 @@ interface OdontogramProps {
   }) => void;
 }
 
+function getCategoryColor(category: string): string {
+  const catLower = category.toLowerCase();
+  if (catLower.includes('cirug') || catLower.includes('quir')) return '#ef4444'; // Red
+  if (catLower.includes('endo')) return '#f59e0b'; // Amber
+  if (catLower.includes('orto') || catLower.includes('prev') || catLower.includes('higien')) return '#14b8a6'; // Teal
+  if (catLower.includes('prot') || catLower.includes('fija') || catLower.includes('remov')) return '#a855f7'; // Purple
+  if (catLower.includes('radiolog') || catLower.includes('exame')) return '#3b82f6'; // Blue
+  return '#10b981'; // Green
+}
+
 export default function Odontogram({ initialType = 'adult', onChange }: OdontogramProps) {
   const [activeTab, setActiveTab] = useState<'adult' | 'child'>(initialType);
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const [chartState, setChartState] = useState<Record<number, SelectedToothState>>({});
   const [generalObservations, setGeneralObservations] = useState('');
   const [hoveredFace, setHoveredFace] = useState<keyof SelectedToothState['faces'] | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<'prev' | 'rest' | 'endo' | 'surg' | 'prot' | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [hoveredBtn, setHoveredBtn] = useState<'upper' | 'lower' | 'full' | 'multiselect' | null>(null);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [multiSelectedTeeth, setMultiSelectedTeeth] = useState<number[]>([]);
+  const [selectedMultiTreatment, setSelectedMultiTreatment] = useState<string | null>(null);
 
-  const selectToothAndScroll = (id: number) => {
-    setSelectedTooth(id);
+  // Dynamic database aranceles states
+  const [treatmentOptions, setTreatmentOptions] = useState<TreatmentOption[]>(TREATMENT_OPTIONS);
+  const [categories, setCategories] = useState<string[]>(['prev', 'rest', 'endo', 'surg', 'prot']);
+
+  // Mass selection states
+  const [massSelectionType, setMassSelectionType] = useState<'upper' | 'lower' | 'full' | null>(null);
+  const [massSelectedCategory, setMassSelectedCategory] = useState<string | null>(null);
+
+  // Load dynamic active aranceles from the database db_casos
+  useEffect(() => {
+    async function loadDynamicPrestaciones() {
+      try {
+        const res = await getOdontogramPrestacionesAction();
+        if (res.success && res.data) {
+          if (res.data.length > 0) {
+            const mapped: TreatmentOption[] = res.data.map(item => ({
+              id: item.id.toString(),
+              name: item.name,
+              category: item.category,
+              color: getCategoryColor(item.category)
+            }));
+            setTreatmentOptions(mapped);
+
+            // Get unique categories list
+            const uniqueCats = Array.from(new Set(res.data.map(item => item.category)));
+            setCategories(uniqueCats);
+          } else {
+            // Explicitly set empty to trigger warning panel if all categories are deactivated
+            setTreatmentOptions([]);
+            setCategories([]);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load prestaciones:", err);
+      }
+    }
+    loadDynamicPrestaciones();
+  }, []);
+
+  // Mass operations application logic
+  const handleApplyMassTreatment = (treatmentId: string) => {
+    if (!massSelectionType) return;
+    
+    // Determine the teeth IDs based on mass selection type and current tab
+    let targetTeethIds: number[] = [];
+    if (activeTab === 'adult') {
+      if (massSelectionType === 'upper') targetTeethIds = ADULT_TEETH.slice(0, 16).map(t => t.id);
+      else if (massSelectionType === 'lower') targetTeethIds = ADULT_TEETH.slice(16, 32).map(t => t.id);
+      else targetTeethIds = ADULT_TEETH.map(t => t.id);
+    } else {
+      if (massSelectionType === 'upper') targetTeethIds = CHILD_TEETH.slice(0, 10).map(t => t.id);
+      else if (massSelectionType === 'lower') targetTeethIds = CHILD_TEETH.slice(10, 20).map(t => t.id);
+      else targetTeethIds = CHILD_TEETH.map(t => t.id);
+    }
+
+    setChartState(prev => {
+      const next = { ...prev };
+      targetTeethIds.forEach(id => {
+        const current = next[id] || {
+          faces: { V: false, O: false, M: false, D: false, L: false },
+          treatments: []
+        };
+        // Add treatment if not already assigned
+        if (!current.treatments.includes(treatmentId)) {
+          next[id] = {
+            ...current,
+            treatments: [...current.treatments, treatmentId]
+          };
+        }
+      });
+      return next;
+    });
+
+    setMassSelectionType(null); // Close modal
+    setMassSelectedCategory(null);
+  };
+
+  const selectToothAndScroll = (id: number, e?: React.MouseEvent) => {
+    const isCtrlPressed = e ? (e.ctrlKey || e.metaKey) : false;
+
+    if (isMultiSelectMode || isCtrlPressed) {
+      if (!isMultiSelectMode) {
+        setIsMultiSelectMode(true);
+      }
+      setMultiSelectedTeeth((prev) => {
+        if (prev.includes(id)) {
+          return prev.filter((tid) => tid !== id);
+        } else {
+          return [...prev, id];
+        }
+      });
+    } else {
+      setSelectedTooth(id);
+    }
+  };
+
+  const handleApplyMultiTreatment = () => {
+    if (!selectedMultiTreatment || multiSelectedTeeth.length === 0) return;
+
+    setChartState((prev) => {
+      const next = { ...prev };
+      multiSelectedTeeth.forEach((id) => {
+        const current = next[id] || {
+          faces: { V: false, O: false, M: false, D: false, L: false },
+          treatments: []
+        };
+        if (!current.treatments.includes(selectedMultiTreatment)) {
+          next[id] = {
+            ...current,
+            treatments: [...current.treatments, selectedMultiTreatment]
+          };
+        }
+      });
+      return next;
+    });
+
+    // Reset state
+    setMultiSelectedTeeth([]);
+    setSelectedMultiTreatment(null);
+    setIsMultiSelectMode(false);
+  };
+
+  const handleCancelMultiSelect = () => {
+    setMultiSelectedTeeth([]);
+    setSelectedMultiTreatment(null);
+    setIsMultiSelectMode(false);
   };
 
   const [mounted, setMounted] = useState(false);
@@ -167,10 +308,11 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
     setMounted(true);
   }, []);
 
-  // Reset category on tooth select
+  // Reset category and search term on tooth select
   useEffect(() => {
     if (selectedTooth) {
       setSelectedCategory(null);
+      setSearchTerm('');
     }
   }, [selectedTooth]);
 
@@ -215,7 +357,7 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
         // 2. Treatments needed
         if (state.treatments.length > 0) {
           const treatmentNames = state.treatments.map((tid) => {
-            const opt = TREATMENT_OPTIONS.find((o) => o.id === tid);
+            const opt = treatmentOptions.find((o) => o.id === tid);
             return opt ? opt.name : tid;
           });
           treatmentList.push(`Pieza ${tooth.id}: Realizar [${treatmentNames.join(', ')}]`);
@@ -326,9 +468,11 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
   const renderToothIcon = (id: number, type: 'incisor' | 'canine' | 'premolar' | 'molar', isUpper: boolean, size = 30) => {
     const state = getToothState(id);
     const isFocused = selectedTooth === id;
+    const isMultiSelected = multiSelectedTeeth.includes(id);
 
     let color = 'hsla(var(--foreground-hsl) / 0.16)';
     if (isFocused) color = 'hsl(var(--primary-hsl))';
+    else if (isMultiSelected) color = 'hsl(var(--accent-hsl))';
     else if (isToothModified(id)) color = 'hsl(var(--accent-hsl))';
 
     // Tailored SVG Line art paths for Incisor, Canine, Premolar, Molar
@@ -348,7 +492,7 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
         width={size}
         height={size}
         viewBox="0 0 40 40"
-        onClick={() => selectToothAndScroll(id)}
+        onClick={(e) => selectToothAndScroll(id, e)}
         className="odont-tooth-svg"
         style={{
           cursor: 'pointer',
@@ -374,10 +518,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
   const renderCircularSelector = (id: number, interactive = true, size = 36) => {
     const state = getToothState(id);
     const isFocused = selectedTooth === id;
+    const isMultiSelected = multiSelectedTeeth.includes(id);
 
     // Highlight modified tooth
     let strokeColor = 'var(--glass-border)';
     if (isFocused) strokeColor = 'hsl(var(--primary-hsl))';
+    else if (isMultiSelected) strokeColor = 'hsl(var(--accent-hsl))';
     else if (isToothModified(id)) strokeColor = 'hsl(var(--accent-hsl))';
 
     return (
@@ -388,12 +534,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
         onClick={(e) => {
           if (!interactive) return;
           e.stopPropagation();
-          selectToothAndScroll(id);
+          selectToothAndScroll(id, e);
         }}
         className={interactive ? "odont-circle-svg" : ""}
         style={{
           cursor: interactive ? 'pointer' : 'default',
-          filter: isFocused ? 'drop-shadow(0 0 5px rgba(59, 130, 246, 0.4))' : (isToothModified(id) ? 'drop-shadow(0 0 4px rgba(20, 184, 166, 0.25))' : 'none'),
+          filter: isFocused ? 'drop-shadow(0 0 5px rgba(59, 130, 246, 0.4))' : (isMultiSelected ? 'drop-shadow(0 0 6px rgba(20, 184, 166, 0.6))' : (isToothModified(id) ? 'drop-shadow(0 0 4px rgba(20, 184, 166, 0.25))' : 'none')),
           transition: 'all 0.2s ease',
           overflow: 'visible'
         }}
@@ -410,8 +556,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
-            selectToothAndScroll(id);
-            toggleFace(id, 'O');
+            if (isMultiSelectMode || e.ctrlKey || e.metaKey) {
+              selectToothAndScroll(id, e);
+            } else {
+              selectToothAndScroll(id, e);
+              toggleFace(id, 'O');
+            }
           }}
         />
 
@@ -425,8 +575,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
-            selectToothAndScroll(id);
-            toggleFace(id, 'V');
+            if (isMultiSelectMode || e.ctrlKey || e.metaKey) {
+              selectToothAndScroll(id, e);
+            } else {
+              selectToothAndScroll(id, e);
+              toggleFace(id, 'V');
+            }
           }}
         />
 
@@ -440,8 +594,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
-            selectToothAndScroll(id);
-            toggleFace(id, 'L');
+            if (isMultiSelectMode || e.ctrlKey || e.metaKey) {
+              selectToothAndScroll(id, e);
+            } else {
+              selectToothAndScroll(id, e);
+              toggleFace(id, 'L');
+            }
           }}
         />
 
@@ -455,8 +613,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
-            selectToothAndScroll(id);
-            toggleFace(id, 'M');
+            if (isMultiSelectMode || e.ctrlKey || e.metaKey) {
+              selectToothAndScroll(id, e);
+            } else {
+              selectToothAndScroll(id, e);
+              toggleFace(id, 'M');
+            }
           }}
         />
 
@@ -470,8 +632,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
-            selectToothAndScroll(id);
-            toggleFace(id, 'D');
+            if (isMultiSelectMode || e.ctrlKey || e.metaKey) {
+              selectToothAndScroll(id, e);
+            } else {
+              selectToothAndScroll(id, e);
+              toggleFace(id, 'D');
+            }
           }}
         />
 
@@ -591,7 +757,7 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
               <Layers size={13} style={{ strokeWidth: 2.5 }} /> Temporal (Niño)
             </button>
           </div>
-
+ 
           {Object.keys(chartState).length > 0 && (
             <button
               type="button"
@@ -607,8 +773,8 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
               }}
               onClick={() => {
                 if (window.confirm("¿Está seguro de que desea limpiar por completo todos los diagnósticos y tratamientos del odontograma?")) {
-                  setChartState({});
-                  setSelectedTooth(null);
+                   setChartState({});
+                   setSelectedTooth(null);
                 }
               }}
             >
@@ -617,7 +783,7 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           )}
         </div>
       </div>
-
+ 
       {/* Anatomical Odontogram Chart */}
       <div className="glass-panel" style={{
         padding: '34px 28px',
@@ -631,127 +797,599 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
         position: 'relative',
         overflowX: 'auto',
       }}>
-
+ 
         {/* Subtle grid indicators */}
         <div style={{ position: 'absolute', left: '18px', top: '18px', fontSize: '0.74rem', fontWeight: 800, opacity: 0.5, color: 'hsla(var(--foreground-hsl) / 0.7)', letterSpacing: '0.05em' }}>
           DERIVACIÓN DENTAL VITACURA
         </div>
 
-        {/* Anatomical Jaws Rows Wrapper */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '28px',
-          minWidth: activeTab === 'child' ? '450px' : '600px',
-          maxWidth: activeTab === 'child' ? '540px' : '820px',
-          width: '100%',
-          alignItems: 'center'
-        }}>
-
-          {/* MAXILAR SUPERIOR (Upper Jaw) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              fontSize: '0.82rem',
-              fontWeight: 800,
-              color: 'hsla(var(--foreground-hsl) / 0.95)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              borderBottom: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
-              paddingBottom: '8px',
-              marginBottom: '6px'
-            }}>
-              Maxilar Superior (Arcada Superior)
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
-              {upperRow.map((tooth) => {
-                const isModified = isToothModified(tooth.id);
-                const isFocused = selectedTooth === tooth.id;
-                return (
-                  <div
-                    key={tooth.id}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '6px',
-                      flex: 1,
-                    }}
-                  >
-                    {/* Upper layout: Number -> Anatomical Shape -> Circle Selector */}
-                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isFocused ? 'hsl(var(--primary-hsl))' : (isModified ? 'hsl(var(--accent-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)') }}>
-                      {tooth.id}
-                    </span>
-
-                    {/* Tooth anatomical drawing */}
-                    {renderToothIcon(tooth.id, tooth.type, true)}
-
-                    {/* Circle 5-surface selector */}
-                    {renderCircularSelector(tooth.id)}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* DIVIDER LINE FOR UPPER/LOWER */}
+        {treatmentOptions.length === 0 ? (
           <div style={{
-            height: '2.5px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            padding: '60px 40px',
+            maxWidth: '680px',
             width: '100%',
-            background: 'linear-gradient(90deg, transparent 0%, hsla(var(--primary-hsl) / 0.2) 50%, transparent 100%)'
-          }} />
-
-          {/* MANDÍBULA INFERIOR (Lower Jaw) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
-              {lowerRow.map((tooth) => {
-                const isModified = isToothModified(tooth.id);
-                const isFocused = selectedTooth === tooth.id;
-                return (
-                  <div
-                    key={tooth.id}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '6px',
-                      flex: 1,
-                    }}
-                  >
-                    {/* Lower layout: Circle Selector -> Anatomical Shape -> Number */}
-                    {renderCircularSelector(tooth.id)}
-
-                    {/* Tooth anatomical drawing (flipped vertically) */}
-                    {renderToothIcon(tooth.id, tooth.type, false)}
-
-                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isFocused ? 'hsl(var(--primary-hsl))' : (isModified ? 'hsl(var(--accent-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)') }}>
-                      {tooth.id}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
+            marginTop: '20px',
+            gap: '18px'
+          }}>
             <div style={{
               display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.82rem',
-              fontWeight: 800,
-              color: 'hsla(var(--foreground-hsl) / 0.95)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              borderTop: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
-              paddingTop: '10px',
-              marginTop: '6px'
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+              border: '1.5px solid rgba(239, 68, 68, 0.3)',
+              boxShadow: '0 0 20px rgba(239, 68, 68, 0.1)',
+              animation: 'pulse 2s infinite'
             }}>
-              Mandíbula Inferior (Arcada Inferior)
+              <XCircle size={32} style={{ color: 'hsl(var(--danger-hsl))' }} />
             </div>
+            
+            <h3 style={{
+              fontSize: '1.2rem',
+              fontWeight: 800,
+              color: 'var(--foreground-hsl)',
+              margin: 0,
+              letterSpacing: '-0.02em'
+            }}>
+              No se encuentran prestaciones disponibles para cargar
+            </h3>
+            
+            <p style={{
+              fontSize: '0.9rem',
+              lineHeight: '1.6',
+              opacity: 0.85,
+              color: 'hsla(var(--foreground-hsl) / 0.85)',
+              fontWeight: 500,
+              margin: 0
+            }}>
+              Por favor, contactarse con su encargado más cercano, o escríbanos directamente a{' '}
+              <a 
+                href="mailto:soporte@policlinicotabancura.cl" 
+                style={{ 
+                  color: 'hsl(var(--primary-hsl))', 
+                  fontWeight: 700, 
+                  textDecoration: 'underline',
+                  transition: 'opacity 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                soporte@policlinicotabancura.cl
+              </a>{' '}
+              o{' '}
+              <a 
+                href="mailto:derivaciones@policlinicotabancura.cl" 
+                style={{ 
+                  color: 'hsl(var(--primary-hsl))', 
+                  fontWeight: 700, 
+                  textDecoration: 'underline',
+                  transition: 'opacity 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                derivaciones@policlinicotabancura.cl
+              </a>.
+            </p>
           </div>
+        ) : (
+          <>
+            {/* Main layout container splitting sidebar buttons and teeth chart */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: '40px',
+              width: '100%',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexWrap: 'nowrap',
+              marginTop: '10px'
+            }}>
 
+          {/* Left Operations Panel */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            justifyContent: 'center',
+            paddingRight: '32px',
+            borderRight: '1.5px solid var(--glass-border)',
+            minWidth: '270px',
+            flexShrink: 0
+          }}>
+            <div style={{
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              opacity: 0.65,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginBottom: '6px',
+              color: 'hsla(var(--foreground-hsl) / 0.85)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><path d="m9 12 2 2 4-4" /></svg>
+              Selecciona 2 o más piezas
+            </div>
+
+            {/* Arcada Superior Button */}
+            <button
+              type="button"
+              className="odont-option-btn animate-fade-in"
+              onMouseEnter={() => setHoveredBtn('upper')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                gap: '12px',
+                padding: '12px 18px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                backgroundColor: hoveredBtn === 'upper' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.05)',
+                color: '#10b981',
+                border: hoveredBtn === 'upper' ? '1.5px solid rgba(16, 185, 129, 0.45)' : '1.5px solid rgba(16, 185, 129, 0.20)',
+                boxShadow: hoveredBtn === 'upper' ? '0 6px 20px -4px rgba(16, 185, 129, 0.18)' : 'none',
+                transform: hoveredBtn === 'upper' ? 'translateY(-2px)' : 'none',
+                cursor: 'pointer',
+                width: '100%',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                margin: 0
+              }}
+              onClick={() => setMassSelectionType('upper')}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                backgroundColor: hoveredBtn === 'upper' ? 'rgba(16, 185, 129, 0.20)' : 'rgba(16, 185, 129, 0.12)',
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+              </div>
+              <span style={{ whiteSpace: 'nowrap' }}>Arcada Superior</span>
+            </button>
+
+            {/* Arcada Inferior Button */}
+            <button
+              type="button"
+              className="odont-option-btn animate-fade-in"
+              onMouseEnter={() => setHoveredBtn('lower')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                gap: '12px',
+                padding: '12px 18px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                backgroundColor: hoveredBtn === 'lower' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(59, 130, 246, 0.05)',
+                color: '#3b82f6',
+                border: hoveredBtn === 'lower' ? '1.5px solid rgba(59, 130, 246, 0.45)' : '1.5px solid rgba(59, 130, 246, 0.20)',
+                boxShadow: hoveredBtn === 'lower' ? '0 6px 20px -4px rgba(59, 130, 246, 0.18)' : 'none',
+                transform: hoveredBtn === 'lower' ? 'translateY(-2px)' : 'none',
+                cursor: 'pointer',
+                width: '100%',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                margin: 0
+              }}
+              onClick={() => setMassSelectionType('lower')}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                backgroundColor: hoveredBtn === 'lower' ? 'rgba(59, 130, 246, 0.20)' : 'rgba(59, 130, 246, 0.12)',
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+              </div>
+              <span style={{ whiteSpace: 'nowrap' }}>Arcada Inferior</span>
+            </button>
+
+            {/* Toda la Boca Button */}
+            <button
+              type="button"
+              className="odont-option-btn animate-fade-in"
+              onMouseEnter={() => setHoveredBtn('full')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                gap: '12px',
+                padding: '12px 18px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                backgroundColor: hoveredBtn === 'full' ? 'rgba(168, 85, 247, 0.12)' : 'rgba(168, 85, 247, 0.05)',
+                color: '#a855f7',
+                border: hoveredBtn === 'full' ? '1.5px solid rgba(168, 85, 247, 0.45)' : '1.5px solid rgba(168, 85, 247, 0.20)',
+                boxShadow: hoveredBtn === 'full' ? '0 6px 20px -4px rgba(168, 85, 247, 0.18)' : 'none',
+                transform: hoveredBtn === 'full' ? 'translateY(-2px)' : 'none',
+                cursor: 'pointer',
+                width: '100%',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                margin: 0
+              }}
+              onClick={() => setMassSelectionType('full')}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                backgroundColor: hoveredBtn === 'full' ? 'rgba(168, 85, 247, 0.20)' : 'rgba(168, 85, 247, 0.12)',
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M4 8.5C4 6 6 4 12 4c6 0 8 2 8 4.5 0 3.5-3 5-3 8.5 0 1.5 1 2 1 2s-1.5 1-4 1c-1.5 0-2-.5-2-.5s-.5.5-2 .5c-2.5 0-4-1-4-1s1-.5 1-2c0-3.5-3-5-3-8.5Z"/></svg>
+              </div>
+              <span style={{ whiteSpace: 'nowrap' }}>Toda la Boca</span>
+            </button>
+
+            {/* Selección Múltiple Toggle Button */}
+            <button
+              type="button"
+              className="odont-option-btn animate-fade-in"
+              onMouseEnter={() => setHoveredBtn('multiselect')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                gap: '12px',
+                padding: '12px 18px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                backgroundColor: isMultiSelectMode 
+                  ? 'rgba(20, 184, 166, 0.15)' 
+                  : (hoveredBtn === 'multiselect' ? 'rgba(120, 120, 120, 0.12)' : 'rgba(120, 120, 120, 0.05)'),
+                color: isMultiSelectMode ? '#14b8a6' : 'hsla(var(--foreground-hsl) / 0.85)',
+                border: isMultiSelectMode 
+                  ? '1.5px solid #14b8a6' 
+                  : (hoveredBtn === 'multiselect' ? '1.5px solid rgba(120, 120, 120, 0.4)' : '1.5px solid rgba(120, 120, 120, 0.18)'),
+                boxShadow: isMultiSelectMode ? '0 6px 20px -4px rgba(20, 184, 166, 0.22)' : 'none',
+                transform: hoveredBtn === 'multiselect' ? 'translateY(-2px)' : 'none',
+                cursor: 'pointer',
+                width: '100%',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                margin: 0
+              }}
+              onClick={() => {
+                setIsMultiSelectMode(!isMultiSelectMode);
+                if (isMultiSelectMode) {
+                  setMultiSelectedTeeth([]);
+                  setSelectedMultiTreatment(null);
+                }
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                backgroundColor: isMultiSelectMode ? 'rgba(20, 184, 166, 0.25)' : 'rgba(120, 120, 120, 0.12)',
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><polyline points="9 11 12 14 22 4"></polyline></svg>
+              </div>
+              <span style={{ whiteSpace: 'nowrap' }}>Selección Múltiple</span>
+              {isMultiSelectMode && (
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#14b8a6',
+                  marginLeft: 'auto',
+                  display: 'inline-block',
+                  boxShadow: '0 0 8px #14b8a6',
+                  animation: 'pulse 1.5s infinite'
+                }} />
+              )}
+            </button>
+
+            {/* Dynamic Multi-Select Action Panel (Relocated to the bottom of the card) */}
+          </div>
+ 
+          {/* Right Anatomical Jaws Rows Panel */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '28px',
+            minWidth: activeTab === 'child' ? '450px' : '600px',
+            maxWidth: activeTab === 'child' ? '540px' : '820px',
+            width: '100%',
+            alignItems: 'center',
+            paddingLeft: '20px',
+            flex: 1
+          }}>
+ 
+            {/* MAXILAR SUPERIOR (Upper Jaw) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                color: 'hsla(var(--foreground-hsl) / 0.95)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                borderBottom: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
+                paddingBottom: '8px',
+                marginBottom: '6px'
+              }}>
+                Maxilar Superior (Arcada Superior)
+              </div>
+ 
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
+                {upperRow.map((tooth) => {
+                  const isModified = isToothModified(tooth.id);
+                  const isFocused = selectedTooth === tooth.id;
+                  return (
+                    <div
+                      key={tooth.id}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        flex: 1,
+                      }}
+                    >
+                      {/* Upper layout: Number -> Anatomical Shape -> Circle Selector */}
+                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isFocused ? 'hsl(var(--primary-hsl))' : (isModified ? 'hsl(var(--accent-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)') }}>
+                        {tooth.id}
+                      </span>
+ 
+                      {/* Tooth anatomical drawing */}
+                      {renderToothIcon(tooth.id, tooth.type, true)}
+ 
+                      {/* Circle 5-surface selector */}
+                      {renderCircularSelector(tooth.id)}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+ 
+            {/* DIVIDER LINE FOR UPPER/LOWER */}
+            <div style={{
+              height: '2.5px',
+              width: '100%',
+              background: 'linear-gradient(90deg, transparent 0%, hsla(var(--primary-hsl) / 0.2) 50%, transparent 100%)'
+            }} />
+ 
+            {/* MANDÍBULA INFERIOR (Lower Jaw) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
+                {lowerRow.map((tooth) => {
+                  const isModified = isToothModified(tooth.id);
+                  const isFocused = selectedTooth === tooth.id;
+                  return (
+                    <div
+                      key={tooth.id}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        flex: 1,
+                      }}
+                    >
+                      {/* Lower layout: Circle Selector -> Anatomical Shape -> Number */}
+                      {renderCircularSelector(tooth.id)}
+ 
+                      {/* Tooth anatomical drawing (flipped vertically) */}
+                      {renderToothIcon(tooth.id, tooth.type, false)}
+ 
+                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isFocused ? 'hsl(var(--primary-hsl))' : (isModified ? 'hsl(var(--accent-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)') }}>
+                        {tooth.id}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+ 
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                color: 'hsla(var(--foreground-hsl) / 0.95)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                borderTop: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
+                paddingTop: '10px',
+                marginTop: '6px'
+              }}>
+                Mandíbula Inferior (Arcada Inferior)
+              </div>
+            </div>
+ 
+          </div>
+ 
         </div>
 
+        {/* Dynamic Multi-Select Action Panel at the bottom */}
+        {isMultiSelectMode && (
+          <div className="glass-panel animate-fade-in" style={{
+            padding: '16px 24px',
+            borderRadius: '16px',
+            border: '1.5px solid var(--glass-border)',
+            background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.06) 0%, rgba(59, 130, 246, 0.03) 100%), hsla(var(--foreground-hsl) / 0.02)',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '24px',
+            marginTop: '10px',
+            width: '100%',
+            boxShadow: '0 8px 32px -4px rgba(20, 184, 166, 0.08)',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 auto', minWidth: '250px' }}>
+              <div style={{ 
+                fontSize: '0.8rem', 
+                fontWeight: 800, 
+                color: '#14b8a6', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.06em',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#14b8a6',
+                  display: 'inline-block',
+                  boxShadow: '0 0 8px #14b8a6',
+                  animation: 'pulse 1.5s infinite'
+                }} />
+                Selección Múltiple Activa
+              </div>
+              <div style={{
+                fontSize: '0.86rem',
+                fontWeight: 700,
+                color: 'var(--foreground-hsl)',
+                opacity: 0.95
+              }}>
+                Piezas seleccionadas ({multiSelectedTeeth.length}): {multiSelectedTeeth.length > 0 ? (
+                  <span style={{ color: '#14b8a6', fontWeight: 800 }}>{multiSelectedTeeth.sort((a,b)=>a-b).join(', ')}</span>
+                ) : (
+                  <span style={{ opacity: 0.6, fontStyle: 'italic', fontWeight: 500 }}>Ninguna pieza seleccionada. Haz clic en las piezas para seleccionarlas.</span>
+                )}
+              </div>
+            </div>
+            
+            {multiSelectedTeeth.length > 0 ? (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '20px',
+                flex: '1 1 auto',
+                justifyContent: 'flex-end',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '280px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, opacity: 0.7 }}>Asignar Prestación Masiva:</span>
+                  <select
+                    value={selectedMultiTreatment || ''}
+                    onChange={(e) => setSelectedMultiTreatment(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1.5px solid var(--glass-border)',
+                      backgroundColor: 'var(--card-hsl)',
+                      color: 'var(--foreground-hsl)',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="" style={{ color: '#334155', backgroundColor: '#ffffff' }}>-- Seleccionar --</option>
+                    {categories.map(cat => {
+                      const catOpts = treatmentOptions.filter(opt => opt.category === cat);
+                      if (catOpts.length === 0) return null;
+                      return (
+                        <optgroup key={cat} label={cat.toUpperCase()} style={{ fontWeight: 800, color: '#334155', backgroundColor: '#ffffff' }}>
+                          {catOpts.map(opt => (
+                            <option key={opt.id} value={opt.id} style={{ color: '#334155', backgroundColor: '#ffffff', fontWeight: 500 }}>
+                              {opt.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      );
+                    })}
+                  </select>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}>
+                  <button
+                    type="button"
+                    className="btn btn-accent"
+                    disabled={!selectedMultiTreatment}
+                    onClick={handleApplyMultiTreatment}
+                    style={{
+                      padding: '10px 20px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      cursor: !selectedMultiTreatment ? 'not-allowed' : 'pointer',
+                      opacity: !selectedMultiTreatment ? 0.6 : 1,
+                      backgroundColor: '#14b8a6',
+                      borderColor: '#14b8a6',
+                      color: '#ffffff',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Aplicar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleCancelMultiSelect}
+                    style={{
+                      padding: '10px 20px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                    Limpiar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.82rem', opacity: 0.7, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center', padding: '8px 0' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Haz clic en las piezas del odontograma para seleccionarlas.
+              </div>
+            )}
+          </div>
+        )}
+          </>
+        )}
+ 
       </div>
 
       {/* Editor & Detail Panel for Active Tooth as Popup Modal in React Portal */}
@@ -789,10 +1427,10 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
                   borderColor: 'hsl(var(--card-border-hsl)) hsl(var(--card-border-hsl)) hsl(var(--card-border-hsl)) hsl(var(--primary-hsl))',
                   boxShadow: '0 24px 60px -15px rgba(10, 17, 36, 0.35), var(--shadow-lg)',
                   display: 'grid',
-                  gridTemplateColumns: '1fr',
-                  gap: '24px',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+                  gap: '32px',
                   width: '95%',
-                  maxWidth: '820px',
+                  maxWidth: '1080px',
                   maxHeight: '92vh',
                   overflowY: 'auto',
                   position: 'relative',
@@ -834,26 +1472,42 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
                   <X size={16} style={{ strokeWidth: 2.5 }} />
                 </button>
 
-                {/* Column 1: Header / Tooth Graphic & State Toggles */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', justifyContent: 'space-between', paddingRight: '24px' }}>
+                {/* Left Column: Tooth details, graphic selection diagram, special conditions, and faces selection buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Tooth Header Information & Center Graphic */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      {renderToothIcon(selectedTooth, activeToothInfo.type, selectedTooth <= (activeTab === 'adult' ? 16 : 10), 32)}
-                      {renderCircularSelector(selectedTooth, false, 44)}
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'hsla(var(--foreground-hsl) / 0.03)',
+                      padding: '12px 14px',
+                      borderRadius: '14px',
+                      border: '1.5px solid var(--glass-border)',
+                      minWidth: '90px',
+                      justifyContent: 'center',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      {renderToothIcon(selectedTooth, activeToothInfo.type, selectedTooth <= (activeTab === 'adult' ? 16 : 10), 38)}
+                      {renderCircularSelector(selectedTooth, true, 48)}
                     </div>
                     <div>
-                      <h4 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--foreground-hsl)' }}>
+                      <h4 style={{ fontSize: '1.32rem', fontWeight: 800, margin: 0, color: 'var(--foreground-hsl)' }}>
                         {getToothName(activeToothInfo)}
                       </h4>
-                      <p style={{ fontSize: '0.82rem', opacity: 0.8, margin: 0, color: 'hsla(var(--foreground-hsl) / 0.8)', fontWeight: 500 }}>
-                        Tipo: {activeToothInfo.type === 'incisor' ? 'Incisivo' : activeToothInfo.type === 'canine' ? 'Canino' : activeToothInfo.type === 'premolar' ? 'Premolar' : 'Molar'} • Número: {activeToothInfo.id}
+                      <p style={{ fontSize: '0.84rem', opacity: 0.85, margin: '4px 0 0 0', color: 'hsla(var(--foreground-hsl) / 0.8)', fontWeight: 500 }}>
+                        Tipo: <span style={{ color: 'hsl(var(--primary-hsl))', fontWeight: 700 }}>{activeToothInfo.type === 'incisor' ? 'Incisivo' : activeToothInfo.type === 'canine' ? 'Canino' : activeToothInfo.type === 'premolar' ? 'Premolar' : 'Molar'}</span>
+                      </p>
+                      <p style={{ fontSize: '0.84rem', opacity: 0.85, margin: '2px 0 0 0', color: 'hsla(var(--foreground-hsl) / 0.8)', fontWeight: 500 }}>
+                        Número: <span style={{ color: 'hsl(var(--primary-hsl))', fontWeight: 800 }}>{activeToothInfo.id}</span>
                       </p>
                     </div>
                   </div>
 
-                  {/* Special Condition Buttons Group with styled title */}
+                  {/* Special Condition Buttons Group */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 800, opacity: 0.9, color: 'hsla(var(--foreground-hsl) / 0.85)', letterSpacing: '0.02em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, opacity: 0.9, color: 'hsla(var(--foreground-hsl) / 0.85)', letterSpacing: '0.02em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                       <HelpCircle size={14} style={{ color: 'hsl(var(--primary-hsl))' }} /> Estado o Condición Especial de la Pieza:
                     </span>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -883,217 +1537,374 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
                       </button>
                     </div>
                   </div>
-                </div>
 
-                {/* Tooth Faces Toggles Visual Diagram Guide */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 800, opacity: 0.9, color: 'hsla(var(--foreground-hsl) / 0.85)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <Layers size={14} style={{ color: 'hsl(var(--primary-hsl))' }} /> Selección Manual de Caras Clínicas Afectadas:
-                  </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {[
-                      { key: 'V', name: 'Vestibular (Frontal)' },
-                      { key: 'O', name: 'Oclusal / Incisal (Masticatoria)' },
-                      { key: 'M', name: 'Mesial (Lateral interna)' },
-                      { key: 'D', name: 'Distal (Lateral externa)' },
-                      { key: 'L', name: 'Lingual / Palatina (Trasera)' }
-                    ].map((face) => {
-                      const key = face.key as keyof SelectedToothState['faces'];
-                      const isFaceActive = activeToothState.faces[key];
-                      return (
-                        <button
-                          key={face.key}
-                          type="button"
-                          onClick={() => toggleFace(selectedTooth, key)}
-                          onMouseEnter={() => setHoveredFace(key)}
-                          onMouseLeave={() => setHoveredFace(null)}
-                          className={`odont-face-btn ${isFaceActive ? 'active' : ''}`}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
-                        >
-                          {isFaceActive ? (
-                            <Check size={14} style={{ color: 'hsl(var(--accent-hsl))', strokeWidth: 3 }} />
-                          ) : (
-                            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', border: '1.5px solid hsla(var(--foreground-hsl) / 0.45)', backgroundColor: 'transparent' }} />
-                          )}
-                          {face.name}
-                        </button>
-                      );
-                    })}
+                  {/* Tooth Faces Toggles Visual Diagram Guide */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, opacity: 0.9, color: 'hsla(var(--foreground-hsl) / 0.85)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <Layers size={14} style={{ color: 'hsl(var(--primary-hsl))' }} /> Selección de Caras Clínicas Afectadas:
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {[
+                        { key: 'V', name: 'Vestibular (Frontal)' },
+                        { key: 'O', name: 'Oclusal / Incisal (Masticatoria)' },
+                        { key: 'M', name: 'Mesial (Lateral interna)' },
+                        { key: 'D', name: 'Distal (Lateral externa)' },
+                        { key: 'L', name: 'Lingual / Palatina (Trasera)' }
+                      ].map((face) => {
+                        const key = face.key as keyof SelectedToothState['faces'];
+                        const isFaceActive = activeToothState.faces[key];
+                        return (
+                          <button
+                            key={face.key}
+                            type="button"
+                            onClick={() => toggleFace(selectedTooth, key)}
+                            onMouseEnter={() => setHoveredFace(key)}
+                            onMouseLeave={() => setHoveredFace(null)}
+                            className={`odont-face-btn ${isFaceActive ? 'active' : ''}`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              fontWeight: 700,
+                              width: '100%',
+                              justifyContent: 'flex-start',
+                              padding: '10px 14px'
+                            }}
+                          >
+                            {isFaceActive ? (
+                              <Check size={14} style={{ color: 'hsl(var(--accent-hsl))', strokeWidth: 3 }} />
+                            ) : (
+                              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', border: '1.5px solid hsla(var(--foreground-hsl) / 0.45)', backgroundColor: 'transparent' }} />
+                            )}
+                            {face.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ height: '1px', backgroundColor: 'var(--glass-border)' }}></div>
+                {/* Right Column: Prestaciones (Treatments Checklist) with Instant Search Bar */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'hsl(var(--primary-hsl))', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <FileText size={15} style={{ color: 'hsl(var(--primary-hsl))' }} /> Asignar Prestaciones para la Pieza {selectedTooth}:
+                    </span>
 
-                {/* Column 2: Prestaciones (Treatments Checklist) - Unified Accordion Panel */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'hsl(var(--primary-hsl))', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <FileText size={15} style={{ color: 'hsl(var(--primary-hsl))' }} /> Asignar Prestaciones para la Pieza {selectedTooth}:
-                  </span>
+                    {/* Quick Search Input */}
+                    <div style={{ position: 'relative', width: '100%' }}>
+                      <input
+                        type="text"
+                        placeholder="Buscar prestación..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px 12px 42px',
+                          borderRadius: '12px',
+                          border: '1.5px solid var(--glass-border)',
+                          backgroundColor: 'hsla(var(--foreground-hsl) / 0.02)',
+                          color: 'var(--foreground-hsl)',
+                          fontSize: '0.88rem',
+                          fontWeight: 500,
+                          outline: 'none',
+                          transition: 'all 0.2s ease',
+                          boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.02)'
+                        }}
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        left: '14px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'hsla(var(--foreground-hsl) / 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        pointerEvents: 'none'
+                      }}>
+                        <Search size={16} />
+                      </span>
+                      {searchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchTerm('')}
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'hsla(var(--foreground-hsl) / 0.5)',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderRadius: '50%',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--foreground-hsl)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'hsla(var(--foreground-hsl) / 0.5)'}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                  {/* Unified Accordion List Container */}
+                  {/* Unified Accordion List or Search Results Container */}
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
                     border: '1px solid var(--glass-border)',
                     borderRadius: '14px',
-                    overflow: 'hidden',
+                    overflowY: 'auto',
+                    maxHeight: '440px',
                     backgroundColor: 'hsla(var(--foreground-hsl) / 0.015)'
                   }}>
-                    {(['prev', 'rest', 'endo', 'surg', 'prot'] as const).map((cat) => {
-                      const catOpts = TREATMENT_OPTIONS.filter((t) => t.category === cat);
-                      const isOpen = selectedCategory === cat;
+                    {searchTerm.trim() !== '' ? (
+                      // Search results mode
+                      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {(() => {
+                          const term = searchTerm.toLowerCase();
+                          const filtered = treatmentOptions.filter(opt =>
+                            opt.name.toLowerCase().includes(term) ||
+                            opt.category.toLowerCase().includes(term)
+                          );
 
-                      // Count assigned treatments in this category
-                      const assignedCount = activeToothState.treatments.filter(tid =>
-                        catOpts.some(opt => opt.id === tid)
-                      ).length;
+                          return (
+                            <>
+                              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'hsla(var(--foreground-hsl) / 0.5)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginBottom: '4px' }}>
+                                Resultados de la búsqueda ({filtered.length})
+                              </div>
+                              {filtered.length > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  {filtered.map((opt) => {
+                                    const isAssigned = activeToothState.treatments.includes(opt.id);
+                                    return (
+                                      <div
+                                        key={opt.id}
+                                        onClick={() => selectedTooth && toggleTreatment(selectedTooth, opt.id)}
+                                        className={`odont-treatment-card ${isAssigned ? 'active' : ''}`}
+                                        style={{
+                                          borderColor: isAssigned ? opt.color : 'var(--glass-border)',
+                                          boxShadow: isAssigned ? `0 4px 14px ${opt.color}1e` : 'none',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          padding: '10px 14px',
+                                          borderRadius: '10px',
+                                          cursor: 'pointer',
+                                          transition: 'all 0.2s ease',
+                                          userSelect: 'none'
+                                        }}
+                                      >
+                                        <div
+                                          className="odont-treatment-checkbox"
+                                          style={{
+                                            backgroundColor: isAssigned ? opt.color : 'transparent',
+                                            borderColor: isAssigned ? opt.color : 'rgba(120, 120, 120, 0.3)',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginRight: '12px',
+                                            flexShrink: 0
+                                          }}
+                                        >
+                                          {isAssigned && (
+                                            <Check size={11} style={{ color: '#ffffff', strokeWidth: 4 }} />
+                                          )}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left' }}>
+                                          <span style={{
+                                            fontSize: '0.84rem',
+                                            color: isAssigned ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)',
+                                            fontWeight: isAssigned ? 600 : 500
+                                          }}>
+                                            {opt.name}
+                                          </span>
+                                          <span style={{
+                                            fontSize: '0.72rem',
+                                            color: opt.color,
+                                            fontWeight: 700,
+                                            opacity: 0.95
+                                          }}>
+                                            Categoría: {opt.category.toUpperCase()}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'hsla(var(--foreground-hsl) / 0.5)', fontSize: '0.84rem', fontWeight: 500 }}>
+                                  No se encontraron prestaciones que coincidan con &ldquo;{searchTerm}&rdquo;.
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      // Traditional category accordions mode
+                      categories.map((cat) => {
+                        const catOpts = treatmentOptions.filter((t) => t.category === cat);
+                        const isOpen = selectedCategory === cat;
 
-                      // Get theme color
-                      const catColor = catOpts[0]?.color || 'hsl(var(--primary-hsl))';
+                        // Count assigned treatments in this category
+                        const assignedCount = activeToothState.treatments.filter(tid =>
+                          catOpts.some(opt => opt.id === tid)
+                        ).length;
 
-                      const renderCategoryIcon = () => {
-                        const iconStyle = { display: 'inline-block', strokeWidth: 2.2 };
-                        if (cat === 'prev') return <Shield size={16} style={iconStyle} />;
-                        if (cat === 'rest') return <Activity size={16} style={iconStyle} />;
-                        if (cat === 'endo') return <Layers size={16} style={iconStyle} />;
-                        if (cat === 'surg') return <Scissors size={16} style={iconStyle} />;
-                        return <Crown size={16} style={iconStyle} />;
-                      };
+                        // Get theme color
+                        const catColor = catOpts[0]?.color || 'hsl(var(--primary-hsl))';
 
-                      return (
-                        <div
-                          key={cat}
-                          style={{
-                            borderBottom: cat !== 'prot' ? '1px solid var(--glass-border)' : 'none',
-                            transition: 'all 0.25s ease'
-                          }}
-                        >
-                          {/* Accordion Header */}
+                        const renderCategoryIcon = () => {
+                          const iconStyle = { display: 'inline-block', strokeWidth: 2.2 };
+                          const catLower = cat.toLowerCase();
+                          if (catLower.includes('prev') || catLower.includes('higien')) return <Shield size={16} style={iconStyle} />;
+                          if (catLower.includes('rest') || catLower.includes('oper') || catLower.includes('general')) return <Activity size={16} style={iconStyle} />;
+                          if (catLower.includes('endo')) return <Layers size={16} style={iconStyle} />;
+                          if (catLower.includes('cirug') || catLower.includes('quir')) return <Scissors size={16} style={iconStyle} />;
+                          if (catLower.includes('prot') || catLower.includes('fija') || catLower.includes('remov')) return <Crown size={16} style={iconStyle} />;
+                          return <FileText size={16} style={iconStyle} />;
+                        };
+
+                        return (
                           <div
-                            onClick={() => setSelectedCategory(isOpen ? null as any : cat)}
+                            key={cat}
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              padding: '14px 20px',
-                              cursor: 'pointer',
-                              backgroundColor: isOpen ? 'hsla(var(--foreground-hsl) / 0.03)' : 'transparent',
-                              transition: 'all 0.2s ease',
-                              userSelect: 'none'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'hsla(var(--foreground-hsl) / 0.04)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = isOpen ? 'hsla(var(--foreground-hsl) / 0.03)' : 'transparent';
+                              borderBottom: '1px solid var(--glass-border)',
+                              transition: 'all 0.25s ease'
                             }}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <span style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                color: isOpen ? catColor : 'var(--foreground-hsl)',
-                                transition: 'color 0.2s ease'
-                              }}>
-                                {renderCategoryIcon()}
-                              </span>
-                              <span style={{
-                                fontSize: '0.84rem',
-                                fontWeight: 700,
-                                color: isOpen ? catColor : 'var(--foreground-hsl)',
-                                transition: 'color 0.2s ease'
-                              }}>
-                                {CATEGORY_NAMES[cat]}
-                              </span>
-
-                              {/* Count Badge */}
-                              {assignedCount > 0 && (
-                                <span style={{
-                                  backgroundColor: catColor,
-                                  color: '#ffffff',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 800,
-                                  borderRadius: '9999px',
-                                  padding: '1px 7px',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  boxShadow: `0 2px 6px ${catColor}44`
-                                }}>
-                                  {assignedCount}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Caret Arrow Indicator */}
-                            <span style={{
-                              opacity: 0.7,
-                              transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              color: isOpen ? catColor : 'var(--foreground-hsl)'
-                            }}>
-                              <ChevronRight size={16} style={{ strokeWidth: 2.5 }} />
-                            </span>
-                          </div>
-
-                          {/* Accordion Body (Collapsible Section) */}
-                          {isOpen && (
+                            {/* Accordion Header */}
                             <div
-                              className="animate-fade-in"
+                              onClick={() => setSelectedCategory(isOpen ? null : cat)}
                               style={{
-                                padding: '18px 20px',
-                                backgroundColor: 'hsla(var(--foreground-hsl) / 0.01)',
-                                borderTop: '1px solid var(--glass-border)',
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                                gap: '12px'
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '14px 20px',
+                                cursor: 'pointer',
+                                backgroundColor: isOpen ? 'hsla(var(--foreground-hsl) / 0.03)' : 'transparent',
+                                transition: 'all 0.2s ease',
+                                userSelect: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'hsla(var(--foreground-hsl) / 0.04)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = isOpen ? 'hsla(var(--foreground-hsl) / 0.03)' : 'transparent';
                               }}
                             >
-                              {catOpts.map((opt) => {
-                                const isAssigned = activeToothState.treatments.includes(opt.id);
-                                return (
-                                  <div
-                                    key={opt.id}
-                                    onClick={() => selectedTooth && toggleTreatment(selectedTooth, opt.id)}
-                                    className={`odont-treatment-card ${isAssigned ? 'active' : ''}`}
-                                    style={{
-                                      borderColor: isAssigned ? opt.color : 'var(--glass-border)',
-                                      boxShadow: isAssigned ? `0 4px 14px ${opt.color}1e` : 'none'
-                                    }}
-                                  >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  color: isOpen ? catColor : 'hsl(var(--foreground-hsl))',
+                                  transition: 'color 0.2s ease'
+                                }}>
+                                  {renderCategoryIcon()}
+                                </span>
+                                <span style={{
+                                  fontSize: '0.84rem',
+                                  fontWeight: 700,
+                                  color: isOpen ? catColor : 'hsl(var(--foreground-hsl))',
+                                  transition: 'color 0.2s ease'
+                                }}>
+                                  {cat}
+                                </span>
+
+                                {/* Count Badge */}
+                                {assignedCount > 0 && (
+                                  <span style={{
+                                    backgroundColor: catColor,
+                                    color: '#ffffff',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 800,
+                                    borderRadius: '9999px',
+                                    padding: '1px 7px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: `0 2px 6px ${catColor}44`
+                                  }}>
+                                    {assignedCount}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Caret Arrow Indicator */}
+                              <span style={{
+                                opacity: 0.7,
+                                transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                color: isOpen ? catColor : 'hsl(var(--foreground-hsl))'
+                              }}>
+                                <ChevronRight size={16} style={{ strokeWidth: 2.5 }} />
+                              </span>
+                            </div>
+
+                            {/* Accordion Body (Collapsible Section) */}
+                            {isOpen && (
+                              <div
+                                className="animate-fade-in"
+                                style={{
+                                  padding: '18px 20px',
+                                  backgroundColor: 'hsla(var(--foreground-hsl) / 0.01)',
+                                  borderTop: '1px solid var(--glass-border)',
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                                  gap: '12px'
+                                }}
+                              >
+                                {catOpts.map((opt) => {
+                                  const isAssigned = activeToothState.treatments.includes(opt.id);
+                                  return (
                                     <div
-                                      className="odont-treatment-checkbox"
+                                      key={opt.id}
+                                      onClick={() => selectedTooth && toggleTreatment(selectedTooth, opt.id)}
+                                      className={`odont-treatment-card ${isAssigned ? 'active' : ''}`}
                                       style={{
-                                        backgroundColor: isAssigned ? opt.color : 'transparent',
-                                        borderColor: isAssigned ? opt.color : 'rgba(120, 120, 120, 0.3)',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
+                                        borderColor: isAssigned ? opt.color : 'var(--glass-border)',
+                                        boxShadow: isAssigned ? `0 4px 14px ${opt.color}1e` : 'none'
                                       }}
                                     >
-                                      {isAssigned && (
-                                        <Check size={11} style={{ color: '#ffffff', strokeWidth: 4 }} />
-                                      )}
+                                      <div
+                                        className="odont-treatment-checkbox"
+                                        style={{
+                                          backgroundColor: isAssigned ? opt.color : 'transparent',
+                                          borderColor: isAssigned ? opt.color : 'rgba(120, 120, 120, 0.3)',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center'
+                                        }}
+                                      >
+                                        {isAssigned && (
+                                          <Check size={11} style={{ color: '#ffffff', strokeWidth: 4 }} />
+                                        )}
+                                      </div>
+                                      <span style={{
+                                        color: isAssigned ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)',
+                                        fontWeight: isAssigned ? 600 : 500
+                                      }}>
+                                        {opt.name}
+                                      </span>
                                     </div>
-                                    <span style={{
-                                      color: isAssigned ? 'var(--foreground-hsl)' : 'hsla(var(--foreground-hsl) / 0.85)',
-                                      fontWeight: isAssigned ? 600 : 500
-                                    }}>
-                                      {opt.name}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
+                {/* Footer Buttons Section */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'flex-end',
@@ -1102,7 +1913,8 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
                   borderTop: '1px solid var(--glass-border)',
                   paddingTop: '16px',
                   gap: '12px',
-                  flexWrap: 'wrap'
+                  flexWrap: 'wrap',
+                  gridColumn: '1 / -1'
                 }}>
                   <button
                     type="button"
@@ -1230,7 +2042,7 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
                         {state.treatments.length > 0 ? (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                             {state.treatments.map((tid) => {
-                              const opt = TREATMENT_OPTIONS.find((o) => o.id === tid);
+                              const opt = treatmentOptions.find((o) => o.id === tid);
                               return (
                                 <span
                                   key={tid}
@@ -1293,6 +2105,201 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           placeholder="Detalles complementarios clínicos, anomalías, derivaciones preferenciales o del caso..."
         />
       </div>
+
+      {/* Mass Selection Portal */}
+      {massSelectionType && mounted && typeof document !== 'undefined' ? (
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: 'rgba(10, 17, 36, 0.5)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 99999,
+              padding: '24px'
+            }}
+            onClick={() => setMassSelectionType(null)}
+          >
+            <div
+              className="glass-panel animate-fade-in"
+              style={{
+                padding: '32px 34px 46px 34px',
+                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.04) 0%, rgba(59, 130, 246, 0.02) 100%), hsl(var(--card-hsl))',
+                borderWidth: '1.5px 1.5px 1.5px 6px',
+                borderStyle: 'solid',
+                borderColor: 'hsl(var(--card-border-hsl)) hsl(var(--card-border-hsl)) hsl(var(--card-border-hsl)) #a855f7',
+                boxShadow: '0 24px 60px -15px rgba(10, 17, 36, 0.35), var(--shadow-lg)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+                width: '95%',
+                maxWidth: '680px',
+                maxHeight: '88vh',
+                overflowY: 'auto',
+                position: 'relative',
+                margin: 'auto'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setMassSelectionType(null);
+                  setMassSelectedCategory(null);
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '18px',
+                  top: '18px',
+                  background: 'hsla(var(--foreground-hsl) / 0.04)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'hsl(var(--foreground-hsl))',
+                  transition: 'all 0.2s ease',
+                  padding: 0,
+                  zIndex: 10
+                }}
+              >
+                <X size={16} style={{ strokeWidth: 2.5 }} />
+              </button>
+
+              <div>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'hsl(var(--foreground-hsl))' }}>
+                  Asignar Prestación en Masa
+                </h4>
+                <p style={{ fontSize: '0.82rem', opacity: 0.8, margin: '4px 0 0 0', color: 'hsla(var(--foreground-hsl) / 0.8)' }}>
+                  Se aplicará la prestación seleccionada a todas las piezas dentales en la{' '}
+                  <strong style={{ color: '#a855f7' }}>
+                    {massSelectionType === 'upper' ? 'Arcada Superior' : massSelectionType === 'lower' ? 'Arcada Inferior' : 'Boca Completa'}
+                  </strong>.
+                </p>
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: 'var(--glass-border)' }} />
+
+              {/* Prestaciones Selector Accordion */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'hsl(var(--primary-hsl))' }}>
+                  Selecciona la prestación a aplicar:
+                </span>
+                
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  backgroundColor: 'hsla(var(--foreground-hsl) / 0.01)'
+                }}>
+                  {categories.map((cat) => {
+                    const catOpts = treatmentOptions.filter(t => t.category === cat);
+                    const isOpen = massSelectedCategory === cat;
+                    const catColor = catOpts[0]?.color || 'hsl(var(--primary-hsl))';
+
+                    const renderCategoryIcon = () => {
+                      const iconStyle = { display: 'inline-block', strokeWidth: 2.2 };
+                      const catLower = cat.toLowerCase();
+                      if (catLower.includes('prev') || catLower.includes('higien')) return <Shield size={15} style={iconStyle} />;
+                      if (catLower.includes('rest') || catLower.includes('oper') || catLower.includes('general')) return <Activity size={15} style={iconStyle} />;
+                      if (catLower.includes('endo')) return <Layers size={15} style={iconStyle} />;
+                      if (catLower.includes('cirug') || catLower.includes('quir')) return <Scissors size={15} style={iconStyle} />;
+                      if (catLower.includes('prot') || catLower.includes('rehab')) return <Crown size={15} style={iconStyle} />;
+                      return <FileText size={15} style={iconStyle} />;
+                    };
+
+                    return (
+                      <div key={`mass-${cat}`} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                        <div
+                          onClick={() => setMassSelectedCategory(isOpen ? null : cat)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '12px 18px',
+                            cursor: 'pointer',
+                            backgroundColor: isOpen ? 'hsla(var(--foreground-hsl) / 0.03)' : 'transparent',
+                            transition: 'all 0.2s ease',
+                            userSelect: 'none'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: isOpen ? catColor : 'hsl(var(--foreground-hsl))' }}>
+                              {renderCategoryIcon()}
+                            </span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: isOpen ? catColor : 'hsl(var(--foreground-hsl))' }}>
+                              {cat}
+                            </span>
+                          </div>
+                          <ChevronRight size={14} style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'all 0.2s ease' }} />
+                        </div>
+
+                        {isOpen && (
+                          <div style={{
+                            padding: '14px 18px',
+                            backgroundColor: 'hsla(var(--foreground-hsl) / 0.005)',
+                            borderTop: '1px solid var(--glass-border)',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr',
+                            gap: '8px'
+                          }}>
+                            {catOpts.map((opt) => (
+                              <button
+                                key={`mass-opt-${opt.id}`}
+                                type="button"
+                                onClick={() => handleApplyMassTreatment(opt.id)}
+                                className="odont-treatment-card"
+                                style={{
+                                  padding: '10px 14px',
+                                  textAlign: 'left',
+                                  width: '100%',
+                                  cursor: 'pointer',
+                                  borderColor: 'var(--glass-border)',
+                                  justifyContent: 'flex-start',
+                                  backgroundColor: 'transparent',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = opt.color;
+                                  e.currentTarget.style.backgroundColor = `${opt.color}0a`;
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--glass-border)';
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                }}
+                              >
+                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: opt.color }} />
+                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'hsl(var(--foreground-hsl))' }}>{opt.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      ) : null}
 
     </div>
   );

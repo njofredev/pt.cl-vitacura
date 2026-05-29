@@ -781,6 +781,31 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   display: block;
 }
 
+/* Premium Form Validation Error Animations */
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes glowRedPulse {
+  0% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.2); }
+  100% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0); }
+}
+
+.animate-shake-error {
+  animation: shakeError 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both,
+             glowRedPulse 1.4s ease-in-out infinite;
+  border-color: hsl(var(--danger-hsl)) !important;
+}
+
+.form-input-error {
+  border-color: hsl(var(--danger-hsl)) !important;
+  background-color: rgba(239, 68, 68, 0.015) !important;
+}
+
+
 
 
 

@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
+import SessionTimeout from '@/components/SessionTimeout';
 import { redirect } from 'next/navigation';
 import React from 'react';
 
@@ -16,6 +17,9 @@ export default async function DashboardLayout({
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
+      {/* Session Inactivity Timeout Handler */}
+      <SessionTimeout />
+
       {/* Sidebar Navigation */}
       <Sidebar user={user} />
 

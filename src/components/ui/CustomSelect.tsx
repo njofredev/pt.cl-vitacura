@@ -9,9 +9,19 @@ interface CustomSelectProps {
   options: { value: string; label: string }[];
   placeholder?: string;
   disabled?: boolean;
+  id?: string;
+  hasError?: boolean;
 }
 
-export default function CustomSelect({ value, onChange, options, placeholder = 'Seleccione...', disabled = false }: CustomSelectProps) {
+export default function CustomSelect({
+  value,
+  onChange,
+  options,
+  placeholder = 'Seleccione...',
+  disabled = false,
+  id,
+  hasError = false
+}: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +38,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
   const selectedOpt = options.find(o => o.value === value);
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} id={id} style={{ position: 'relative', width: '100%', outline: 'none' }}>
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className="form-input"
@@ -40,7 +50,10 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
           opacity: disabled ? 0.6 : 1,
           paddingRight: '14px',
           userSelect: 'none',
-          minHeight: '44px'
+          minHeight: '44px',
+          borderColor: hasError ? 'hsl(var(--danger-hsl))' : undefined,
+          boxShadow: hasError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : undefined,
+          transition: 'all 0.2s ease'
         }}
       >
         <span style={{ color: selectedOpt ? 'var(--foreground-hsl)' : 'hsla(var(--foreground-hsl) / 0.5)' }}>

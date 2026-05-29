@@ -95,6 +95,31 @@ async function setup() {
       );
     `);
 
+    // Create ARANCEL Table
+    console.log('Creating "arancel" table...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS arancel (
+        id INT PRIMARY KEY,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        source TEXT NOT NULL,
+        price_base INT,
+        price_pref INT,
+        show_in_odontogram BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Create HIDDEN_CATEGORIES Table
+    console.log('Creating "hidden_categories" table...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS hidden_categories (
+        category TEXT PRIMARY KEY,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
     // Create Seed Super Admin User
     console.log('Checking for existing admin user...');
     const adminCheck = await client.query(`SELECT id FROM users WHERE email = $1`, ['admin@tabancura.cl']);
