@@ -56,6 +56,7 @@ export default function RegisterCasePage() {
 
   const [selectedMedicalCenter, setSelectedMedicalCenter] = useState('');
   const [customMedicalCenter, setCustomMedicalCenter] = useState('');
+  const [hasPreloadedMedicalCenter, setHasPreloadedMedicalCenter] = useState(false);
 
   const [selectedAgreementType, setSelectedAgreementType] = useState('');
   const [customAgreementType, setCustomAgreementType] = useState('');
@@ -162,6 +163,10 @@ export default function RegisterCasePage() {
           setProfEmail(u.professional_email || u.email || '');
           setProfAddress(u.professional_address || '');
           setProfWebsite(u.professional_website || '');
+          if (u.medical_center) {
+            setSelectedMedicalCenter(u.medical_center);
+            setHasPreloadedMedicalCenter(true);
+          }
         }
       } catch (err) {
         console.error('Failed to load professional defaults:', err);
@@ -1451,45 +1456,71 @@ export default function RegisterCasePage() {
                           <label className="form-label" htmlFor="medical_center_select" style={{ color: medicalCenterError ? 'hsl(var(--danger-hsl))' : undefined }}>
                             Centro Médico de Origen * {medicalCenterError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                           </label>
-                          <CustomSelect
-                            value={selectedMedicalCenter}
-                            onChange={(val) => {
-                              setSelectedMedicalCenter(val);
-                              clearFieldError('medical_center_select', setMedicalCenterError);
-                            }}
-                            options={[
-                              { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
-                              { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
-                              { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
-                              { value: 'Otro', label: 'Otro Centro de Salud Familiar' }
-                            ]}
-                            placeholder="Seleccione un Centro..."
-                            disabled={loading}
-                            id="medical_center_select"
-                            hasError={!!medicalCenterError}
-                          />
-
-                          {selectedMedicalCenter === 'Otro' && (
-                            <div className="animate-fade-in" style={{ marginTop: '10px' }}>
-                              <label className="form-label" htmlFor="custom_medical_center" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique el Centro Médico *</label>
+                          {hasPreloadedMedicalCenter ? (
+                            <>
                               <input
-                                className={`form-input ${medicalCenterError ? 'animate-shake-error' : ''}`}
+                                className="form-input"
                                 type="text"
-                                id="custom_medical_center"
-                                placeholder="Escriba el nombre del centro médico"
-                                value={customMedicalCenter}
-                                onChange={(e) => {
-                                  setCustomMedicalCenter(e.target.value);
-                                  clearFieldError('custom_medical_center', setMedicalCenterError);
-                                }}
-                                required
-                                disabled={loading}
+                                id="medical_center_display"
+                                readOnly={true}
+                                value={selectedMedicalCenter}
                                 style={{
-                                  borderColor: medicalCenterError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
-                                  boxShadow: medicalCenterError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
+                                  opacity: 0.8,
+                                  cursor: 'not-allowed',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                                  fontWeight: 600,
+                                  borderColor: 'var(--glass-border)'
                                 }}
                               />
-                            </div>
+                              <input
+                                type="hidden"
+                                name="medical_center"
+                                value={selectedMedicalCenter}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <CustomSelect
+                                value={selectedMedicalCenter}
+                                onChange={(val) => {
+                                  setSelectedMedicalCenter(val);
+                                  clearFieldError('medical_center_select', setMedicalCenterError);
+                                }}
+                                options={[
+                                  { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
+                                  { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
+                                  { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
+                                  { value: 'Otro', label: 'Otro Centro de Salud Familiar' }
+                                ]}
+                                placeholder="Seleccione un Centro..."
+                                disabled={loading}
+                                id="medical_center_select"
+                                hasError={!!medicalCenterError}
+                              />
+
+                              {selectedMedicalCenter === 'Otro' && (
+                                <div className="animate-fade-in" style={{ marginTop: '10px' }}>
+                                  <label className="form-label" htmlFor="custom_medical_center" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique el Centro Médico *</label>
+                                  <input
+                                    className={`form-input ${medicalCenterError ? 'animate-shake-error' : ''}`}
+                                    type="text"
+                                    id="custom_medical_center"
+                                    placeholder="Escriba el nombre del centro médico"
+                                    value={customMedicalCenter}
+                                    onChange={(e) => {
+                                      setCustomMedicalCenter(e.target.value);
+                                      clearFieldError('custom_medical_center', setMedicalCenterError);
+                                    }}
+                                    required
+                                    disabled={loading}
+                                    style={{
+                                      borderColor: medicalCenterError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
+                                      boxShadow: medicalCenterError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                           {medicalCenterError && (
                             <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>

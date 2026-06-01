@@ -103,7 +103,8 @@ export async function getCurrentUserAction() {
     const res = await pool.query(
       `SELECT id, name, email, role, active,
               professional_title, professional_position, professional_email,
-              professional_address, professional_website, professional_phone
+              professional_address, professional_website, professional_phone,
+              medical_center
        FROM users 
        WHERE id = $1`,
       [session.id]

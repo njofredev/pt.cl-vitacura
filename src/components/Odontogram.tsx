@@ -217,33 +217,25 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
   const handleApplyMassTreatment = (treatmentId: string) => {
     if (!massSelectionType) return;
     
-    // Determine the teeth IDs based on mass selection type and current tab
-    let targetTeethIds: number[] = [];
-    if (activeTab === 'adult') {
-      if (massSelectionType === 'upper') targetTeethIds = ADULT_TEETH.slice(0, 16).map(t => t.id);
-      else if (massSelectionType === 'lower') targetTeethIds = ADULT_TEETH.slice(16, 32).map(t => t.id);
-      else targetTeethIds = ADULT_TEETH.map(t => t.id);
-    } else {
-      if (massSelectionType === 'upper') targetTeethIds = CHILD_TEETH.slice(0, 10).map(t => t.id);
-      else if (massSelectionType === 'lower') targetTeethIds = CHILD_TEETH.slice(10, 20).map(t => t.id);
-      else targetTeethIds = CHILD_TEETH.map(t => t.id);
-    }
+    // Instead of entering the treatment piece by piece, assign it to a single pseudo-ID representing the complete arch
+    let pseudoId = 0;
+    if (massSelectionType === 'upper') pseudoId = 101;
+    else if (massSelectionType === 'lower') pseudoId = 102;
+    else pseudoId = 103;
 
     setChartState(prev => {
       const next = { ...prev };
-      targetTeethIds.forEach(id => {
-        const current = next[id] || {
-          faces: { V: false, O: false, M: false, D: false, L: false },
-          treatments: []
+      const current = next[pseudoId] || {
+        faces: { V: false, O: false, M: false, D: false, L: false },
+        treatments: []
+      };
+      // Add treatment if not already assigned
+      if (!current.treatments.includes(treatmentId)) {
+        next[pseudoId] = {
+          ...current,
+          treatments: [...current.treatments, treatmentId]
         };
-        // Add treatment if not already assigned
-        if (!current.treatments.includes(treatmentId)) {
-          next[id] = {
-            ...current,
-            treatments: [...current.treatments, treatmentId]
-          };
-        }
-      });
+      }
       return next;
     });
 
@@ -326,6 +318,28 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
     // Compile data into readable text for hidden inputs
     const diagnosisList: string[] = [];
     const treatmentList: string[] = [];
+
+    // Compile pseudo-IDs (arches or whole mouth) first to keep it elegant and structured
+    const pseudoIds = [101, 102, 103];
+    pseudoIds.forEach((id) => {
+      const state = chartState[id];
+      if (state) {
+        let name = '';
+        if (id === 101) name = 'Arcada Superior Completa';
+        else if (id === 102) name = 'Arcada Inferior Completa';
+        else name = 'Boca Completa';
+
+        diagnosisList.push(`${name}: Diagnóstico/Estado general`);
+
+        if (state.treatments.length > 0) {
+          const treatmentNames = state.treatments.map((tid) => {
+            const opt = treatmentOptions.find((o) => o.id === tid);
+            return opt ? opt.name : tid;
+          });
+          treatmentList.push(`${name}: Realizar [${treatmentNames.join(', ')}]`);
+        }
+      }
+    });
 
     const stateToCompile = activeTab === 'adult' ? ADULT_TEETH : CHILD_TEETH;
 
@@ -1134,17 +1148,45 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
               <div style={{
                 display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.82rem',
-                fontWeight: 800,
-                color: 'hsla(var(--foreground-hsl) / 0.95)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
                 borderBottom: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
                 paddingBottom: '8px',
-                marginBottom: '6px'
+                marginBottom: '6px',
+                gap: '6px'
               }}>
-                Maxilar Superior (Arcada Superior)
+                <div style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  color: 'hsla(var(--foreground-hsl) / 0.95)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                }}>
+                  Maxilar Superior (Arcada Superior)
+                </div>
+                {chartState[101] && chartState[101].treatments.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
+                    {chartState[101].treatments.map(tid => {
+                      const opt = treatmentOptions.find(o => o.id === tid);
+                      return (
+                        <span key={tid} style={{
+                          fontSize: '0.7rem',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          backgroundColor: opt ? `${opt.color}1c` : 'rgba(255,255,255,0.06)',
+                          color: opt ? opt.color : 'var(--foreground-hsl)',
+                          border: '1px solid',
+                          borderColor: opt ? `${opt.color}44` : 'rgba(255,255,255,0.1)',
+                          fontWeight: 700,
+                          textTransform: 'none'
+                        }}>
+                          Arcada Completa: {opt ? opt.name.split(' (')[0] : tid}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
  
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
@@ -1218,17 +1260,45 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
  
               <div style={{
                 display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.82rem',
-                fontWeight: 800,
-                color: 'hsla(var(--foreground-hsl) / 0.95)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
                 borderTop: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
                 paddingTop: '10px',
-                marginTop: '6px'
+                marginTop: '6px',
+                gap: '6px'
               }}>
-                Mandíbula Inferior (Arcada Inferior)
+                {chartState[102] && chartState[102].treatments.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center', marginBottom: '4px' }}>
+                    {chartState[102].treatments.map(tid => {
+                      const opt = treatmentOptions.find(o => o.id === tid);
+                      return (
+                        <span key={tid} style={{
+                          fontSize: '0.7rem',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          backgroundColor: opt ? `${opt.color}1c` : 'rgba(255,255,255,0.06)',
+                          color: opt ? opt.color : 'var(--foreground-hsl)',
+                          border: '1px solid',
+                          borderColor: opt ? `${opt.color}44` : 'rgba(255,255,255,0.1)',
+                          fontWeight: 700,
+                          textTransform: 'none'
+                        }}>
+                          Arcada Completa: {opt ? opt.name.split(' (')[0] : tid}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                <div style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  color: 'hsla(var(--foreground-hsl) / 0.95)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                }}>
+                  Mandíbula Inferior (Arcada Inferior)
+                </div>
               </div>
             </div>
  
@@ -2014,29 +2084,52 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
               <tbody>
                 {Object.entries(chartState).map(([idStr, state]) => {
                   const id = parseInt(idStr, 10);
-                  const tooth = currentTeethList.find((t) => t.id === id);
-                  if (!tooth) return null;
-
-                  const activeFaces = Object.entries(state.faces)
-                    .filter(([_, isActive]) => isActive)
-                    .map(([faceName]) => faceName)
-                    .join(', ');
+                  const isPseudo = id === 101 || id === 102 || id === 103;
+                  
+                  let nameLabel = '';
+                  let typeLabel = '';
+                  let activeFaces = '';
+                  
+                  if (isPseudo) {
+                    if (id === 101) {
+                      nameLabel = 'Arcada Superior';
+                      typeLabel = 'Arcada Completa';
+                    } else if (id === 102) {
+                      nameLabel = 'Arcada Inferior';
+                      typeLabel = 'Arcada Completa';
+                    } else {
+                      nameLabel = 'Toda la Boca';
+                      typeLabel = 'Dentición Completa';
+                    }
+                    activeFaces = 'Completo';
+                  } else {
+                    const tooth = currentTeethList.find((t) => t.id === id);
+                    if (!tooth) return null;
+                    nameLabel = `Pieza ${id}`;
+                    typeLabel = tooth.type === 'incisor' ? 'Incisivo' : tooth.type === 'canine' ? 'Canino' : tooth.type === 'premolar' ? 'Premolar' : 'Molar';
+                    activeFaces = Object.entries(state.faces)
+                      .filter(([_, isActive]) => isActive)
+                      .map(([faceName]) => faceName)
+                      .join(', ') || (state.condition === 'ausente' ? 'Completo' : 'General');
+                  }
 
                   let toothConditionLabel = '';
-                  if (state.condition === 'ausente') toothConditionLabel = 'Ausente';
-                  if (state.condition === 'implante') toothConditionLabel = 'Implante';
-                  if (state.condition === 'corona_existente') toothConditionLabel = 'Corona Previa';
+                  if (!isPseudo) {
+                    if (state.condition === 'ausente') toothConditionLabel = 'Ausente';
+                    if (state.condition === 'implante') toothConditionLabel = 'Implante';
+                    if (state.condition === 'corona_existente') toothConditionLabel = 'Corona Previa';
+                  }
 
                   return (
                     <tr key={id}>
                       <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--foreground-hsl)' }}>
-                        Pieza {id} {toothConditionLabel && <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', marginLeft: '6px' }}>{toothConditionLabel}</span>}
+                        {nameLabel} {toothConditionLabel && <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', marginLeft: '6px' }}>{toothConditionLabel}</span>}
                       </td>
                       <td style={{ padding: '8px 12px', opacity: 0.7, fontSize: '0.84rem', color: 'var(--foreground-hsl)' }}>
-                        {tooth.type === 'incisor' ? 'Incisivo' : tooth.type === 'canine' ? 'Canino' : tooth.type === 'premolar' ? 'Premolar' : 'Molar'}
+                        {typeLabel}
                       </td>
                       <td style={{ padding: '8px 12px', color: 'hsl(var(--accent-hsl))', fontWeight: 600 }}>
-                        {activeFaces || (state.condition === 'ausente' ? 'Completo' : 'General')}
+                        {activeFaces}
                       </td>
                       <td style={{ padding: '8px 12px' }}>
                         {state.treatments.length > 0 ? (
