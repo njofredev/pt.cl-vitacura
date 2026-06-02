@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { formatRUT, formatDate, formatDateTime } from '@/lib/utils';
 import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction } from '@/app/actions/caseActions';
+import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
 import { UserSession } from '@/lib/auth';
 import Link from 'next/link';
 import CustomSelect from '@/components/ui/CustomSelect';
@@ -79,6 +80,12 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   const [editTreatmentNeeded, setEditTreatmentNeeded] = useState('');
   const [editProfessionalName, setEditProfessionalName] = useState('');
 
+  const [editMedicalCenterSelect, setEditMedicalCenterSelect] = useState('');
+  const [customEditMedicalCenter, setCustomEditMedicalCenter] = useState('');
+  const [editAgreementTypeSelect, setEditAgreementTypeSelect] = useState('');
+  const [customEditAgreementType, setCustomEditAgreementType] = useState('');
+  const [editAgreements, setEditAgreements] = useState<{ value: string; label: string }[]>([]);
+
   // Filter cases based on search and status dropdown
   const filteredCases = cases.filter((c) => {
     const fullName = `${c.first_names} ${c.last_names}`.toLowerCase();
@@ -119,12 +126,64 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
     setEditDentalDiagnosis(c.dental_diagnosis || '');
     setEditTreatmentNeeded(c.treatment_needed || '');
     setEditProfessionalName(c.professional_name || '');
+
+    const knownCenters = ['CESFAM Vitacura', 'CESFAM Lo Barnechea', 'Consultorio Dr. Aníbal Ariztía', 'Policlinico Tabancura'];
+    if (c.medical_center && knownCenters.includes(c.medical_center)) {
+      setEditMedicalCenterSelect(c.medical_center);
+      setCustomEditMedicalCenter('');
+    } else {
+      setEditMedicalCenterSelect(c.medical_center ? 'Otro' : '');
+      setCustomEditMedicalCenter(c.medical_center || '');
+    }
     
     setIsEditing(false);
     setError(null);
     setSuccess(null);
     setIsModalOpen(true);
   }
+
+  useEffect(() => {
+    async function loadEditConvenios() {
+      const center = editMedicalCenterSelect === 'Otro' ? customEditMedicalCenter : editMedicalCenterSelect;
+      if (!center) {
+        setEditAgreements([{ value: 'Otro', label: 'Otro Convenio' }]);
+        return;
+      }
+
+      try {
+        const res = await getConveniosByMedicalCenterAction(center);
+        if (res.success && res.convenios) {
+          const mapped = res.convenios.map((cov: any) => ({
+            value: cov.empresa,
+            label: cov.empresa,
+          }));
+          mapped.push({ value: 'Otro', label: 'Otro Convenio' });
+          setEditAgreements(mapped);
+
+          // Attempt to map the loaded agreement
+          const currentAgreement = selectedCase?.agreement_type || '';
+          const isValid = mapped.some((opt: any) => opt.value === currentAgreement);
+          if (isValid) {
+            setEditAgreementTypeSelect(currentAgreement);
+            setCustomEditAgreementType('');
+          } else {
+            setEditAgreementTypeSelect(currentAgreement ? 'Otro' : '');
+            setCustomEditAgreementType(currentAgreement);
+          }
+        } else {
+          setEditAgreements([{ value: 'Otro', label: 'Otro Convenio' }]);
+          setEditAgreementTypeSelect(selectedCase?.agreement_type ? 'Otro' : '');
+          setCustomEditAgreementType(selectedCase?.agreement_type || '');
+        }
+      } catch (err) {
+        console.error('Failed to load edit convenios:', err);
+        setEditAgreements([{ value: 'Otro', label: 'Otro Convenio' }]);
+      }
+    }
+    if (isEditing) {
+      loadEditConvenios();
+    }
+  }, [editMedicalCenterSelect, customEditMedicalCenter, isEditing, selectedCase]);
 
   async function handleDeleteCase(caseId: string, name: string) {
     const confirmed = window.confirm(`¿Está seguro de que desea eliminar permanentemente el caso social de ${name}? Esta acción no se puede deshacer.`);
@@ -164,6 +223,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
     setError(null);
     setSuccess(null);
 
+    const finalMedicalCenter = editMedicalCenterSelect === 'Otro' ? customEditMedicalCenter : editMedicalCenterSelect;
+    const finalAgreementType = editAgreementTypeSelect === 'Otro' ? customEditAgreementType : editAgreementTypeSelect;
+
     try {
       const result = await updateCaseDetailsAction(selectedCase.id, {
         rut: editRut,
@@ -175,8 +237,8 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
         email: editEmail,
         mobile: editMobile,
         description: editDescription,
-        medical_center: editMedicalCenter,
-        agreement_type: editAgreementType,
+        medical_center: finalMedicalCenter,
+        agreement_type: finalAgreementType,
         dental_diagnosis: editDentalDiagnosis,
         treatment_needed: editTreatmentNeeded,
         professional_name: editProfessionalName
@@ -197,8 +259,8 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
           email: editEmail || null,
           mobile: editMobile,
           description: editDescription,
-          medical_center: editMedicalCenter || null,
-          agreement_type: editAgreementType || null,
+          medical_center: finalMedicalCenter || null,
+          agreement_type: finalAgreementType || null,
           dental_diagnosis: editDentalDiagnosis || null,
           treatment_needed: editTreatmentNeeded || null,
           professional_name: editProfessionalName || null
@@ -540,11 +602,55 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Centro Médico</label>
-                        <input type="text" className="form-input" value={editMedicalCenter} onChange={e => setEditMedicalCenter(e.target.value)} style={{ width: '100%' }} />
+                        <CustomSelect
+                          value={editMedicalCenterSelect}
+                          onChange={(val) => {
+                            setEditMedicalCenterSelect(val);
+                          }}
+                          options={[
+                            { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
+                            { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
+                            { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
+                            { value: 'Policlinico Tabancura', label: 'Policlínico Tabancura' },
+                            { value: 'Otro', label: 'Otro Centro de Salud Familiar' }
+                          ]}
+                          placeholder="Seleccione Centro..."
+                        />
+                        {editMedicalCenterSelect === 'Otro' && (
+                          <div className="animate-fade-in" style={{ marginTop: '6px' }}>
+                            <input
+                              className="form-input"
+                              type="text"
+                              placeholder="Especifique el centro médico"
+                              value={customEditMedicalCenter}
+                              onChange={e => setCustomEditMedicalCenter(e.target.value)}
+                              required
+                              style={{ width: '100%' }}
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Convenio Solicitado</label>
-                        <input type="text" className="form-input" value={editAgreementType} onChange={e => setEditAgreementType(e.target.value)} style={{ width: '100%' }} />
+                        <CustomSelect
+                          value={editAgreementTypeSelect}
+                          onChange={setEditAgreementTypeSelect}
+                          options={editAgreements}
+                          placeholder="Seleccione tipo de convenio..."
+                        />
+                        {editAgreementTypeSelect === 'Otro' && (
+                          <div className="animate-fade-in" style={{ marginTop: '6px' }}>
+                            <input
+                              className="form-input"
+                              type="text"
+                              placeholder="Especifique el convenio"
+                              value={customEditAgreementType}
+                              onChange={e => setCustomEditAgreementType(e.target.value)}
+                              required
+                              style={{ width: '100%' }}
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Diagnóstico Odontológico</label>

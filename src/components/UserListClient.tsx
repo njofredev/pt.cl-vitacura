@@ -18,6 +18,7 @@ interface User {
   professional_address?: string;
   professional_website?: string;
   professional_phone?: string;
+  medical_center?: string;
 }
 
 interface UserListClientProps {
@@ -36,6 +37,8 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
 
   const [newRole, setNewRole] = useState('internal');
   const [editRole, setEditRole] = useState('internal');
+  const [newMedicalCenter, setNewMedicalCenter] = useState('');
+  const [editMedicalCenter, setEditMedicalCenter] = useState('');
 
   const roleLabels = {
     admin: 'Administrador General',
@@ -82,6 +85,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         const name = formData.get('name') as string;
         const email = formData.get('email') as string;
         const role = formData.get('role') as any;
+        const medical_center = formData.get('medical_center') as string;
         
         const newUser: User = {
           id: Math.random().toString(), // temporary, they'll get the real UUID on refresh
@@ -90,8 +94,10 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
           role,
           active: true,
           created_at: new Date(),
+          medical_center,
         };
         setUsers([newUser, ...users]);
+        setNewMedicalCenter('');
         
         setTimeout(() => {
           setIsModalOpen(false);
@@ -133,6 +139,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         const professional_address = formData.get('professional_address') as string;
         const professional_website = formData.get('professional_website') as string;
         const professional_phone = formData.get('professional_phone') as string;
+        const medical_center = formData.get('medical_center') as string;
 
         setUsers(users.map(u => u.id === editingUser.id ? { 
           ...u, 
@@ -144,12 +151,14 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
           professional_email,
           professional_address,
           professional_website,
-          professional_phone
+          professional_phone,
+          medical_center
         } : u));
 
         setTimeout(() => {
           setIsEditModalOpen(false);
           setEditingUser(null);
+          setEditMedicalCenter('');
           setSuccess(null);
         }, 1500);
       } else {
@@ -257,6 +266,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                         onClick={() => {
                           setEditingUser(u);
                           setEditRole(u.role);
+                          setEditMedicalCenter(u.medical_center || '');
                           setIsEditModalOpen(true);
                         }}
                         className="btn btn-primary"
@@ -335,6 +345,23 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
               disabled={loading}
             />
             <input type="hidden" name="role" value={newRole} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="medical_center">Centro Médico Asignado</label>
+            <CustomSelect
+              value={newMedicalCenter}
+              onChange={setNewMedicalCenter}
+              options={[
+                { value: '', label: 'Ninguno (Selección libre)' },
+                { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
+                { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
+                { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
+                { value: 'Policlinico Tabancura', label: 'Policlínico Tabancura' }
+              ]}
+              disabled={loading}
+            />
+            <input type="hidden" name="medical_center" value={newMedicalCenter} />
           </div>
 
           <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginTop: '8px', marginBottom: '4px' }}>
@@ -437,6 +464,23 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                 disabled={loading}
               />
               <input type="hidden" name="role" value={editRole} />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="edit_medical_center">Centro Médico Asignado</label>
+              <CustomSelect
+                value={editMedicalCenter}
+                onChange={setEditMedicalCenter}
+                options={[
+                  { value: '', label: 'Ninguno (Selección libre)' },
+                  { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
+                  { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
+                  { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
+                  { value: 'Policlinico Tabancura', label: 'Policlínico Tabancura' }
+                ]}
+                disabled={loading}
+              />
+              <input type="hidden" name="medical_center" value={editMedicalCenter} />
             </div>
 
             <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px', marginTop: '8px', marginBottom: '4px' }}>

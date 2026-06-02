@@ -24,6 +24,7 @@ export async function createUserAction(formData: FormData) {
   const professionalAddress = formData.get('professional_address') as string;
   const professionalWebsite = formData.get('professional_website') as string;
   const professionalPhone = formData.get('professional_phone') as string;
+  const medicalCenter = formData.get('medical_center') as string;
 
   if (!name || !email || !password || !role) {
     return { error: 'Por favor complete todos los campos requeridos' };
@@ -45,9 +46,10 @@ export async function createUserAction(formData: FormData) {
       INSERT INTO users (
         name, email, password_hash, role, active, password_plain,
         professional_title, professional_position, professional_email,
-        professional_address, professional_website, professional_phone
+        professional_address, professional_website, professional_phone,
+        medical_center
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     `, [
       name.trim(), 
       email.toLowerCase().trim(), 
@@ -60,7 +62,8 @@ export async function createUserAction(formData: FormData) {
       professionalEmail ? professionalEmail.toLowerCase().trim() : null,
       professionalAddress ? professionalAddress.trim() : null,
       professionalWebsite ? professionalWebsite.trim() : null,
-      professionalPhone ? professionalPhone.trim() : null
+      professionalPhone ? professionalPhone.trim() : null,
+      medicalCenter ? medicalCenter.trim() : null
     ]);
 
     revalidatePath('/dashboard/users');
@@ -137,6 +140,7 @@ export async function updateUserAction(userId: string, formData: FormData) {
   const professionalAddress = formData.get('professional_address') as string;
   const professionalWebsite = formData.get('professional_website') as string;
   const professionalPhone = formData.get('professional_phone') as string;
+  const medicalCenter = formData.get('medical_center') as string;
 
   if (!name || !email || !role) {
     return { error: 'Por favor complete todos los campos requeridos (Nombre, Correo, Rol)' };
@@ -168,8 +172,9 @@ export async function updateUserAction(userId: string, formData: FormData) {
           professional_address = $9,
           professional_website = $10,
           professional_phone = $11,
+          medical_center = $12,
           updated_at = NOW()
-        WHERE id = $12
+        WHERE id = $13
       `, [
         name.trim(), 
         email.toLowerCase().trim(), 
@@ -182,6 +187,7 @@ export async function updateUserAction(userId: string, formData: FormData) {
         professionalAddress ? professionalAddress.trim() : null,
         professionalWebsite ? professionalWebsite.trim() : null,
         professionalPhone ? professionalPhone.trim() : null,
+        medicalCenter ? medicalCenter.trim() : null,
         userId
       ]);
     } else {
@@ -197,8 +203,9 @@ export async function updateUserAction(userId: string, formData: FormData) {
           professional_address = $7,
           professional_website = $8,
           professional_phone = $9,
+          medical_center = $10,
           updated_at = NOW()
-        WHERE id = $10
+        WHERE id = $11
       `, [
         name.trim(), 
         email.toLowerCase().trim(), 
@@ -209,6 +216,7 @@ export async function updateUserAction(userId: string, formData: FormData) {
         professionalAddress ? professionalAddress.trim() : null,
         professionalWebsite ? professionalWebsite.trim() : null,
         professionalPhone ? professionalPhone.trim() : null,
+        medicalCenter ? medicalCenter.trim() : null,
         userId
       ]);
     }

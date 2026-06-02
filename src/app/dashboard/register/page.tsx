@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { formatRUT, validateRUT, cleanRUT } from '@/lib/utils';
 import { registerPersonAndCaseAction, getPersonByRutAction } from '@/app/actions/caseActions';
 import { getCurrentUserAction } from '@/app/actions/userActions';
+import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
 import { useRouter } from 'next/navigation';
 import Odontogram from '@/components/Odontogram';
 import Modal from '@/components/ui/Modal';
@@ -60,6 +61,7 @@ export default function RegisterCasePage() {
 
   const [selectedAgreementType, setSelectedAgreementType] = useState('');
   const [customAgreementType, setCustomAgreementType] = useState('');
+  const [agreements, setAgreements] = useState<{ value: string; label: string }[]>([]);
 
   // Specific validation error states
   const [firstNamesError, setFirstNamesError] = useState<string | null>(null);
@@ -174,6 +176,40 @@ export default function RegisterCasePage() {
     }
     loadDefaults();
   }, []);
+
+  useEffect(() => {
+    async function loadConvenios() {
+      const center = selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter;
+      if (!center) {
+        setAgreements([{ value: 'Otro', label: 'Otro Convenio' }]);
+        return;
+      }
+
+      try {
+        const res = await getConveniosByMedicalCenterAction(center);
+        if (res.success && res.convenios) {
+          const mapped = res.convenios.map((c: any) => ({
+            value: c.empresa,
+            label: c.empresa,
+          }));
+          mapped.push({ value: 'Otro', label: 'Otro Convenio' });
+          setAgreements(mapped);
+
+          // Reset selection if it's not valid for the new medical center
+          const isValid = mapped.some((opt: any) => opt.value === selectedAgreementType);
+          if (!isValid && selectedAgreementType !== '' && selectedAgreementType !== 'Otro') {
+            setSelectedAgreementType('');
+          }
+        } else {
+          setAgreements([{ value: 'Otro', label: 'Otro Convenio' }]);
+        }
+      } catch (err) {
+        console.error('Failed to load convenios:', err);
+        setAgreements([{ value: 'Otro', label: 'Otro Convenio' }]);
+      }
+    }
+    loadConvenios();
+  }, [selectedMedicalCenter, customMedicalCenter]);
 
   function handleRutChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value;
@@ -1540,7 +1576,7 @@ export default function RegisterCasePage() {
                               setSelectedAgreementType(val);
                               clearFieldError('agreement_type_select', setAgreementTypeError);
                             }}
-                            options={[
+                            options={agreements.length > 0 ? agreements : [
                               { value: 'Confección de Prótesis Removibles', label: 'Confección de Prótesis Removibles' },
                               { value: 'Atención Dental Básica', label: 'Atención Dental Básica' },
                               { value: 'Tratamiento de Endodoncia', label: 'Tratamiento de Endodoncia' },
