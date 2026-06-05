@@ -6,6 +6,12 @@ import { getSession } from '@/lib/auth';
 import { validateRUT, cleanRUT } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
 import { sendAutomaticReferralEmail } from '@/lib/mail';
+import { headers } from 'next/headers';
+
+// Memory-based rate limiting map to prevent brute-forcing
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+const RATE_LIMIT_COUNT = 30; // Max 30 requests per minute
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute window
 
 export async function registerPersonAndCaseAction(formData: FormData) {
   const session = await getSession();
@@ -297,9 +303,46 @@ export async function updateCaseDetailsAction(
 
 export async function getPersonByRutAction(rutRaw: string) {
   const session = await getSession();
-  
-  if (!session || (session.role !== 'admin' && session.role !== 'external')) {
-    return { error: 'No autorizado para consultar datos de postulantes' };
+  let clientIp = 'unknown';
+  let clientKey: string | null = null;
+
+  try {
+    const reqHeaders = await headers();
+    clientIp = reqHeaders.get('x-forwarded-for') || reqHeaders.get('x-real-ip') || 'unknown';
+    clientKey = reqHeaders.get('x-api-key') || reqHeaders.get('authorization')?.replace('Bearer ', '') || null;
+  } catch (e) {
+    // headers() might error outside HTTP request context, ignore
+  }
+
+  // 1. Env-defined Token Verification
+  const internalApiKey = process.env.INTERNAL_API_KEY;
+  if (internalApiKey) {
+    // If API key is configured, allow request only if it matches, OR if there is a valid session
+    if (clientKey !== internalApiKey && (!session || (session.role !== 'admin' && session.role !== 'external'))) {
+      return { error: 'No autorizado: Token de API inválido o sesión inválida' };
+    }
+  } else {
+    // Default session authentication
+    if (!session || (session.role !== 'admin' && session.role !== 'external')) {
+      return { error: 'No autorizado para consultar datos de postulantes' };
+    }
+  }
+
+  // 2. Memory-based Rate Limiting
+  const limiterKey = session ? `${session.id}_${clientIp}` : clientIp;
+  const now = Date.now();
+  const limitInfo = rateLimitMap.get(limiterKey) || { count: 0, lastReset: now };
+
+  if (now - limitInfo.lastReset > RATE_LIMIT_WINDOW) {
+    limitInfo.count = 1;
+    limitInfo.lastReset = now;
+    rateLimitMap.set(limiterKey, limitInfo);
+  } else {
+    limitInfo.count += 1;
+    rateLimitMap.set(limiterKey, limitInfo);
+    if (limitInfo.count > RATE_LIMIT_COUNT) {
+      return { error: 'Demasiadas solicitudes. Por favor intente más tarde.' };
+    }
   }
 
   const cleaned = cleanRUT(rutRaw);

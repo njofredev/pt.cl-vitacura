@@ -242,7 +242,8 @@ export default function Sidebar({ user }: SidebarProps) {
                 style={{ 
                   width: '100%', 
                   height: '100%', 
-                  objectFit: 'contain'
+                  objectFit: 'contain',
+                  filter: theme === 'dark' ? 'brightness(0) invert(1)' : 'none'
                 }} 
               />
             </div>
@@ -266,93 +267,11 @@ export default function Sidebar({ user }: SidebarProps) {
                   letterSpacing: '0.08em',
                   opacity: 0.95
                 }}>
-                  REGISTRO DIGITAL SOCIAL
+                  DERIVACIÓN DIGITAL
                 </span>
               </div>
             )}
           </div>
-
-          {/* Simulated Search Bar */}
-          {isOpen ? (
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (searchVal.trim()) {
-                  window.location.href = `/dashboard/cases?search=${encodeURIComponent(searchVal.trim())}`;
-                }
-              }}
-              style={{
-                padding: '0 4px',
-                marginBottom: '2px'
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '10px 14px',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid var(--glass-border)',
-                fontSize: '0.82rem',
-                color: 'hsl(var(--foreground-hsl))',
-                opacity: 0.85
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  <input 
-                    type="text" 
-                    placeholder="Buscar en la app..." 
-                    value={searchVal}
-                    onChange={(e) => setSearchVal(e.target.value)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      outline: 'none',
-                      color: 'hsl(var(--foreground-hsl))',
-                      fontSize: '0.82rem',
-                      width: '100%',
-                      padding: 0
-                    }}
-                  />
-                </div>
-                <span style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  opacity: 0.8,
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid var(--glass-border)',
-                  whiteSpace: 'nowrap'
-                }}>
-                  Enter
-                </span>
-              </div>
-            </form>
-          ) : (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0' }}>
-              <div 
-                onClick={() => {
-                  window.location.href = '/dashboard/cases';
-                }}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid var(--glass-border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: 0.6,
-                  cursor: 'pointer'
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </div>
-            </div>
-          )}
 
           {/* Menu Section Label */}
           {isOpen && (
@@ -384,7 +303,7 @@ export default function Sidebar({ user }: SidebarProps) {
                     gap: '14px',
                     padding: '12px 16px',
                     borderRadius: '9999px',
-                    color: isActive ? '#022c22' : 'hsl(var(--foreground-hsl))',
+                    color: isActive ? '#ffffff' : 'hsl(var(--foreground-hsl))',
                     backgroundColor: isActive ? '#10b981' : 'transparent',
                     textDecoration: 'none',
                     fontWeight: isActive ? 700 : 500,

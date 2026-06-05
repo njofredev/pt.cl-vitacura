@@ -474,7 +474,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     <td style={{ textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
                       <button 
                         onClick={() => openDetails(c)}
-                        className="btn-secondary"
+                        className="btn btn-secondary"
                         style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                       >
                         Ver Ficha
@@ -482,15 +482,16 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       <a 
                         href={`/dashboard/cases/${c.id}/print`}
                         target="_blank"
-                        className="btn-primary"
-                        style={{ padding: '6px 12px', fontSize: '0.8rem', textDecoration: 'none' }}
+                        className="btn btn-primary"
+                        style={{ padding: '6px 12px', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                         Imprimir
                       </a>
                       {user.role === 'admin' && (
                         <button
                           onClick={() => handleDeleteCase(c.id, `${c.first_names} ${c.last_names}`)}
-                          className="btn-danger"
+                          className="btn btn-danger"
                           style={{ padding: '6px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center' }}
                           title="Eliminar Caso"
                           disabled={loading}
@@ -513,24 +514,10 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
           title={`Ficha de Caso Social - ${selectedCase.first_names} ${selectedCase.last_names}`}
-          maxWidth="700px"
+          maxWidth="1000px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
-            {/* Admin toggle edit mode button */}
-            {user.role === 'admin' && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="btn-secondary"
-                  style={{ padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700 }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                  {isEditing ? 'Cancelar Edición' : 'Editar Datos de Ficha'}
-                </button>
-              </div>
-            )}
 
             {isEditing ? (
               /* Editable details form for administrator role */
@@ -563,7 +550,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>RUT</label>
-                      <input type="text" className="form-input" value={editRut} onChange={e => setEditRut(e.target.value)} required style={{ width: '100%' }} />
+                      <input type="text" className="form-input" value={editRut} onChange={e => setEditRut(e.target.value.replace(/[^0-9kK.-]/g, ''))} maxLength={12} required style={{ width: '100%' }} />
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Nacionalidad</label>
@@ -683,7 +670,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
               </form>
             ) : (
               /* Read-only details view (original layout) */
-              <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
                 {/* Beneficiary particulars grid */}
                 <div>
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -739,29 +726,29 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     {selectedCase.dental_diagnosis ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Centro Médico:</span>
+                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Centro Médico:</span>
                           <span style={{ fontWeight: 600 }}>{selectedCase.medical_center}</span>
                         </div>
                         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Convenio Solicitado:</span>
+                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Convenio Solicitado:</span>
                           <span style={{ fontWeight: 700, color: 'hsl(var(--accent-hsl))' }}>{selectedCase.agreement_type}</span>
                         </div>
                         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Diagnóstico Odontológico:</span>
+                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Diagnóstico:</span>
                           <span style={{ fontStyle: 'italic', opacity: 0.95, whiteSpace: 'pre-wrap' }}>"{selectedCase.dental_diagnosis}"</span>
                         </div>
                         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Prestación Requerida:</span>
-                          <span style={{ whiteSpace: 'pre-wrap' }}>{selectedCase.treatment_needed}</span>
+                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Prestación Requerida:</span>
+                          <span style={{ whiteSpace: 'pre-wrap', fontSize: '0.92rem' }}>{selectedCase.treatment_needed}</span>
                         </div>
                         {selectedCase.description && (
                           <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                            <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Observaciones Generales:</span>
+                            <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Observaciones:</span>
                             <span style={{ opacity: 0.85 }}>{selectedCase.description}</span>
                           </div>
                         )}
                         <div style={{ display: 'flex' }}>
-                          <span style={{ width: '180px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Profesional Derivador:</span>
+                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Profesional Derivador:</span>
                           <span style={{ fontWeight: 600, color: 'hsl(var(--primary-hsl))' }}>{selectedCase.professional_name}</span>
                         </div>
                       </div>
@@ -776,7 +763,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     <span>Registrado por: {selectedCase.registered_by_name || 'Admin Semilla'}</span>
                   </div>
                 </div>
-              </>
+              </div>
             )}
              {/* Review and observations block */}
              <div>
@@ -877,6 +864,27 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary" disabled={loading} style={{ padding: '10px 20px' }}>
                           Cerrar
                         </button>
+                        {user.role === 'admin' && (
+                          <button 
+                            type="button" 
+                            onClick={() => setIsEditing(true)} 
+                            className="btn-accent" 
+                            style={{ 
+                              padding: '10px 20px', 
+                              fontWeight: 700, 
+                              backgroundColor: '#4f46e5', 
+                              borderColor: '#4f46e5', 
+                              color: '#ffffff', 
+                              boxShadow: '0 4px 15px rgba(79, 70, 229, 0.25)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            Editar Datos de Ficha
+                          </button>
+                        )}
                         <button type="submit" className="btn-accent" disabled={loading} style={{ padding: '10px 20px', fontWeight: 700, boxShadow: '0 4px 15px rgba(20, 184, 166, 0.25)' }}>
                           {loading ? 'Guardando...' : 'Guardar Evaluación'}
                         </button>

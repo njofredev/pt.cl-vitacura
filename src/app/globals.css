@@ -7,26 +7,26 @@
   --font-sans: 'Google Sans', 'Product Sans', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-display: 'Google Sans', 'Product Sans', 'Outfit', system-ui, -apple-system, sans-serif;
 
-  /* Colors (Light Mode - Default - Premium Warm Cream & Sand Theme) */
-  --background-hsl: 38 24% 94%; /* Soft Warm Sand background (#f4f1ea) */
-  --foreground-hsl: 224 45% 10%; /* Rich Charcoal-Navy instead of stark black */
+  /* Colors (Light Mode - Default - Premium Crisp & Clean Theme) */
+  --background-hsl: 210 20% 97.5%; /* Clean Light Gray-White background */
+  --foreground-hsl: 224 45% 12%; /* Rich Charcoal-Navy */
   
-  --card-hsl: 38 28% 98.5%; /* Warm paper-white (#fdfcf9) */
-  --card-border-hsl: 38 12% 86%; /* Soft warm linen border */
+  --card-hsl: 0 0% 100%; /* Pure White card background */
+  --card-border-hsl: 210 14% 89%; /* Clean soft grey border */
   
-  --primary-hsl: 224 80% 48%; /* Deeper royal blue to contrast beautifully with cream */
+  --primary-hsl: 224 80% 48%;
   --primary-hover-hsl: 224 80% 40%;
   --primary-foreground-hsl: 0 0% 100%;
   
-  --secondary-hsl: 38 20% 90%; /* Rich warm grey-cream */
-  --secondary-hover-hsl: 38 20% 84%;
-  --secondary-foreground-hsl: 224 45% 10%;
-
-  --accent-hsl: 172 66% 40%; /* Deeper teal accent for excellent legibility */
+  --secondary-hsl: 210 16% 95%; /* Soft grey */
+  --secondary-hover-hsl: 210 16% 90%;
+  --secondary-foreground-hsl: 224 45% 12%;
+  
+  --accent-hsl: 172 66% 38%; /* Deep teal accent */
   --accent-foreground-hsl: 172 100% 5%;
 
-  --muted-hsl: 38 8% 44%; /* Soft muted warm brown-grey */
-  --muted-background-hsl: 38 18% 90%;
+  --muted-hsl: 218 11% 45%; /* Neutral muted gray */
+  --muted-background-hsl: 210 16% 95%;
 
   --success-hsl: 142 76% 32%;
   --warning-hsl: 38 92% 44%;
@@ -36,17 +36,17 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
-  --shadow-sm: 0 2px 8px rgba(139, 131, 114, 0.08);
-  --shadow-md: 0 8px 30px rgba(139, 131, 114, 0.12);
-  --shadow-lg: 0 16px 40px rgba(139, 131, 114, 0.16);
-  --glass-bg: rgba(253, 252, 249, 0.72);
-  --glass-border: rgba(139, 131, 114, 0.18);
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 8px 30px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(15, 23, 42, 0.14);
   --glass-blur: 16px;
   --input-bg: rgba(255, 255, 255, 0.95);
-  --input-border: rgba(139, 131, 114, 0.22);
-  --input-border-hover: rgba(139, 131, 114, 0.45);
-  --select-option-bg: #fdfcf9;
-  --select-option-fg: #0a1124;
+  --input-border: rgba(15, 23, 42, 0.22);
+  --input-border-hover: rgba(15, 23, 42, 0.45);
+  --select-option-bg: #ffffff;
+  --select-option-fg: #0f172a;
 }
 
 /* Explicit Dark Theme overrides */
@@ -135,6 +135,10 @@
   padding: 0;
   margin: 0;
   font-family: var(--font-sans);
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html, body {
@@ -805,7 +809,60 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background-color: rgba(239, 68, 68, 0.015) !important;
 }
 
+/* Premium Orange/Amber Pulse Animation for stand-out buttons */
+@keyframes glowOrangePulse {
+  0% { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(251, 146, 60, 0.15); }
+  100% { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
+}
 
+.animate-glow-orange {
+  animation: glowOrangePulse 2s infinite ease-in-out;
+}
 
+/* 3-Column User Modal Layout for Desktop */
+.user-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
+@media (min-width: 1024px) {
+  .user-form-container {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 24px !important;
+    align-items: start;
+  }
+}
 
+.user-form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--glass-border);
+  padding: 18px;
+  border-radius: var(--radius-md);
+  height: 100%;
+}
+
+:root.dark .user-form-column {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.user-column-header {
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.user-column-title {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}

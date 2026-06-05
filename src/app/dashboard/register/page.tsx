@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import Odontogram from '@/components/Odontogram';
 import Modal from '@/components/ui/Modal';
 import CustomSelect from '@/components/ui/CustomSelect';
+import CustomDatePicker from '@/components/ui/CustomDatePicker';
 
 export default function RegisterCasePage() {
   const router = useRouter();
@@ -62,6 +63,7 @@ export default function RegisterCasePage() {
   const [selectedAgreementType, setSelectedAgreementType] = useState('');
   const [customAgreementType, setCustomAgreementType] = useState('');
   const [agreements, setAgreements] = useState<{ value: string; label: string }[]>([]);
+  const [preloadedAgreementType, setPreloadedAgreementType] = useState('');
 
   // Specific validation error states
   const [firstNamesError, setFirstNamesError] = useState<string | null>(null);
@@ -72,7 +74,9 @@ export default function RegisterCasePage() {
   const [mobileError, setMobileError] = useState<string | null>(null);
   const [medicalCenterError, setMedicalCenterError] = useState<string | null>(null);
   const [agreementTypeError, setAgreementTypeError] = useState<string | null>(null);
- 
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [isCancelHovered, setIsCancelHovered] = useState(false);
+
   // Structural type for validation error center
   interface ValidationErrorItem {
     field: string;
@@ -82,7 +86,7 @@ export default function RegisterCasePage() {
     elementId: string;
   }
   const [validationErrors, setValidationErrors] = useState<ValidationErrorItem[]>([]);
- 
+
   // Focus & Scroll helper for the error center list
   function triggerErrorJump(elementId: string, stepNum: 1 | 2) {
     if (step !== stepNum) {
@@ -92,10 +96,10 @@ export default function RegisterCasePage() {
       const el = document.getElementById(elementId);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
+
         // Focus programmatically
         el.focus();
- 
+
         // Apply temporary high-contrast vibration/shake/pulse glow animation
         el.classList.add('animate-shake-error');
         setTimeout(() => {
@@ -104,7 +108,7 @@ export default function RegisterCasePage() {
       }
     }, 200);
   }
- 
+
   // Clear field error dyamically as they correct it in real-time
   function clearFieldError(fieldId: string, errorSetter?: (err: string | null) => void) {
     if (errorSetter) errorSetter(null);
@@ -169,6 +173,10 @@ export default function RegisterCasePage() {
             setSelectedMedicalCenter(u.medical_center);
             setHasPreloadedMedicalCenter(true);
           }
+          if (u.agreement_type) {
+            setPreloadedAgreementType(u.agreement_type);
+            setSelectedAgreementType(u.agreement_type);
+          }
         }
       } catch (err) {
         console.error('Failed to load professional defaults:', err);
@@ -195,10 +203,22 @@ export default function RegisterCasePage() {
           mapped.push({ value: 'Otro', label: 'Otro Convenio' });
           setAgreements(mapped);
 
-          // Reset selection if it's not valid for the new medical center
-          const isValid = mapped.some((opt: any) => opt.value === selectedAgreementType);
-          if (!isValid && selectedAgreementType !== '' && selectedAgreementType !== 'Otro') {
-            setSelectedAgreementType('');
+          // If there's a preloaded agreement type, select it. Otherwise if medical center was preloaded, select the first matching convenio
+          if (preloadedAgreementType) {
+            const matches = mapped.some((opt: any) => opt.value === preloadedAgreementType);
+            if (matches) {
+              setSelectedAgreementType(preloadedAgreementType);
+            } else if (res.convenios.length > 0) {
+              setSelectedAgreementType(res.convenios[0].empresa);
+            }
+          } else if (hasPreloadedMedicalCenter && res.convenios.length > 0) {
+            setSelectedAgreementType(res.convenios[0].empresa);
+          } else {
+            // Reset selection if it's not valid for the new medical center
+            const isValid = mapped.some((opt: any) => opt.value === selectedAgreementType);
+            if (!isValid && selectedAgreementType !== '' && selectedAgreementType !== 'Otro') {
+              setSelectedAgreementType('');
+            }
           }
         } else {
           setAgreements([{ value: 'Otro', label: 'Otro Convenio' }]);
@@ -209,11 +229,12 @@ export default function RegisterCasePage() {
       }
     }
     loadConvenios();
-  }, [selectedMedicalCenter, customMedicalCenter]);
+  }, [selectedMedicalCenter, customMedicalCenter, preloadedAgreementType]);
 
   function handleRutChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value;
-    setRut(raw);
+    const filtered = raw.replace(/[^0-9kK.-]/g, '');
+    setRut(filtered);
     if (rutError) setRutError(null);
   }
 
@@ -314,7 +335,7 @@ export default function RegisterCasePage() {
     setError(null);
     setSuccess(null);
     setStep(1);
-    
+
     // Clear validation errors
     setFirstNamesError(null);
     setLastNamesError(null);
@@ -324,6 +345,7 @@ export default function RegisterCasePage() {
     setMobileError(null);
     setMedicalCenterError(null);
     setAgreementTypeError(null);
+    setEmailError(null);
     setValidationErrors([]);
   }
 
@@ -336,6 +358,8 @@ export default function RegisterCasePage() {
     setBirthDateError(null);
     setCommuneError(null);
     setMobileError(null);
+    setAgreementTypeError(null);
+    setEmailError(null);
 
     const errorsList: ValidationErrorItem[] = [];
 
@@ -451,6 +475,27 @@ export default function RegisterCasePage() {
         label: 'Comuna Especificada',
         message: 'Especifique la comuna.',
         elementId: 'custom_commune'
+      });
+    }
+
+    // Validate Email
+    if (!emailInput.trim()) {
+      setEmailError('Por favor ingrese un correo electrónico.');
+      errorsList.push({
+        field: 'email',
+        step: 1,
+        label: 'Correo Electrónico',
+        message: 'El correo electrónico es obligatorio.',
+        elementId: 'email'
+      });
+    } else if (!emailInput.includes('@')) {
+      setEmailError('Por favor ingrese un correo electrónico válido.');
+      errorsList.push({
+        field: 'email',
+        step: 1,
+        label: 'Correo Electrónico',
+        message: 'Correo electrónico inválido.',
+        elementId: 'email'
       });
     }
 
@@ -699,7 +744,7 @@ export default function RegisterCasePage() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-            Inscribir Persona y Caso Social
+            Inscribir Persona y Derivación Digital
           </h2>
           <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
             Ingrese los datos personales del postulante y el detalle del convenio o caso de ayuda solicitado.
@@ -725,7 +770,7 @@ export default function RegisterCasePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.88rem', lineHeight: '1.45' }}>
           <strong style={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.78rem' }}>Información Importante</strong>
           <span style={{ fontWeight: 500, opacity: 0.95 }}>
-            Una vez ingresado el caso, el registro quedará bloqueado para edición. Si necesitas corregir o modificar algún dato posterior al envío, por favor escribe directamente a <a href="mailto:derivaciones@policlinicotabancura.cl" style={{ color: 'currentColor', textDecoration: 'underline', fontWeight: 700 }}>derivaciones@policlinicotabancura.cl</a>.
+            Una vez ingresada la derivación, el registro quedará bloqueado para su edición. Si necesitas corregir o modificar algún dato posterior al envío, por favor escribe directamente a <a href="mailto:derivaciones@policlinicotabancura.cl" style={{ color: 'currentColor', textDecoration: 'underline', fontWeight: 700 }}>derivaciones@policlinicotabancura.cl</a>.
           </span>
         </div>
       </div>
@@ -779,7 +824,7 @@ export default function RegisterCasePage() {
               backgroundColor: step >= 2 ? '#10b981' : 'var(--glass-border)',
               transition: 'all 0.3s ease'
             }} />
-            
+
             {/* Step 2 */}
             <div style={{
               display: 'flex',
@@ -889,6 +934,9 @@ export default function RegisterCasePage() {
                   <label className="form-label" htmlFor="rut" style={{ color: rutError ? 'hsl(var(--danger-hsl))' : undefined }}>
                     RUT del Beneficiario * {rutError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                   </label>
+                  <span style={{ fontSize: '0.76rem', opacity: 0.55, marginTop: '-3px', marginBottom: '2px', display: 'block', fontWeight: 500 }}>
+                    Ej: 123456781 + Enter/Tab para buscar en el registro
+                  </span>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <input
                       className={`form-input ${rutError ? 'animate-shake-error' : ''}`}
@@ -903,8 +951,9 @@ export default function RegisterCasePage() {
                       }}
                       onBlur={handleRutBlur}
                       onKeyDown={handleRutKeyDown}
-                      placeholder="Ej: 12.345.678-K"
+                      placeholder=""
                       disabled={loading}
+                      maxLength={12}
                       style={{
                         flex: 1,
                         borderColor: rutError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)'
@@ -946,13 +995,16 @@ export default function RegisterCasePage() {
                   <label className="form-label" htmlFor="first_names" style={{ color: firstNamesError ? 'hsl(var(--danger-hsl))' : undefined }}>
                     Nombres * {firstNamesError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                   </label>
+                  <span style={{ fontSize: '0.76rem', opacity: 0.55, marginTop: '-3px', marginBottom: '2px', display: 'block', fontWeight: 500 }}>
+                    Nombres completos del beneficiario
+                  </span>
                   <input
                     className={`form-input ${firstNamesError ? 'animate-shake-error' : ''}`}
                     type="text"
                     id="first_names"
                     name="first_names"
                     required
-                    placeholder="Nombres completos"
+                    placeholder=""
                     disabled={loading}
                     value={firstNames}
                     onChange={(e) => {
@@ -976,13 +1028,16 @@ export default function RegisterCasePage() {
                   <label className="form-label" htmlFor="last_names" style={{ color: lastNamesError ? 'hsl(var(--danger-hsl))' : undefined }}>
                     Apellidos * {lastNamesError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                   </label>
+                  <span style={{ fontSize: '0.76rem', opacity: 0.55, marginTop: '-3px', marginBottom: '2px', display: 'block', fontWeight: 500 }}>
+                    Apellidos paterno y materno
+                  </span>
                   <input
                     className={`form-input ${lastNamesError ? 'animate-shake-error' : ''}`}
                     type="text"
                     id="last_names"
                     name="last_names"
                     required
-                    placeholder="Apellidos paterno y materno"
+                    placeholder=""
                     disabled={loading}
                     value={lastNames}
                     onChange={(e) => {
@@ -1006,6 +1061,9 @@ export default function RegisterCasePage() {
                   <label className="form-label" htmlFor="nationality_select" style={{ color: nationalityError ? 'hsl(var(--danger-hsl))' : undefined }}>
                     Nacionalidad * {nationalityError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                   </label>
+                  <span style={{ fontSize: '0.76rem', opacity: 0.55, marginTop: '-3px', marginBottom: '2px', display: 'block', fontWeight: 500 }}>
+                    Nacionalidad de origen
+                  </span>
                   <CustomSelect
                     value={selectedNationality}
                     onChange={(val) => {
@@ -1029,7 +1087,7 @@ export default function RegisterCasePage() {
                   />
 
                   {selectedNationality === 'Otra' && (
-                    <div className="animate-fade-in" style={{ marginTop: '10px' }}>
+                    <div className="form-group animate-fade-in" style={{ marginTop: '10px' }}>
                       <label className="form-label" htmlFor="custom_nationality" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique la Nacionalidad *</label>
                       <input
                         className={`form-input ${nationalityError ? 'animate-shake-error' : ''}`}
@@ -1068,101 +1126,41 @@ export default function RegisterCasePage() {
                   <label className="form-label" htmlFor="birth_date_text" style={{ color: birthDateError ? 'hsl(var(--danger-hsl))' : undefined }}>
                     Fecha de Nacimiento * {birthDateError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                   </label>
-                  <div style={{ position: 'relative', width: '100%' }}>
-                    <input
-                      className={`form-input ${birthDateError ? 'animate-shake-error' : ''}`}
-                      type="text"
-                      id="birth_date_text"
-                      placeholder="DD/MM/AAAA"
-                      value={birthDateInput}
-                      onChange={(e) => {
-                        clearFieldError('birth_date_text', setBirthDateError);
-                        // Apply auto mask for DD/MM/AAAA
-                        let val = e.target.value.replace(/\D/g, '');
-                        if (val.length > 8) val = val.substring(0, 8);
+                  <span style={{ fontSize: '0.76rem', opacity: 0.55, marginTop: '-3px', marginBottom: '2px', display: 'block', fontWeight: 500 }}>
+                    Formato DD/MM/AAAA
+                  </span>
+                  <CustomDatePicker
+                    value={pickerDate}
+                    onChange={(val) => {
+                      setPickerDate(val);
+                      clearFieldError('birth_date_text', setBirthDateError);
+                      if (!val) {
+                        setBirthDateInput('');
+                        return;
+                      }
+                      const parts = val.split('-');
+                      if (parts.length === 3) {
+                        setBirthDateInput(`${parts[2]}/${parts[1]}/${parts[0]}`);
 
-                        let formatted = '';
-                        if (val.length > 0) {
-                          formatted += val.substring(0, 2);
-                          if (val.length > 2) {
-                            formatted += '/' + val.substring(2, 4);
-                            if (val.length > 4) {
-                              formatted += '/' + val.substring(4, 8);
-                            }
-                          }
+                        // Calculate age to switch odontogram automatically
+                        const today = new Date();
+                        const birth = new Date(val);
+                        let age = today.getFullYear() - birth.getFullYear();
+                        const m = today.getMonth() - birth.getMonth();
+                        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                          age--;
                         }
-                        setBirthDateInput(formatted);
-
-                        // If complete, set the picker date and update age
-                        if (val.length === 8) {
-                          const day = val.substring(0, 2);
-                          const month = val.substring(2, 4);
-                          const year = val.substring(4, 8);
-                          const isoDate = `${year}-${month}-${day}`;
-                          setPickerDate(isoDate);
-
-                          // Age calculation to switch odontogram type automatically
-                          const today = new Date();
-                          const birth = new Date(isoDate);
-                          let age = today.getFullYear() - birth.getFullYear();
-                          const m = today.getMonth() - birth.getMonth();
-                          if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-                            age--;
-                          }
-                          if (age < 12) {
-                            setOdontogramType('child');
-                          } else {
-                            setOdontogramType('adult');
-                          }
+                        if (age < 12) {
+                          setOdontogramType('child');
+                        } else {
+                          setOdontogramType('adult');
                         }
-                      }}
-                      required
-                      disabled={loading}
-                      style={{
-                        paddingRight: '44px',
-                        borderColor: birthDateError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
-                        boxShadow: birthDateError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
-                      }}
-                    />
-
-                    {/* Invisible native date picker over the calendar icon for triggering calendar pop-up */}
-                    <div style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      pointerEvents: 'none',
-                      color: 'hsl(var(--primary-hsl))'
-                    }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    </div>
-
-                    <input
-                      type="date"
-                      value={pickerDate}
-                      onChange={(e) => {
-                        handleBirthDateChange(e);
-                        clearFieldError('birth_date_text', setBirthDateError);
-                      }}
-                      style={{
-                        position: 'absolute',
-                        right: '8px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: '32px',
-                        height: '32px',
-                        opacity: 0,
-                        cursor: 'pointer',
-                        zIndex: 5
-                      }}
-                      disabled={loading}
-                    />
-                  </div>
+                      }
+                    }}
+                    required
+                    disabled={loading}
+                    hasError={!!birthDateError}
+                  />
                   {birthDateError && (
                     <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>
                       {birthDateError}
@@ -1182,6 +1180,9 @@ export default function RegisterCasePage() {
                   <label className="form-label" htmlFor="commune_select" style={{ color: communeError ? 'hsl(var(--danger-hsl))' : undefined }}>
                     Comuna de Residencia * {communeError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                   </label>
+                  <span style={{ fontSize: '0.76rem', opacity: 0.55, marginTop: '-3px', marginBottom: '2px', display: 'block', fontWeight: 500 }}>
+                    Comuna de residencia actual
+                  </span>
                   <CustomSelect
                     value={selectedCommune}
                     onChange={(val) => {
@@ -1210,7 +1211,7 @@ export default function RegisterCasePage() {
                   />
 
                   {selectedCommune === 'Otra Comuna' && (
-                    <div className="animate-fade-in" style={{ marginTop: '10px' }}>
+                    <div className="form-group animate-fade-in" style={{ marginTop: '10px' }}>
                       <label className="form-label" htmlFor="custom_commune" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique la Comuna *</label>
                       <input
                         className={`form-input ${communeError ? 'animate-shake-error' : ''}`}
@@ -1246,17 +1247,35 @@ export default function RegisterCasePage() {
 
                 {/* Email */}
                 <div className="form-group">
-                  <label className="form-label" htmlFor="email">Correo Electrónico</label>
+                  <label className="form-label" htmlFor="email" style={{ color: emailError ? 'hsl(var(--danger-hsl))' : undefined }}>
+                    Correo Electrónico * {emailError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
+                  </label>
+                  <span style={{ fontSize: '0.76rem', opacity: 0.55, marginTop: '-3px', marginBottom: '2px', display: 'block', fontWeight: 500 }}>
+                    Dirección de correo electrónico
+                  </span>
                   <input
-                    className="form-input"
+                    className={`form-input ${emailError ? 'animate-shake-error' : ''}`}
                     type="email"
                     id="email"
                     name="email"
-                    placeholder="ejemplo@correo.com (Opcional)"
+                    required
+                    placeholder=""
                     disabled={loading}
                     value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
+                    onChange={(e) => {
+                      setEmailInput(e.target.value);
+                      clearFieldError('email', setEmailError);
+                    }}
+                    style={{
+                      borderColor: emailError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
+                      boxShadow: emailError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
+                    }}
                   />
+                  {emailError && (
+                    <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>
+                      {emailError}
+                    </span>
+                  )}
                 </div>
 
                 {/* Mobile Phone */}
@@ -1264,13 +1283,16 @@ export default function RegisterCasePage() {
                   <label className="form-label" htmlFor="mobile" style={{ color: mobileError ? 'hsl(var(--danger-hsl))' : undefined }}>
                     Celular de Contacto * {mobileError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                   </label>
+                  <span style={{ fontSize: '0.76rem', opacity: 0.55, marginTop: '-3px', marginBottom: '2px', display: 'block', fontWeight: 500 }}>
+                    Ej: +56 9 1234 5678
+                  </span>
                   <input
                     className={`form-input ${mobileError ? 'animate-shake-error' : ''}`}
                     type="tel"
                     id="mobile"
                     name="mobile"
                     required
-                    placeholder="+56 9 1234 5678"
+                    placeholder=""
                     disabled={loading}
                     value={mobileInput}
                     onChange={(e) => {
@@ -1445,442 +1467,482 @@ export default function RegisterCasePage() {
                   <strong style={{ fontSize: '0.94rem', paddingLeft: '19px' }}>{mobileInput}</strong>
                 </div>
               </div>
-                    {/* Hidden fields for Step 1 so HTML form handles them on submit */}
-                    <input type="hidden" name="first_names" value={firstNames} />
-                    <input type="hidden" name="last_names" value={lastNames} />
-                    <input type="hidden" name="email" value={emailInput} />
-                    <input type="hidden" name="mobile" value={mobileInput} />
-                    <input type="hidden" name="nationality" value={selectedNationality === 'Otra' ? customNationality : selectedNationality} />
-                    <input type="hidden" name="birth_date" value={(() => {
-                      const parts = birthDateInput.split('/');
-                      return parts.length === 3 && parts[2].length === 4
-                        ? `${parts[2]}-${parts[1]}-${parts[0]}`
-                        : '';
-                    })()} />
-                    <input type="hidden" name="commune" value={selectedCommune === 'Otra Comuna' ? customCommune : selectedCommune} />
-                  </div>
-                )}
+              {/* Hidden fields for Step 1 so HTML form handles them on submit */}
+              <input type="hidden" name="first_names" value={firstNames} />
+              <input type="hidden" name="last_names" value={lastNames} />
+              <input type="hidden" name="email" value={emailInput} />
+              <input type="hidden" name="mobile" value={mobileInput} />
+              <input type="hidden" name="nationality" value={selectedNationality === 'Otra' ? customNationality : selectedNationality} />
+              <input type="hidden" name="birth_date" value={(() => {
+                const parts = birthDateInput.split('/');
+                return parts.length === 3 && parts[2].length === 4
+                  ? `${parts[2]}-${parts[1]}-${parts[0]}`
+                  : '';
+              })()} />
+              <input type="hidden" name="commune" value={selectedCommune === 'Otra Comuna' ? customCommune : selectedCommune} />
+            </div>
+          )}
 
-                {/* Section 2 & 3: Only visible on step 2 or 3 */}
-                {(step === 2 || step === 3) && (
-                  <div className="animate-fade-in" style={{ display: step === 2 ? 'flex' : 'none', flexDirection: 'column', gap: '30px' }}>
-                    {/* Section 2: Case Details */}
-                    <div>
-                      <h3 style={{
-                        fontSize: '1.1rem',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
-                        borderBottom: '1px solid var(--glass-border)',
-                        paddingBottom: '10px',
-                        marginBottom: '20px',
-                        color: 'hsl(var(--accent-hsl))',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
-                        2. Detalle del Caso o Convenio
-                      </h3>
+          {/* Section 2 & 3: Only visible on step 2 or 3 */}
+          {(step === 2 || step === 3) && (
+            <div className="animate-fade-in" style={{ display: step === 2 ? 'flex' : 'none', flexDirection: 'column', gap: '30px' }}>
+              {/* Section 2: Case Details */}
+              <div>
+                <h3 style={{
+                  fontSize: '1.1rem',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  borderBottom: '1px solid var(--glass-border)',
+                  paddingBottom: '10px',
+                  marginBottom: '14px',
+                  color: 'hsl(var(--accent-hsl))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                  2. Detalle del Caso o Convenio
+                </h3>
 
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                        gap: '20px'
-                      }}>
-                        {/* Medical Center */}
-                        <div className="form-group" id="medical_center_group" tabIndex={-1} style={{ outline: 'none' }}>
-                          <label className="form-label" htmlFor="medical_center_select" style={{ color: medicalCenterError ? 'hsl(var(--danger-hsl))' : undefined }}>
-                            Centro Médico de Origen * {medicalCenterError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
-                          </label>
-                          {hasPreloadedMedicalCenter ? (
-                            <>
-                              <input
-                                className="form-input"
-                                type="text"
-                                id="medical_center_display"
-                                readOnly={true}
-                                value={selectedMedicalCenter}
-                                style={{
-                                  opacity: 0.8,
-                                  cursor: 'not-allowed',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                                  fontWeight: 600,
-                                  borderColor: 'var(--glass-border)'
-                                }}
-                              />
-                              <input
-                                type="hidden"
-                                name="medical_center"
-                                value={selectedMedicalCenter}
-                              />
-                            </>
-                          ) : (
-                            <>
-                              <CustomSelect
-                                value={selectedMedicalCenter}
-                                onChange={(val) => {
-                                  setSelectedMedicalCenter(val);
-                                  clearFieldError('medical_center_select', setMedicalCenterError);
-                                }}
-                                options={[
-                                  { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
-                                  { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
-                                  { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
-                                  { value: 'Otro', label: 'Otro Centro de Salud Familiar' }
-                                ]}
-                                placeholder="Seleccione un Centro..."
-                                disabled={loading}
-                                id="medical_center_select"
-                                hasError={!!medicalCenterError}
-                              />
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '20px'
+                }}>
+                  {/* Medical Center */}
+                  <div className="form-group" id="medical_center_group" tabIndex={-1} style={{ outline: 'none' }}>
+                    <label className="form-label" htmlFor="medical_center_select" style={{ color: medicalCenterError ? 'hsl(var(--danger-hsl))' : undefined }}>
+                      Centro Médico de Origen * {medicalCenterError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
+                    </label>
+                    {hasPreloadedMedicalCenter ? (
+                      <>
+                        <input
+                          className="form-input"
+                          type="text"
+                          id="medical_center_display"
+                          readOnly={true}
+                          value={selectedMedicalCenter}
+                          style={{
+                            opacity: 0.8,
+                            cursor: 'not-allowed',
+                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                            fontWeight: 600,
+                            borderColor: 'var(--glass-border)'
+                          }}
+                        />
+                        <input
+                          type="hidden"
+                          name="medical_center"
+                          value={selectedMedicalCenter}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <CustomSelect
+                          value={selectedMedicalCenter}
+                          onChange={(val) => {
+                            setSelectedMedicalCenter(val);
+                            clearFieldError('medical_center_select', setMedicalCenterError);
+                          }}
+                          options={[
+                            { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
+                            { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
+                            { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
+                            { value: 'Otro', label: 'Otro Centro de Salud Familiar' }
+                          ]}
+                          placeholder="Seleccione un Centro..."
+                          disabled={loading}
+                          id="medical_center_select"
+                          hasError={!!medicalCenterError}
+                        />
 
-                              {selectedMedicalCenter === 'Otro' && (
-                                <div className="animate-fade-in" style={{ marginTop: '10px' }}>
-                                  <label className="form-label" htmlFor="custom_medical_center" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique el Centro Médico *</label>
-                                  <input
-                                    className={`form-input ${medicalCenterError ? 'animate-shake-error' : ''}`}
-                                    type="text"
-                                    id="custom_medical_center"
-                                    placeholder="Escriba el nombre del centro médico"
-                                    value={customMedicalCenter}
-                                    onChange={(e) => {
-                                      setCustomMedicalCenter(e.target.value);
-                                      clearFieldError('custom_medical_center', setMedicalCenterError);
-                                    }}
-                                    required
-                                    disabled={loading}
-                                    style={{
-                                      borderColor: medicalCenterError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
-                                      boxShadow: medicalCenterError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
-                                    }}
-                                  />
-                                </div>
-                              )}
-                            </>
-                          )}
-                          {medicalCenterError && (
-                            <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>
-                              {medicalCenterError}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Agreement Type */}
-                        <div className="form-group" id="agreement_type_group" tabIndex={-1} style={{ outline: 'none' }}>
-                          <label className="form-label" htmlFor="agreement_type_select" style={{ color: agreementTypeError ? 'hsl(var(--danger-hsl))' : undefined }}>
-                            Convenio sin Costo de * {agreementTypeError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
-                          </label>
-                          <CustomSelect
-                            value={selectedAgreementType}
-                            onChange={(val) => {
-                              setSelectedAgreementType(val);
-                              clearFieldError('agreement_type_select', setAgreementTypeError);
-                            }}
-                            options={agreements.length > 0 ? agreements : [
-                              { value: 'Confección de Prótesis Removibles', label: 'Confección de Prótesis Removibles' },
-                              { value: 'Atención Dental Básica', label: 'Atención Dental Básica' },
-                              { value: 'Tratamiento de Endodoncia', label: 'Tratamiento de Endodoncia' },
-                              { value: 'Implantes Dentales', label: 'Implantes Dentales' },
-                              { value: 'Otro', label: 'Otro Convenio' }
-                            ]}
-                            placeholder="Seleccione tipo de convenio..."
-                            disabled={loading}
-                            id="agreement_type_select"
-                            hasError={!!agreementTypeError}
-                          />
-
-                          {selectedAgreementType === 'Otro' && (
-                            <div className="animate-fade-in" style={{ marginTop: '10px' }}>
-                              <label className="form-label" htmlFor="custom_agreement_type" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique el Convenio *</label>
-                              <input
-                                className={`form-input ${agreementTypeError ? 'animate-shake-error' : ''}`}
-                                type="text"
-                                id="custom_agreement_type"
-                                placeholder="Escriba el tipo de convenio"
-                                value={customAgreementType}
-                                onChange={(e) => {
-                                  setCustomAgreementType(e.target.value);
-                                  clearFieldError('custom_agreement_type', setAgreementTypeError);
-                                }}
-                                required
-                                disabled={loading}
-                                style={{
-                                  borderColor: agreementTypeError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
-                                  boxShadow: agreementTypeError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
-                                }}
-                              />
-                            </div>
-                          )}
-                          {agreementTypeError && (
-                            <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>
-                              {agreementTypeError}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Interactive Odontogram Integration */}
-                      <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <h3 style={{
-                            fontSize: '1.15rem',
-                            fontFamily: 'var(--font-display)',
-                            fontWeight: 800,
-                            color: 'hsl(var(--primary-hsl))',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            margin: 0
-                          }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                            Detalle Odontológico Clínico *
-                          </h3>
-                          <span style={{ fontSize: '0.84rem', opacity: 0.8, color: 'hsla(var(--foreground-hsl) / 0.85)' }}>
-                            Diagnostique piezas y caras dentales, y asigne las prestaciones necesarias usando el odontograma interactivo.
-                          </span>
-                        </div>
-
-                        <Odontogram initialType={odontogramType} onChange={setOdontogramData} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  /* Step 3 Verified Case & Odontogram summary card */
-                  <div className="animate-fade-in" style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '14px',
-                    padding: '24px 28px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.04) 0%, rgba(59, 130, 246, 0.01) 100%)',
-                    border: '1.5px solid rgba(20, 184, 166, 0.2)',
-                    boxShadow: 'var(--shadow-sm)',
-                    position: 'relative'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                      <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#14b8a6', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                        Detalle del Caso y Diagnóstico Verificados
+                        {selectedMedicalCenter === 'Otro' && (
+                          <div className="form-group animate-fade-in" style={{ marginTop: '10px' }}>
+                            <label className="form-label" htmlFor="custom_medical_center" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique el Centro Médico *</label>
+                            <input
+                              className={`form-input ${medicalCenterError ? 'animate-shake-error' : ''}`}
+                              type="text"
+                              id="custom_medical_center"
+                              placeholder="Escriba el nombre del centro médico"
+                              value={customMedicalCenter}
+                              onChange={(e) => {
+                                setCustomMedicalCenter(e.target.value);
+                                clearFieldError('custom_medical_center', setMedicalCenterError);
+                              }}
+                              required
+                              disabled={loading}
+                              style={{
+                                borderColor: medicalCenterError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
+                                boxShadow: medicalCenterError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
+                              }}
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {medicalCenterError && (
+                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>
+                        {medicalCenterError}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setStep(2)}
-                        className="btn-secondary"
-                        style={{
-                          padding: '8px 16px',
-                          fontSize: '0.8rem',
-                          borderRadius: '8px',
-                          fontWeight: 700,
-                          height: 'auto',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-                        Modificar
-                      </button>
-                    </div>
+                    )}
+                  </div>
 
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                      gap: '16px',
-                      marginTop: '6px'
+                  {/* Agreement Type */}
+                  <div className="form-group" id="agreement_type_group" tabIndex={-1} style={{ outline: 'none' }}>
+                    <label className="form-label" htmlFor="agreement_type_select" style={{ color: agreementTypeError ? 'hsl(var(--danger-hsl))' : undefined }}>
+                      Convenio sin Costo de * {agreementTypeError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
+                    </label>
+                    {hasPreloadedMedicalCenter ? (
+                      <>
+                        <input
+                          className="form-input"
+                          type="text"
+                          id="agreement_type_display"
+                          readOnly={true}
+                          value={selectedAgreementType}
+                          style={{
+                            opacity: 0.8,
+                            cursor: 'not-allowed',
+                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                            fontWeight: 600,
+                            borderColor: 'var(--glass-border)'
+                          }}
+                        />
+                        <input
+                          type="hidden"
+                          name="agreement_type"
+                          value={selectedAgreementType}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <CustomSelect
+                          value={selectedAgreementType}
+                          onChange={(val) => {
+                            setSelectedAgreementType(val);
+                            clearFieldError('agreement_type_select', setAgreementTypeError);
+                          }}
+                          options={agreements.length > 0 ? agreements : [
+                            { value: 'Confección de Prótesis Removibles', label: 'Confección de Prótesis Removibles' },
+                            { value: 'Atención Dental Básica', label: 'Atención Dental Básica' },
+                            { value: 'Tratamiento de Endodoncia', label: 'Tratamiento de Endodoncia' },
+                            { value: 'Implantes Dentales', label: 'Implantes Dentales' },
+                            { value: 'Otro', label: 'Otro Convenio' }
+                          ]}
+                          placeholder="Seleccione tipo de convenio..."
+                          disabled={loading}
+                          id="agreement_type_select"
+                          hasError={!!agreementTypeError}
+                        />
+                      </>
+                    )}
+
+                    {selectedAgreementType === 'Otro' && (
+                      <div className="form-group animate-fade-in" style={{ marginTop: '10px' }}>
+                        <label className="form-label" htmlFor="custom_agreement_type" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique el Convenio *</label>
+                        <input
+                          className={`form-input ${agreementTypeError ? 'animate-shake-error' : ''}`}
+                          type="text"
+                          id="custom_agreement_type"
+                          placeholder="Escriba el tipo de convenio"
+                          value={customAgreementType}
+                          onChange={(e) => {
+                            setCustomAgreementType(e.target.value);
+                            clearFieldError('custom_agreement_type', setAgreementTypeError);
+                          }}
+                          required
+                          disabled={loading}
+                          style={{
+                            borderColor: agreementTypeError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
+                            boxShadow: agreementTypeError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
+                          }}
+                        />
+                      </div>
+                    )}
+                    {agreementTypeError && (
+                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>
+                        {agreementTypeError}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <p style={{
+                  fontSize: '0.86rem',
+                  color: '#d97706',
+                  fontWeight: 600,
+                  margin: '16px 0 0 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  lineHeight: '1.4'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                  Los convenios se encuentran precargados en el sistema. Si necesita revisar o cambiar esa asignación, por favor comuníquese con el encargado del convenio registrado.
+                </p>
+
+                {/* Interactive Odontogram Integration */}
+                <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <h3 style={{
+                      fontSize: '1.15rem',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      color: 'hsl(var(--primary-hsl))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      margin: 0
                     }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        <span style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          opacity: 0.6,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          marginBottom: '2px',
-                          color: 'var(--foreground-hsl)'
-                        }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><path d="M3 21h18" /><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" /><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" /><path d="M10 9h4" /><path d="M12 7v4" /></svg>
-                          Centro Médico de Origen
-                        </span>
-                        <strong style={{ fontSize: '0.94rem', paddingLeft: '19px' }}>{selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter}</strong>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        <span style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          opacity: 0.6,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          marginBottom: '2px',
-                          color: 'var(--foreground-hsl)'
-                        }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
-                          Tipo de Convenio
-                        </span>
-                        <strong style={{ fontSize: '0.94rem', paddingLeft: '19px' }}>{selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType}</strong>
-                      </div>
-                      <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          opacity: 0.6,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          marginBottom: '4px',
-                          color: 'var(--foreground-hsl)'
-                        }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
-                          Diagnósticos Registrados (Odontograma)
-                        </span>
-                        <div style={{ paddingLeft: '19px' }}>
-                          <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', fontStyle: 'italic', opacity: 0.9, lineHeight: '1.4' }}>
-                            {odontogramData.dentalDiagnosis || 'Sin patologías o piezas ingresadas en odontograma interactivo.'}
-                          </p>
-                        </div>
-                      </div>
-                      <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          opacity: 0.6,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          marginBottom: '4px',
-                          color: 'var(--foreground-hsl)'
-                        }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg>
-                          Prestaciones Requeridas (Odontograma)
-                        </span>
-                        <div style={{ paddingLeft: '19px' }}>
-                          <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4' }}>
-                            {odontogramData.treatmentNeeded || 'Sin prestaciones asignadas.'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Hidden fields for submission */}
-                    <input type="hidden" name="medical_center" value={selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter} />
-                    <input type="hidden" name="agreement_type" value={selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType} />
-                    <input type="hidden" name="dental_diagnosis" value={odontogramData.dentalDiagnosis || 'Sin patologías registradas en odontograma.'} />
-                    <input type="hidden" name="treatment_needed" value={odontogramData.treatmentNeeded || 'Sin tratamientos asignados.'} />
-                    <input type="hidden" name="description" value={odontogramData.description || 'Derivación ingresada mediante odontograma interactivo.'} />
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                      Detalle Odontológico Clínico *
+                    </h3>
+                    <span style={{ fontSize: '0.84rem', opacity: 0.8, color: 'hsla(var(--foreground-hsl) / 0.85)' }}>
+                      Diagnostique piezas y caras dentales, y asigne las prestaciones necesarias usando el odontograma interactivo.
+                    </span>
                   </div>
-                )}
 
-                {/* Section 3: Professional Details (Step 3 Only) */}
-                {step === 3 && (
-                  <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                    <div>
-                      <h3 style={{
-                        fontSize: '1.1rem',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
-                        borderBottom: '1px solid var(--glass-border)',
-                        paddingBottom: '10px',
-                        marginTop: '40px',
-                        marginBottom: '20px',
-                        color: 'hsl(var(--accent-hsl))',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                        3. Firma del Profesional Derivador
-                      </h3>
+                  <Odontogram initialType={odontogramType} onChange={setOdontogramData} />
+                </div>
+              </div>
+            </div>
+          )}
 
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                        gap: '20px'
-                      }}>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="professional_name">Nombre del Profesional *</label>
-                          <input className="form-input" type="text" id="professional_name" name="professional_name" required readOnly={true} value={profName} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="professional_title">Profesión *</label>
-                          <input className="form-input" type="text" id="professional_title" name="professional_title" required readOnly={true} value={profTitle} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="professional_position">Cargo *</label>
-                          <input className="form-input" type="text" id="professional_position" name="professional_position" required readOnly={true} value={profPosition} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="professional_email">Correo de Contacto *</label>
-                          <input className="form-input" type="email" id="professional_email" name="professional_email" required readOnly={true} value={profEmail} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="professional_address">Dirección del Centro *</label>
-                          <input className="form-input" type="text" id="professional_address" name="professional_address" required readOnly={true} value={profAddress} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="professional_website">Sitio Web (Opcional)</label>
-                          <input className="form-input" type="text" id="professional_website" name="professional_website" readOnly={true} value={profWebsite} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
-                        </div>
-                      </div>
+          {step === 3 && (
+            /* Step 3 Verified Case & Odontogram summary card */
+            <div className="animate-fade-in" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              padding: '24px 28px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.04) 0%, rgba(59, 130, 246, 0.01) 100%)',
+              border: '1.5px solid rgba(20, 184, 166, 0.2)',
+              boxShadow: 'var(--shadow-sm)',
+              position: 'relative'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#14b8a6', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  Detalle del Caso y Diagnóstico Verificados
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="btn-secondary"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.8rem',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    height: 'auto',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                  Modificar
+                </button>
+              </div>
 
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '16px',
-                        padding: '16px 20px',
-                        borderRadius: '12px',
-                        backgroundColor: 'rgba(217, 119, 6, 0.05)',
-                        border: '1px solid rgba(217, 119, 6, 0.2)',
-                        color: '#d97706',
-                        marginTop: '24px'
-                      }}>
-                        <div style={{
-                          color: '#d97706',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          marginTop: '2px'
-                        }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 800,
-                            textTransform: 'uppercase',
-                            color: '#d97706',
-                            letterSpacing: '0.05em'
-                          }}>
-                            Información Importante
-                          </span>
-                          <p style={{
-                            fontSize: '0.85rem',
-                            margin: 0,
-                            lineHeight: '1.4',
-                            opacity: 0.95
-                          }}>
-                            Si quieres modificar tus datos registrados, debes enviar un correo a{' '}
-                            <a href="mailto:derivaciones@policlinicotabancura.cl" style={{ fontWeight: 700, textDecoration: 'underline', color: 'currentColor' }}>
-                              derivaciones@policlinicotabancura.cl
-                            </a>.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '16px',
+                marginTop: '6px'
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    opacity: 0.6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '2px',
+                    color: 'var(--foreground-hsl)'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><path d="M3 21h18" /><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" /><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" /><path d="M10 9h4" /><path d="M12 7v4" /></svg>
+                    Centro Médico de Origen
+                  </span>
+                  <strong style={{ fontSize: '0.94rem', paddingLeft: '19px' }}>{selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter}</strong>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    opacity: 0.6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '2px',
+                    color: 'var(--foreground-hsl)'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                    Tipo de Convenio
+                  </span>
+                  <strong style={{ fontSize: '0.94rem', paddingLeft: '19px' }}>{selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType}</strong>
+                </div>
+                <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    opacity: 0.6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '4px',
+                    color: 'var(--foreground-hsl)'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+                    Diagnósticos Registrados (Odontograma)
+                  </span>
+                  <div style={{ paddingLeft: '19px' }}>
+                    <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', fontStyle: 'italic', opacity: 0.9, lineHeight: '1.4' }}>
+                      {odontogramData.dentalDiagnosis || 'Sin patologías o piezas ingresadas en odontograma interactivo.'}
+                    </p>
                   </div>
-                )}
+                </div>
+                <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    opacity: 0.6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '4px',
+                    color: 'var(--foreground-hsl)'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg>
+                    Prestaciones Requeridas (Odontograma)
+                  </span>
+                  <div style={{ paddingLeft: '19px' }}>
+                    <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4' }}>
+                      {odontogramData.treatmentNeeded || 'Sin prestaciones asignadas.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hidden fields for submission */}
+              <input type="hidden" name="medical_center" value={selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter} />
+              <input type="hidden" name="agreement_type" value={selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType} />
+              <input type="hidden" name="dental_diagnosis" value={odontogramData.dentalDiagnosis || 'Sin patologías registradas en odontograma.'} />
+              <input type="hidden" name="treatment_needed" value={odontogramData.treatmentNeeded || 'Sin tratamientos asignados.'} />
+              <input type="hidden" name="description" value={odontogramData.description || 'Derivación ingresada mediante odontograma interactivo.'} />
+            </div>
+          )}
+
+          {/* Section 3: Professional Details (Step 3 Only) */}
+          {step === 3 && (
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+              <div>
+                <h3 style={{
+                  fontSize: '1.1rem',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  borderBottom: '1px solid var(--glass-border)',
+                  paddingBottom: '10px',
+                  marginTop: '40px',
+                  marginBottom: '20px',
+                  color: 'hsl(var(--accent-hsl))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                  3. Firma del Profesional Derivador
+                </h3>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '20px'
+                }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="professional_name">Nombre del Profesional *</label>
+                    <input className="form-input" type="text" id="professional_name" name="professional_name" required readOnly={true} value={profName} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="professional_title">Profesión *</label>
+                    <input className="form-input" type="text" id="professional_title" name="professional_title" required readOnly={true} value={profTitle} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="professional_position">Cargo *</label>
+                    <input className="form-input" type="text" id="professional_position" name="professional_position" required readOnly={true} value={profPosition} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="professional_email">Correo de Contacto *</label>
+                    <input className="form-input" type="email" id="professional_email" name="professional_email" required readOnly={true} value={profEmail} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="professional_address">Dirección del Centro *</label>
+                    <input className="form-input" type="text" id="professional_address" name="professional_address" required readOnly={true} value={profAddress} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="professional_website">Sitio Web (Opcional)</label>
+                    <input className="form-input" type="text" id="professional_website" name="professional_website" readOnly={true} value={profWebsite} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '16px',
+                  padding: '16px 20px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(217, 119, 6, 0.05)',
+                  border: '1px solid rgba(217, 119, 6, 0.2)',
+                  color: '#d97706',
+                  marginTop: '24px'
+                }}>
+                  <div style={{
+                    color: '#d97706',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: '2px'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      color: '#d97706',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Información Importante
+                    </span>
+                    <p style={{
+                      fontSize: '0.85rem',
+                      margin: 0,
+                      lineHeight: '1.4',
+                      opacity: 0.95
+                    }}>
+                      Si quieres modificar tus datos registrados, debes enviar un correo a{' '}
+                      <a href="mailto:derivaciones@policlinicotabancura.cl" style={{ fontWeight: 700, textDecoration: 'underline', color: 'currentColor' }}>
+                        derivaciones@policlinicotabancura.cl
+                      </a>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Footer Action Buttons with conditional wizard steps */}
           <div style={{
@@ -1895,9 +1957,17 @@ export default function RegisterCasePage() {
               <>
                 <button
                   type="button"
-                  onClick={() => router.back()}
+                  onClick={() => router.push('/dashboard')}
                   className="btn-secondary"
                   disabled={loading}
+                  onMouseEnter={() => setIsCancelHovered(true)}
+                  onMouseLeave={() => setIsCancelHovered(false)}
+                  style={{
+                    backgroundColor: isCancelHovered ? 'hsl(var(--warning-hsl, 45 90% 50%))' : undefined,
+                    color: isCancelHovered ? '#000000' : undefined,
+                    borderColor: isCancelHovered ? 'hsl(var(--warning-hsl, 45 90% 50%))' : undefined,
+                    boxShadow: isCancelHovered ? '0 0 15px rgba(245, 158, 11, 0.4)' : undefined
+                  }}
                 >
                   Cancelar
                 </button>

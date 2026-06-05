@@ -12,13 +12,11 @@ export async function getConveniosByMedicalCenterAction(medicalCenter: string) {
     const res = await pool.query(
       `SELECT id, empresa, fecha_afiliacion, descuento 
        FROM convenios 
-       WHERE medical_center = $1
-       ORDER BY empresa ASC`,
-      [medicalCenter.trim()]
+       ORDER BY empresa ASC`
     );
     return { success: true, convenios: res.rows };
   } catch (error) {
-    console.error('Error fetching convenios by medical center:', error);
+    console.error('Error fetching all convenios:', error);
     return { error: 'Error del servidor al obtener los convenios.' };
   }
 }

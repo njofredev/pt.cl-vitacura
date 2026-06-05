@@ -20,7 +20,12 @@ import {
   X,
   Save,
   FileText,
-  Search
+  Search,
+  MousePointerClick,
+  Paintbrush,
+  Stethoscope,
+  Zap,
+  CheckSquare
 } from 'lucide-react';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 
@@ -182,6 +187,10 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
   const [massSelectionType, setMassSelectionType] = useState<'upper' | 'lower' | 'full' | null>(null);
   const [massSelectedCategory, setMassSelectedCategory] = useState<string | null>(null);
 
+  // Tour states
+  const [showTour, setShowTour] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+
   // Load dynamic active aranceles from the database db_casos
   useEffect(() => {
     async function loadDynamicPrestaciones() {
@@ -299,6 +308,233 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const resetTourStepState = (step: number) => {
+    if (step === 0) {
+      setSelectedTooth(null);
+      setIsMultiSelectMode(false);
+      // Pre-populate with initial mock data so summary table renders immediately
+      setChartState({
+        18: {
+          faces: { V: true, O: false, M: false, D: false, L: false },
+          treatments: ['obturacion_simple']
+        }
+      });
+    } else if (step === 1 || step === 2) {
+      setSelectedTooth(18);
+      setIsMultiSelectMode(false);
+      setChartState({
+        18: {
+          faces: { V: true, O: false, M: false, D: false, L: false },
+          treatments: ['obturacion_simple']
+        }
+      });
+    } else if (step === 3) {
+      setSelectedTooth(null);
+      setIsMultiSelectMode(false);
+      // Pre-populate upper arch mass action mock data
+      setChartState({
+        18: {
+          faces: { V: true, O: false, M: false, D: false, L: false },
+          treatments: ['obturacion_simple']
+        },
+        101: {
+          faces: { V: false, O: false, M: false, D: false, L: false },
+          treatments: ['limpieza']
+        }
+      });
+    } else if (step === 4) {
+      setSelectedTooth(null);
+      setIsMultiSelectMode(true);
+      setChartState({
+        18: {
+          faces: { V: true, O: false, M: false, D: false, L: false },
+          treatments: ['obturacion_simple']
+        },
+        101: {
+          faces: { V: false, O: false, M: false, D: false, L: false },
+          treatments: ['limpieza']
+        }
+      });
+    } else if (step === 5) {
+      setSelectedTooth(null);
+      setIsMultiSelectMode(false);
+      // Ensure both tooth 18 and upper arch are in the summary table for final step
+      setChartState({
+        18: {
+          faces: { V: true, O: false, M: false, D: false, L: false },
+          treatments: ['obturacion_simple']
+        },
+        101: {
+          faces: { V: false, O: false, M: false, D: false, L: false },
+          treatments: ['limpieza']
+        }
+      });
+    }
+  };
+
+  // Tour step synchronizer to make the walkthrough interactive
+  useEffect(() => {
+    if (showTour) {
+      resetTourStepState(tourStep);
+    } else {
+      // Reset modes when tour is closed
+      if (tourStep === 4 || tourStep === 5) {
+        setIsMultiSelectMode(false);
+      }
+    }
+  }, [showTour, tourStep]);
+
+  const closeTourAndClear = () => {
+    setShowTour(false);
+    setChartState({});
+    setSelectedTooth(null);
+    setIsMultiSelectMode(false);
+    setMultiSelectedTeeth([]);
+    setSelectedMultiTreatment(null);
+  };
+
+  const renderTourBubble = (stepNumber: number) => {
+    if (!showTour || tourStep !== stepNumber) return null;
+
+    const stepsData = [
+      {
+        title: "Selección de Piezas",
+        desc: "Haz clic sobre cualquier pieza dental en el odontograma para ver sus caras y poder asignarle diagnósticos o prestaciones específicas.",
+        icon: <MousePointerClick size={20} />
+      },
+      {
+        title: "Diagnóstico por Caras",
+        desc: "Haz clic en las caras clínicas del diente (Vestibular, Oclusal, Mesial, Distal, Lingual) o marca un estado global (Ausente, Implante, Corona).",
+        icon: <Paintbrush size={20} />
+      },
+      {
+        title: "Asignación de Prestaciones",
+        desc: "Busca prestaciones arancelarias por nombre o categoría, y márcalas para asignarlas inmediatamente a la pieza seleccionada.",
+        icon: <Stethoscope size={20} />
+      },
+      {
+        title: "Acciones en Masa",
+        desc: "Usa estos accesos rápidos para aplicar el tratamiento elegido a toda la arcada superior, inferior o a la boca completa en un clic.",
+        icon: <Zap size={20} />
+      },
+      {
+        title: "Selección Múltiple",
+        desc: "Activa este modo para seleccionar múltiples piezas simultáneamente y aplicarles el mismo tratamiento en lote.",
+        icon: <CheckSquare size={20} />
+      },
+      {
+        title: "Resumen de Prestaciones",
+        desc: "Visualiza el desglose completo de tratamientos y diagnósticos asignados en la tabla de resumen al final de la página antes de comenzar.",
+        icon: <FileText size={20} />
+      }
+    ];
+
+    const step = stepsData[stepNumber];
+
+    const isLastStep = stepNumber === 5;
+
+    return createPortal(
+      <div 
+        className="glass-panel animate-fade-in"
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          padding: '24px',
+          background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.05) 0%, rgba(59, 130, 246, 0.03) 100%), hsl(var(--card-hsl))',
+          borderWidth: '1.5px 1.5px 1.5px 6px',
+          borderStyle: 'solid',
+          borderColor: isLastStep ? 'hsl(var(--card-border-hsl)) hsl(var(--card-border-hsl)) hsl(var(--card-border-hsl)) #10b981' : 'hsl(var(--card-border-hsl)) hsl(var(--card-border-hsl)) hsl(var(--card-border-hsl)) #fb923c',
+          borderRadius: '16px',
+          boxShadow: isLastStep ? '0 16px 40px -10px rgba(16, 185, 129, 0.25), var(--shadow-lg)' : '0 16px 40px -10px rgba(251, 146, 60, 0.25), var(--shadow-lg)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          width: '380px',
+          maxWidth: '90vw',
+          zIndex: 999999, // Above the active tooth editor modal (99999)
+          textAlign: 'left'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <span style={{ color: isLastStep ? '#10b981' : '#fb923c', display: 'flex', alignItems: 'center' }}>{step.icon}</span>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: isLastStep ? '#10b981' : '#fb923c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Guía Rápida • Paso {stepNumber + 1} de 6
+            </span>
+            <h5 style={{ fontSize: '0.94rem', fontWeight: 800, margin: '2px 0 0 0', color: 'hsl(var(--foreground-hsl))' }}>
+              {step.title}
+            </h5>
+          </div>
+          <button 
+            type="button" 
+            onClick={(e) => { e.stopPropagation(); closeTourAndClear(); }}
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.15)', 
+              border: 'none', 
+              borderRadius: '50%',
+              width: '28px',
+              height: '28px',
+              cursor: 'pointer', 
+              color: '#ffffff', 
+              display: 'flex', 
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              padding: 0
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'}
+          >
+            <X size={16} style={{ strokeWidth: 3, color: '#ffffff' }} />
+          </button>
+        </div>
+        <p style={{ fontSize: '0.82rem', lineHeight: '1.5', margin: 0, color: 'hsla(var(--foreground-hsl) / 0.85)', fontWeight: 500 }}>
+          {step.desc}
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setTourStep(prev => Math.max(0, prev - 1)); }}
+            disabled={stepNumber === 0}
+            className="odont-option-btn"
+            style={{ 
+              padding: '6px 14px', 
+              fontSize: '0.78rem', 
+              borderRadius: '8px', 
+              opacity: stepNumber === 0 ? 0.4 : 1, 
+              margin: 0, 
+              cursor: stepNumber === 0 ? 'not-allowed' : 'pointer',
+              fontWeight: 700
+            }}
+          >
+            Atrás
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); if (stepNumber < 5) setTourStep(prev => prev + 1); else closeTourAndClear(); }}
+            className="odont-option-btn"
+            style={{ 
+              padding: '6px 16px', 
+              fontSize: '0.78rem', 
+              borderRadius: '8px', 
+              backgroundColor: isLastStep ? '#10b981' : '#fb923c', 
+              color: '#ffffff', 
+              border: isLastStep ? '1px solid #10b981' : '1px solid #fb923c', 
+              margin: 0, 
+              fontWeight: 800,
+              boxShadow: isLastStep ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
+            }}
+          >
+            {isLastStep ? 'Iniciar' : 'Siguiente'}
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
+  };
 
   // Reset category and search term on tooth select
   useEffect(() => {
@@ -695,7 +931,7 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
   const activeToothState = selectedTooth ? getToothState(selectedTooth) : null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', padding: '24px', border: '1.5px solid hsl(var(--card-border-hsl))' }}>
 
       {/* Visual Header / Tab Switcher */}
       <div style={{
@@ -703,15 +939,48 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '6px',
-        backgroundColor: 'hsla(var(--foreground-hsl) / 0.02)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: '12px',
         gap: '8px'
       }}>
-        <span style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.04em', paddingLeft: '12px', color: 'hsla(var(--foreground-hsl) / 0.8)' }}>
-          Visualización del Odontograma
+        <span style={{ 
+          fontSize: '0.82rem', 
+          fontWeight: 700, 
+          opacity: 0.8, 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.04em', 
+          paddingLeft: '12px', 
+          color: 'hsla(var(--foreground-hsl) / 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <Activity size={16} style={{ color: 'hsl(var(--primary-hsl))', strokeWidth: 2.5 }} />
+          Odontograma digital
         </span>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="odont-option-btn animate-glow-orange"
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.8rem',
+              borderRadius: '8px',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'rgba(251, 146, 60, 0.08)',
+              color: '#fb923c',
+              border: '1px solid rgba(251, 146, 60, 0.25)',
+              margin: 0
+            }}
+            onClick={() => {
+              setShowTour(true);
+              setTourStep(0);
+            }}
+          >
+            <HelpCircle size={13} /> Guía Rápida
+          </button>
+
           <div style={{
             display: 'flex',
             backgroundColor: 'hsla(var(--foreground-hsl) / 0.04)',
@@ -799,23 +1068,16 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
       </div>
  
       {/* Anatomical Odontogram Chart */}
-      <div className="glass-panel" style={{
-        padding: '34px 28px',
+      <div style={{
+        padding: '10px 0 0 0',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '28px',
-        background: 'linear-gradient(180deg, hsl(var(--card-hsl)) 0%, hsla(var(--card-hsl) / 0.96) 100%)',
-        border: '1.5px solid hsl(var(--card-border-hsl))',
-        boxShadow: 'var(--shadow-lg), 0 12px 46px -12px rgba(139, 131, 114, 0.22)',
         position: 'relative',
         overflowX: 'auto',
+        width: '100%'
       }}>
- 
-        {/* Subtle grid indicators */}
-        <div style={{ position: 'absolute', left: '18px', top: '18px', fontSize: '0.74rem', fontWeight: 800, opacity: 0.5, color: 'hsla(var(--foreground-hsl) / 0.7)', letterSpacing: '0.05em' }}>
-          DERIVACIÓN DENTAL VITACURA
-        </div>
 
         {treatmentOptions.length === 0 ? (
           <div style={{
@@ -913,10 +1175,20 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
             flexDirection: 'column',
             gap: '14px',
             justifyContent: 'center',
-            paddingRight: '32px',
             borderRight: '1.5px solid var(--glass-border)',
             minWidth: '270px',
-            flexShrink: 0
+            flexShrink: 0,
+            // Tour Step 3 Highlight
+            border: (showTour && tourStep === 3) ? '2.5px solid #fb923c' : '2.5px solid transparent',
+            borderRadius: '16px',
+            paddingTop: (showTour && tourStep === 3) ? '16px' : '0px',
+            paddingRight: (showTour && (tourStep === 3 || tourStep === 4)) ? '16px' : '32px',
+            paddingBottom: (showTour && tourStep === 3) ? '16px' : '0px',
+            paddingLeft: (showTour && tourStep === 3) ? '16px' : '0px',
+            backgroundColor: (showTour && tourStep === 3) ? 'rgba(251, 146, 60, 0.04)' : 'transparent',
+            boxShadow: (showTour && tourStep === 3) ? '0 0 25px rgba(251, 146, 60, 0.15)' : 'none',
+            transition: 'all 0.3s ease',
+            position: 'relative'
           }}>
             <div style={{
               fontSize: '0.74rem',
@@ -1082,10 +1354,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
                   ? 'rgba(20, 184, 166, 0.15)' 
                   : (hoveredBtn === 'multiselect' ? 'rgba(120, 120, 120, 0.12)' : 'rgba(120, 120, 120, 0.05)'),
                 color: isMultiSelectMode ? '#14b8a6' : 'hsla(var(--foreground-hsl) / 0.85)',
-                border: isMultiSelectMode 
-                  ? '1.5px solid #14b8a6' 
-                  : (hoveredBtn === 'multiselect' ? '1.5px solid rgba(120, 120, 120, 0.4)' : '1.5px solid rgba(120, 120, 120, 0.18)'),
-                boxShadow: isMultiSelectMode ? '0 6px 20px -4px rgba(20, 184, 166, 0.22)' : 'none',
+                border: (showTour && tourStep === 4) 
+                  ? '2px solid #fb923c' 
+                  : (isMultiSelectMode ? '1.5px solid #14b8a6' : (hoveredBtn === 'multiselect' ? '1.5px solid rgba(120, 120, 120, 0.4)' : '1.5px solid rgba(120, 120, 120, 0.18)')),
+                boxShadow: (showTour && tourStep === 4) 
+                  ? '0 0 20px rgba(251, 146, 60, 0.25)' 
+                  : (isMultiSelectMode ? '0 6px 20px -4px rgba(20, 184, 166, 0.22)' : 'none'),
                 transform: hoveredBtn === 'multiselect' ? 'translateY(-2px)' : 'none',
                 cursor: 'pointer',
                 width: '100%',
@@ -1128,7 +1402,6 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
               )}
             </button>
 
-            {/* Dynamic Multi-Select Action Panel (Relocated to the bottom of the card) */}
           </div>
  
           {/* Right Anatomical Jaws Rows Panel */}
@@ -1141,7 +1414,13 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
             width: '100%',
             alignItems: 'center',
             paddingLeft: '20px',
-            flex: 1
+            flex: 1,
+            // Tour Step 0 Highlight
+            border: (showTour && tourStep === 0) ? '2.5px solid #fb923c' : '2.5px dashed transparent',
+            borderRadius: '16px',
+            padding: '16px 16px 16px 20px',
+            boxShadow: (showTour && tourStep === 0) ? '0 0 25px rgba(251, 146, 60, 0.25)' : 'none',
+            transition: 'all 0.3s ease'
           }}>
  
             {/* MAXILAR SUPERIOR (Upper Jaw) */}
@@ -1543,7 +1822,18 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
                 </button>
 
                 {/* Left Column: Tooth details, graphic selection diagram, special conditions, and faces selection buttons */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '20px',
+                  border: (showTour && tourStep === 1) ? '2px solid #fb923c' : '2.5px solid transparent',
+                  borderRadius: '16px',
+                  padding: (showTour && tourStep === 1) ? '12px' : '0px',
+                  backgroundColor: (showTour && tourStep === 1) ? 'rgba(251, 146, 60, 0.04)' : 'transparent',
+                  boxShadow: (showTour && tourStep === 1) ? '0 0 25px rgba(251, 146, 60, 0.15)' : 'none',
+                  transition: 'all 0.3s ease',
+                  position: 'relative'
+                }}>
                   {/* Tooth Header Information & Center Graphic */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{
@@ -1655,7 +1945,19 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
                 </div>
 
                 {/* Right Column: Prestaciones (Treatments Checklist) with Instant Search Bar */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '16px', 
+                  overflow: 'hidden',
+                  border: (showTour && tourStep === 2) ? '2px solid #fb923c' : '2.5px solid transparent',
+                  borderRadius: '16px',
+                  padding: (showTour && tourStep === 2) ? '12px' : '0px',
+                  backgroundColor: (showTour && tourStep === 2) ? 'rgba(251, 146, 60, 0.04)' : 'transparent',
+                  boxShadow: (showTour && tourStep === 2) ? '0 0 25px rgba(251, 146, 60, 0.15)' : 'none',
+                  transition: 'all 0.3s ease',
+                  position: 'relative'
+                }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'hsl(var(--primary-hsl))', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                       <FileText size={15} style={{ color: 'hsl(var(--primary-hsl))' }} /> Asignar Prestaciones para la Pieza {selectedTooth}:
@@ -2065,7 +2367,15 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
 
       {/* Summary Table of Selected Treatments (Inspirada en el segundo pantallazo) */}
       {Object.keys(chartState).length > 0 && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '24px', border: '1px solid var(--glass-border)' }}>
+        <div 
+          className="glass-panel animate-fade-in" 
+          style={{ 
+            padding: '24px', 
+            border: showTour && tourStep === 5 ? '2px solid #fb923c' : '1px solid var(--glass-border)',
+            boxShadow: showTour && tourStep === 5 ? '0 0 20px rgba(251, 146, 60, 0.4)' : 'none',
+            transition: 'all 0.3s ease'
+          }}
+        >
           <h4 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', color: 'hsla(var(--foreground-hsl) / 0.8)' }}>
             <Activity size={18} style={{ color: 'hsl(var(--primary-hsl))' }} /> Resumen de Prestaciones Asignadas
           </h4>
@@ -2393,6 +2703,8 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           document.body
         )
       ) : null}
+
+      {mounted && showTour && renderTourBubble(tourStep)}
 
     </div>
   );

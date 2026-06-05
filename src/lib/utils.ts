@@ -36,7 +36,7 @@ export function formatRUT(rut: string): string {
  */
 export function validateRUT(rut: string): boolean {
   const cleaned = cleanRUT(rut);
-  if (cleaned.length < 8) return false;
+  if (cleaned.length < 8 || cleaned.length > 9) return false;
   
   const dv = cleaned.slice(-1);
   const numbers = parseInt(cleaned.slice(0, -1), 10);

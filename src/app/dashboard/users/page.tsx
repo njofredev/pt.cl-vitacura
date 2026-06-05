@@ -22,7 +22,8 @@ export default async function UsersPage() {
     const res = await pool.query(`
       SELECT id, name, email, role, active, created_at,
              professional_title, professional_position, professional_email,
-             professional_address, professional_website, professional_phone 
+             professional_address, professional_website, professional_phone,
+             medical_center, agreement_type
       FROM users 
       ORDER BY created_at DESC
     `);

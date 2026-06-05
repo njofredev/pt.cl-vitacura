@@ -2,7 +2,57 @@
 
 import React, { useState, useEffect } from 'react';
 import { getArancelesAction, toggleArancelOdontogramAction, toggleCategoryVisibilityAction, Arancel } from '@/app/actions/arancelActions';
-import { Search, ShieldAlert, Sparkles, Filter, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { 
+  Search, ShieldAlert, Sparkles, Filter, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle,
+  Scissors, Pill, Smile, FlaskConical, Baby, Wrench, Activity, Layers, RefreshCw, AlertTriangle 
+} from 'lucide-react';
+
+const getCategoryIcon = (category: string) => {
+  const cat = category.toUpperCase().trim();
+  if (cat.includes('CIRUGÍA') || cat.includes('CIRUGIA')) return <Scissors size={14} />;
+  if (cat.includes('ENDODONCIA')) return <Pill size={14} />;
+  if (cat.includes('GENERAL')) return <Smile size={14} />;
+  if (cat.includes('IMPLANTOLOGÍA') || cat.includes('IMPLANTOLOGIA')) return <Sparkles size={14} />;
+  if (cat.includes('LABORATORIOS') || cat.includes('LABORATORIO')) return <FlaskConical size={14} />;
+  if (cat.includes('ODONTOPEDIATRÍA') || cat.includes('ODONTOPEDIATRIA')) return <Baby size={14} />;
+  if (cat.includes('OPERATORIA')) return <Wrench size={14} />;
+  if (cat.includes('ORTODONCIA')) return <Activity size={14} />;
+  if (cat.includes('PERIODONCIA')) return <Activity size={14} />;
+  if (cat.includes('PRÓTESIS FIJA') || cat.includes('PROTESIS FIJA')) return <Layers size={14} />;
+  if (cat.includes('PRÓTESIS REMOVIBLE') || cat.includes('PROTESIS REMOVIBLE')) return <RefreshCw size={14} />;
+  if (cat.includes('RADIOLOGÍA') || cat.includes('RADIOLOGIA')) return <Search size={14} />;
+  if (cat.includes('TTM')) return <AlertTriangle size={14} />;
+  return <Sparkles size={14} />;
+};
+
+const sortCategories = (cats: string[]) => {
+  const customOrder = [
+    'CIRUGÍA', 'CIRUGIA',
+    'ENDODONCIA',
+    'GENERAL',
+    'IMPLANTOLOGÍA', 'IMPLANTOLOGIA',
+    'LABORATORIOS', 'LABORATORIO',
+    'ODONTOPEDIATRÍA', 'ODONTOPEDIATRIA',
+    'OPERATORIA',
+    'ORTODONCIA',
+    'PERIODONCIA',
+    'PRÓTESIS FIJA', 'PROTESIS FIJA',
+    'TTM -DOF', 'TTM-DOF', 'TTM',
+    'PRÓTESIS REMOVIBLE', 'PROTESIS REMOVIBLE',
+    'RADIOLOGÍA', 'RADIOLOGIA'
+  ].map(c => c.toUpperCase().trim());
+
+  return [...cats].sort((a, b) => {
+    const idxA = customOrder.findIndex(c => a.toUpperCase().trim().includes(c));
+    const idxB = customOrder.findIndex(c => b.toUpperCase().trim().includes(c));
+    
+    const valA = idxA === -1 ? 999 : idxA;
+    const valB = idxB === -1 ? 999 : idxB;
+    
+    if (valA !== valB) return valA - valB;
+    return a.localeCompare(b);
+  });
+};
 
 export default function ArancelManager() {
   const [aranceles, setAranceles] = useState<Arancel[]>([]);
@@ -30,7 +80,7 @@ export default function ArancelManager() {
       if (res.success && res.data) {
         setAranceles(res.data);
         setTotal(res.total || 0);
-        setCategories(res.categories || []);
+        setCategories(sortCategories(res.categories || []));
         setHiddenCategories(res.hiddenCategories || []);
       } else {
         setError(res.error || 'No se pudieron cargar los datos.');
@@ -117,7 +167,7 @@ export default function ArancelManager() {
             Desactiva una categoría completa para ocultarla al instante (con todas sus prestaciones) dentro del odontograma interactivo.
           </p>
 
-          <div style={{ display: 'flex', gap: '10px 16px', flexWrap: 'wrap', marginTop: '6px' }}>
+          <div style={{ display: 'flex', gap: '12px 18px', flexWrap: 'wrap', marginTop: '8px' }}>
             {categories.map((cat) => {
               const isHidden = hiddenCategories.includes(cat);
               const isToggling = togglingCategory === cat;
@@ -128,24 +178,41 @@ export default function ArancelManager() {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '10px',
+                    gap: '14px',
                     padding: '8px 14px',
-                    borderRadius: '12px',
-                    backgroundColor: isHidden ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.04)',
-                    border: isHidden ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(16, 185, 129, 0.15)',
-                    transition: 'all 0.2s ease',
-                    opacity: isToggling ? 0.6 : 1
+                    borderRadius: '16px',
+                    backgroundColor: isHidden ? 'rgba(239, 68, 68, 0.03)' : 'rgba(16, 185, 129, 0.03)',
+                    border: isHidden ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(16, 185, 129, 0.2)',
+                    transition: 'all 0.25s ease',
+                    opacity: isToggling ? 0.6 : 1,
+                    minWidth: '220px',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.01)'
                   }}
                 >
-                  <span style={{
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.02em',
-                    color: isHidden ? 'hsl(var(--danger-hsl))' : 'hsl(var(--foreground-hsl))'
-                  }}>
-                    {cat}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '8px',
+                      backgroundColor: isHidden ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                      color: isHidden ? '#ef4444' : '#10b981',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      {getCategoryIcon(cat)}
+                    </div>
+                    <span style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      textTransform: 'capitalize',
+                      color: isHidden ? 'hsl(var(--danger-hsl))' : 'hsl(var(--foreground-hsl))'
+                    }}>
+                      {cat.toLowerCase()}
+                    </span>
+                  </div>
 
                   <button
                     type="button"
@@ -160,7 +227,8 @@ export default function ArancelManager() {
                       position: 'relative',
                       cursor: isToggling ? 'not-allowed' : 'pointer',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      padding: 0
+                      padding: 0,
+                      flexShrink: 0
                     }}
                     title={isHidden ? `Mostrar categoría ${cat} en odontograma` : `Esconder categoría ${cat} en odontograma`}
                   >
@@ -184,25 +252,32 @@ export default function ArancelManager() {
       )}
 
       {/* Search & Category Filter Bar */}
-      <div className="glass-panel animate-fade-in" style={{ padding: '24px 30px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="glass-panel animate-fade-in" style={{ padding: '24px 30px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}>
         
         {/* Search Input */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '280px', position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', left: '14px', color: 'hsla(var(--foreground-hsl) / 0.5)', pointerEvents: 'none' }} />
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Buscar prestación dental por nombre..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ paddingLeft: '40px', margin: 0, width: '100%' }}
-          />
+        <div className="form-group" style={{ flex: 1, minWidth: '280px', marginBottom: 0 }}>
+          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            Buscar Prestación
+          </label>
+          <div style={{ position: 'relative', width: '100%' }}>
+            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'hsla(var(--foreground-hsl) / 0.5)', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Buscar prestación dental por nombre..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ paddingLeft: '40px', margin: 0, width: '100%' }}
+            />
+          </div>
         </div>
 
         {/* Category Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '240px' }}>
-          <Filter size={15} style={{ color: 'hsl(var(--primary-hsl))' }} />
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.8 }}>Categoría:</span>
+        <div className="form-group" style={{ minWidth: '240px', marginBottom: 0 }}>
+          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Filter size={14} style={{ color: 'hsl(var(--primary-hsl))' }} />
+            Categoría
+          </label>
           <select
             className="form-input"
             value={category}
@@ -210,7 +285,7 @@ export default function ArancelManager() {
               setCategory(e.target.value);
               setPage(1);
             }}
-            style={{ margin: 0, flex: 1, height: '42px', padding: '0 12px' }}
+            style={{ margin: 0, width: '100%', height: '42px', padding: '0 12px' }}
           >
             <option value="all">Todas las Categorías</option>
             {categories.map(cat => (
@@ -337,7 +412,7 @@ export default function ArancelManager() {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px', flexWrap: 'wrap', gap: '16px' }}>
           <span style={{ fontSize: '0.82rem', opacity: 0.6, fontWeight: 600 }}>
             Mostrando prestaciones {(page - 1) * limit + 1} a {Math.min(page * limit, total)} de un total de {total}
           </span>
@@ -351,9 +426,87 @@ export default function ArancelManager() {
             >
               <ChevronLeft size={16} /> Anterior
             </button>
-            <span style={{ fontSize: '0.88rem', fontWeight: 800, padding: '0 8px' }}>
-              Página {page} de {totalPages}
-            </span>
+
+            {/* Page numbers */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {(() => {
+                const pages: (number | string)[] = [];
+                if (totalPages <= 7) {
+                  for (let i = 1; i <= totalPages; i++) pages.push(i);
+                } else {
+                  pages.push(1);
+                  let start = Math.max(2, page - 1);
+                  let end = Math.min(totalPages - 1, page + 1);
+                  
+                  if (page <= 3) {
+                    end = 4;
+                  } else if (page >= totalPages - 2) {
+                    start = totalPages - 3;
+                  }
+                  
+                  if (start > 2) {
+                    pages.push('...');
+                  }
+                  
+                  for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                  }
+                  
+                  if (end < totalPages - 1) {
+                    pages.push('...');
+                  }
+                  
+                  pages.push(totalPages);
+                }
+
+                return pages.map((p, idx) => {
+                  if (p === '...') {
+                    return (
+                      <span key={`dots-${idx}`} style={{ padding: '0 8px', fontSize: '0.88rem', opacity: 0.5, fontWeight: 600 }}>
+                        ...
+                      </span>
+                    );
+                  }
+                  const isCurrent = p === page;
+                  return (
+                    <button
+                      key={`page-${p}`}
+                      onClick={() => setPage(p as number)}
+                      disabled={loading}
+                      style={{
+                        minWidth: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        border: isCurrent ? '1px solid #059669' : '1px solid var(--glass-border)',
+                        backgroundColor: isCurrent ? '#10b981' : 'rgba(255, 255, 255, 0.03)',
+                        color: isCurrent ? '#ffffff' : 'hsl(var(--foreground-hsl))',
+                        opacity: loading ? 0.6 : 1
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isCurrent) {
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isCurrent) {
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+                        }
+                      }}
+                    >
+                      {p}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+
             <button
               onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
               disabled={page === totalPages || loading}
