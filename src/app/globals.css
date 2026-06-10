@@ -204,6 +204,10 @@ h1, h2, h3, h4, h5, h6 {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 /* Interactive elements */
 a {
   text-decoration: none;
@@ -332,22 +336,31 @@ button:active, .btn:active {
   text-transform: uppercase;
 }
 
-.badge-pendiente {
+.badge-pendiente,
+.badge-ingresado {
   background-color: rgba(245, 158, 11, 0.15);
   color: hsl(var(--warning-hsl));
 }
 
-.badge-en_revision {
+.badge-en_revision,
+.badge-agendado {
   background-color: rgba(59, 130, 246, 0.15);
   color: hsl(var(--primary-hsl));
 }
 
-.badge-aprobado {
+.badge-aprobado,
+.badge-en_tratamiento {
   background-color: rgba(16, 185, 129, 0.15);
   color: hsl(var(--success-hsl));
 }
 
-.badge-rechazado {
+.badge-sincronizado {
+  background-color: rgba(20, 184, 166, 0.15);
+  color: #14b8a6;
+}
+
+.badge-rechazado,
+.badge-finalizado {
   background-color: rgba(239, 68, 68, 0.15);
   color: hsl(var(--danger-hsl));
 }

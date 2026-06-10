@@ -32,21 +32,25 @@ export default async function DashboardPage() {
 
       const statusRes = await pool.query('SELECT status, COUNT(*) FROM cases GROUP BY status');
       statusRes.rows.forEach((row: any) => {
-        if (row.status === 'pendiente') stats.pendingCases = parseInt(row.count);
-        if (row.status === 'en_revision') stats.inRevisionCases = parseInt(row.count);
-        if (row.status === 'aprobado') stats.approvedCases = parseInt(row.count);
-        if (row.status === 'rechazado') stats.rejectedCases = parseInt(row.count);
+        if (row.status === 'ingresado') stats.pendingCases = parseInt(row.count);
+        if (row.status === 'agendado') stats.inRevisionCases = parseInt(row.count);
+        if (row.status === 'en_tratamiento') stats.approvedCases = parseInt(row.count);
+        if (row.status === 'finalizado') stats.rejectedCases = parseInt(row.count);
       });
 
       const usersCountRes = await pool.query('SELECT COUNT(*) FROM users');
       stats.totalUsers = parseInt(usersCountRes.rows[0].count);
 
       const recentRes = await pool.query(`
-        SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name
-        FROM cases c 
-        JOIN persons p ON c.person_id = p.id 
-        LEFT JOIN users u ON c.registered_by = u.id
-        ORDER BY c.created_at DESC 
+        WITH global_cases AS (
+          SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name,
+                 ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
+          FROM cases c 
+          JOIN persons p ON c.person_id = p.id 
+          LEFT JOIN users u ON c.registered_by = u.id
+        )
+        SELECT * FROM global_cases
+        ORDER BY created_at DESC 
         LIMIT 5
       `);
       recentCases = recentRes.rows;
@@ -57,19 +61,23 @@ export default async function DashboardPage() {
 
       const statusRes = await pool.query('SELECT status, COUNT(*) FROM cases GROUP BY status');
       statusRes.rows.forEach((row: any) => {
-        if (row.status === 'pendiente') stats.pendingCases = parseInt(row.count);
-        if (row.status === 'en_revision') stats.inRevisionCases = parseInt(row.count);
-        if (row.status === 'aprobado') stats.approvedCases = parseInt(row.count);
-        if (row.status === 'rechazado') stats.rejectedCases = parseInt(row.count);
+        if (row.status === 'ingresado') stats.pendingCases = parseInt(row.count);
+        if (row.status === 'agendado') stats.inRevisionCases = parseInt(row.count);
+        if (row.status === 'en_tratamiento') stats.approvedCases = parseInt(row.count);
+        if (row.status === 'finalizado') stats.rejectedCases = parseInt(row.count);
       });
 
       const recentRes = await pool.query(`
-        SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name
-        FROM cases c 
-        JOIN persons p ON c.person_id = p.id 
-        LEFT JOIN users u ON c.registered_by = u.id
-        WHERE c.status = 'pendiente'
-        ORDER BY c.created_at DESC 
+        WITH global_cases AS (
+          SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name,
+                 ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
+          FROM cases c 
+          JOIN persons p ON c.person_id = p.id 
+          LEFT JOIN users u ON c.registered_by = u.id
+        )
+        SELECT * FROM global_cases
+        WHERE status = 'ingresado'
+        ORDER BY created_at DESC 
         LIMIT 5
       `);
       recentCases = recentRes.rows;
@@ -90,18 +98,22 @@ export default async function DashboardPage() {
       `, [user.id]);
 
       statusRes.rows.forEach((row: any) => {
-        if (row.status === 'pendiente') stats.pendingCases = parseInt(row.count);
-        if (row.status === 'en_revision') stats.inRevisionCases = parseInt(row.count);
-        if (row.status === 'aprobado') stats.approvedCases = parseInt(row.count);
-        if (row.status === 'rechazado') stats.rejectedCases = parseInt(row.count);
+        if (row.status === 'ingresado') stats.pendingCases = parseInt(row.count);
+        if (row.status === 'agendado') stats.inRevisionCases = parseInt(row.count);
+        if (row.status === 'en_tratamiento') stats.approvedCases = parseInt(row.count);
+        if (row.status === 'finalizado') stats.rejectedCases = parseInt(row.count);
       });
 
       const recentRes = await pool.query(`
-        SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at
-        FROM cases c 
-        JOIN persons p ON c.person_id = p.id 
-        WHERE c.registered_by = $1
-        ORDER BY c.created_at DESC 
+        WITH global_cases AS (
+          SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, c.registered_by,
+                 ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
+          FROM cases c 
+          JOIN persons p ON c.person_id = p.id 
+        )
+        SELECT * FROM global_cases
+        WHERE registered_by = $1
+        ORDER BY created_at DESC 
         LIMIT 5
       `, [user.id]);
       recentCases = recentRes.rows;
@@ -548,25 +560,25 @@ export default async function DashboardPage() {
                 {/* Baseline axis */}
                 <line x1="30" y1="160" x2="290" y2="160" stroke="var(--glass-border)" />
 
-                {/* Bar 1: Pendiente */}
+                {/* Bar 1: Ingresado */}
                 <rect x="42" y={160 - barHeights.pending} width="28" height={barHeights.pending} rx="4" fill="#f59e0b" fillOpacity="0.85" stroke="#f59e0b" strokeWidth="1" />
                 <text x="56" y={150 - barHeights.pending} textAnchor="middle" fontSize="10" fill="#f59e0b" fontWeight="800">{stateCounts.pending}</text>
-                <text x="56" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">PENDIENTE</text>
+                <text x="56" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">INGRESADO</text>
 
-                {/* Bar 2: En Revisión */}
+                {/* Bar 2: Agendado */}
                 <rect x="106" y={160 - barHeights.inRevision} width="28" height={barHeights.inRevision} rx="4" fill="#3b82f6" fillOpacity="0.85" stroke="#3b82f6" strokeWidth="1" />
                 <text x="120" y={150 - barHeights.inRevision} textAnchor="middle" fontSize="10" fill="#3b82f6" fontWeight="800">{stateCounts.inRevision}</text>
-                <text x="120" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">REVISIÓN</text>
+                <text x="120" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">AGENDADO</text>
 
-                {/* Bar 3: Aprobado */}
+                {/* Bar 3: En Tratamiento */}
                 <rect x="170" y={160 - barHeights.approved} width="28" height={barHeights.approved} rx="4" fill="#10b981" fillOpacity="0.85" stroke="#10b981" strokeWidth="1" />
                 <text x="184" y={150 - barHeights.approved} textAnchor="middle" fontSize="10" fill="#10b981" fontWeight="800">{stateCounts.approved}</text>
-                <text x="184" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">APROBADO</text>
+                <text x="184" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">TRATAMIENTO</text>
 
-                {/* Bar 4: Rechazado */}
+                {/* Bar 4: Finalizado */}
                 <rect x="234" y={160 - barHeights.rejected} width="28" height={barHeights.rejected} rx="4" fill="#ef4444" fillOpacity="0.85" stroke="#ef4444" strokeWidth="1" />
                 <text x="248" y={150 - barHeights.rejected} textAnchor="middle" fontSize="10" fill="#ef4444" fontWeight="800">{stateCounts.rejected}</text>
-                <text x="248" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">RECHAZADO</text>
+                <text x="248" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">FINALIZADO</text>
               </svg>
             </div>
           </div>
@@ -603,6 +615,11 @@ export default async function DashboardPage() {
                     {recentCases.map((c) => (
                       <tr key={c.id}>
                         <td style={{ fontWeight: 700, color: 'hsl(var(--foreground-hsl))' }}>
+                          {c.yearly_correlative && (
+                            <span style={{ opacity: 0.5, marginRight: '8px', fontWeight: 500, fontFamily: 'monospace' }}>
+                              {String(c.yearly_correlative).padStart(4, '0')}
+                            </span>
+                          )}
                           {c.first_names} {c.last_names}
                         </td>
                         <td style={{
@@ -625,7 +642,7 @@ export default async function DashboardPage() {
                         )}
                         <td>
                           <span className={`badge badge-${c.status}`} style={{ fontWeight: 800, fontSize: '0.68rem', letterSpacing: '0.04em' }}>
-                            {c.status.replace('_', ' ')}
+                            {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                           </span>
                         </td>
                       </tr>

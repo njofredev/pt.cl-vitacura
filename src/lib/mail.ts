@@ -58,7 +58,7 @@ export async function sendAutomaticReferralEmail(caseData: {
             <td style="padding: 10px 8px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">${caseData.rut}</td>
           </tr>
           <tr>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #475569;">Centro de Salud de Origen:</td>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #475569;">Institución de Origen:</td>
             <td style="padding: 10px 8px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">${caseData.medicalCenter || 'CESFAM Vitacura'}</td>
           </tr>
           <tr>

@@ -86,7 +86,7 @@ async function setup() {
         professional_phone VARCHAR(255),
         professional_website VARCHAR(255),
         professional_address VARCHAR(255),
-        status VARCHAR(20) DEFAULT 'pendiente' CHECK (status IN ('pendiente', 'en_revision', 'aprobado', 'rechazado')),
+        status VARCHAR(20) DEFAULT 'ingresado' CHECK (status IN ('ingresado', 'agendado', 'en_tratamiento', 'finalizado', 'sincronizado')),
         observations TEXT,
         registered_by UUID REFERENCES users(id) ON DELETE SET NULL,
         updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -131,6 +131,21 @@ async function setup() {
         medical_center VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Create AUDIT_LOGS Table
+    console.log('Creating "audit_logs" table...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        action VARCHAR(100) NOT NULL,
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        user_name VARCHAR(255),
+        user_email VARCHAR(255),
+        ip_address VARCHAR(100),
+        details JSONB,
+        created_at TIMESTAMP DEFAULT NOW()
       );
     `);
 

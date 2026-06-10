@@ -293,7 +293,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
               color: '#000',
               letterSpacing: '0.02em'
             }}>
-              {caseData.medical_center ? caseData.medical_center.toUpperCase() + '.' : 'CENTRO DE SALUD FAMILIAR.'}<br/>
+              {caseData.medical_center ? caseData.medical_center.toUpperCase() + '.' : 'INSTITUCIÓN DE SALUD.'}<br/>
               DERIVACIÓN A CONVENIO POLICLÍNICO TABANCURA SIN COSTO.
             </h1>
           </div>
@@ -305,7 +305,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
             <p style={{ marginBottom: '24px' }}>
               Junto con saludarlos cordialmente y esperando que se encuentren muy bien, les enviamos el presente 
               documento oficial como derivación de <strong>{caseData.first_names} {caseData.last_names}</strong>, RUT: <strong>{caseData.rut}</strong>, quien es usuario registrado y activo de 
-              nuestro Centro de Salud Familiar, para acogerse al Convenio Subvencionado Sin Costo de {caseData.agreement_type || 'Atención Odontológica Especializada'}.
+              nuestra Institución de Salud, para acogerse al Convenio Subvencionado Sin Costo de {caseData.agreement_type || 'Atención Odontológica Especializada'}.
             </p>
 
             <div style={{ 
@@ -369,7 +369,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
                 <p style={{ margin: 0, color: '#444' }}>{caseData.professional_title || 'Cirujano Dentista'}</p>
                 <p style={{ margin: 0, color: '#444' }}>{caseData.professional_position || 'Programa Odontológico'}</p>
                 <p style={{ margin: 0, color: '#444' }}>{caseData.medical_center || 'CESFAM'}</p>
-                <p style={{ margin: 0, textDecoration: 'underline', color: 'hsl(var(--primary-hsl))' }}>{caseData.professional_email || 'correo@centro.cl'}</p>
+                <p style={{ margin: 0, textDecoration: 'underline', color: 'hsl(var(--primary-hsl))' }}>{caseData.professional_email || 'correo@institucion.cl'}</p>
                 <p style={{ margin: 0, color: '#666', fontSize: '0.82rem' }}>{caseData.professional_address || 'Dirección registrada'}</p>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { validateRUT, cleanRUT } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
 import { sendAutomaticReferralEmail } from '@/lib/mail';
 import { headers } from 'next/headers';
+import { logAuditAction } from '@/app/actions/auditActions';
 
 // Memory-based rate limiting map to prevent brute-forcing
 const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
@@ -114,7 +115,7 @@ export async function registerPersonAndCaseAction(formData: FormData) {
       `, [
         personId, 
         description ? description.trim() : '', 
-        'pendiente', 
+        'ingresado', 
         '',
         medicalCenter?.trim() || null,
         agreementType?.trim() || null,
@@ -146,6 +147,7 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         console.error('Error al iniciar el envío automático de correo:', err);
       });
       
+      await logAuditAction('CASE_CREATED', { rut: cleanedRUT, firstNames: firstNames.trim(), lastNames: lastNames.trim(), medicalCenter, agreementType });
       revalidatePath('/dashboard');
       revalidatePath('/dashboard/cases');
       return { success: true };
@@ -161,7 +163,7 @@ export async function registerPersonAndCaseAction(formData: FormData) {
   }
 }
 
-export async function updateCaseStatusAction(caseId: string, status: 'pendiente' | 'en_revision' | 'aprobado' | 'rechazado', observations: string) {
+export async function updateCaseStatusAction(caseId: string, status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado', observations: string) {
   const session = await getSession();
   
   if (!session || (session.role !== 'admin' && session.role !== 'internal')) {
@@ -178,6 +180,8 @@ export async function updateCaseStatusAction(caseId: string, status: 'pendiente'
       SET status = $1, observations = $2, updated_by = $3, updated_at = NOW()
       WHERE id = $4
     `, [status, observations.trim(), session.id, caseId]);
+
+    await logAuditAction('CASE_STATUS_UPDATED', { caseId, status, observations: observations.trim() });
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/cases');
@@ -201,6 +205,8 @@ export async function deleteCaseAction(caseId: string) {
 
   try {
     await pool.query('DELETE FROM cases WHERE id = $1', [caseId]);
+
+    await logAuditAction('CASE_DELETED', { caseId });
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/cases');
@@ -286,6 +292,7 @@ export async function updateCaseDetailsAction(
 
       await client.query('COMMIT');
       
+      await logAuditAction('CASE_DETAILS_UPDATED', { caseId, rut: cleanedRUT, firstNames: data.first_names.trim(), lastNames: data.last_names.trim() });
       revalidatePath('/dashboard');
       revalidatePath('/dashboard/cases');
       return { success: true };

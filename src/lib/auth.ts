@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import * as bcrypt from 'bcryptjs';
 import pool from './db';
+import { logAuditAction } from '@/app/actions/auditActions';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'tabancura_default_super_secret_key_change_me_in_prod';
 const key = new TextEncoder().encode(JWT_SECRET);
@@ -47,17 +48,20 @@ export async function loginUser(email: string, password: string): Promise<{ succ
     );
 
     if (res.rows.length === 0) {
+      await logAuditAction('LOGIN_FAILED', { email, reason: 'Usuario no encontrado' });
       return { success: false, error: 'Credenciales inválidas' };
     }
 
     const user = res.rows[0];
 
     if (!user.active) {
+      await logAuditAction('LOGIN_FAILED', { email, reason: 'Cuenta desactivada' });
       return { success: false, error: 'Esta cuenta ha sido desactivada' };
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
+      await logAuditAction('LOGIN_FAILED', { email, reason: 'Contraseña incorrecta' });
       return { success: false, error: 'Credenciales inválidas' };
     }
 
@@ -79,14 +83,17 @@ export async function loginUser(email: string, password: string): Promise<{ succ
       path: '/',
     });
 
+    await logAuditAction('LOGIN_SUCCESS', null, { id: user.id, name: user.name, email: user.email });
     return { success: true, user: sessionUser };
   } catch (error) {
     console.error('Login error:', error);
+    await logAuditAction('LOGIN_ERROR', { email, error: String(error) });
     return { success: false, error: 'Error del servidor al iniciar sesión' };
   }
 }
 
 export async function logoutUser() {
+  await logAuditAction('LOGOUT');
   const cookieStore = await cookies();
   cookieStore.set('session', '', {
     httpOnly: true,

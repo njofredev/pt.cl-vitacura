@@ -541,21 +541,21 @@ export default function RegisterCasePage() {
     const errorsList: ValidationErrorItem[] = [...validationErrors.filter(e => e.step === 1)];
 
     if (!selectedMedicalCenter) {
-      setMedicalCenterError('Por favor seleccione un centro médico de origen.');
+      setMedicalCenterError('Por favor seleccione una institución de origen.');
       errorsList.push({
         field: 'medical_center',
         step: 2,
-        label: 'Centro Médico de Origen',
-        message: 'Seleccione un centro médico.',
+        label: 'Institución de Origen',
+        message: 'Seleccione una institución.',
         elementId: 'medical_center_select'
       });
     } else if (selectedMedicalCenter === 'Otro' && !customMedicalCenter.trim()) {
-      setMedicalCenterError('Por favor especifique el centro médico de origen.');
+      setMedicalCenterError('Por favor especifique la institución de origen.');
       errorsList.push({
         field: 'custom_medical_center',
         step: 2,
-        label: 'Centro Médico Especificado',
-        message: 'Especifique el centro médico.',
+        label: 'Institución Especificada',
+        message: 'Especifique la institución.',
         elementId: 'custom_medical_center'
       });
     }
@@ -642,7 +642,7 @@ export default function RegisterCasePage() {
       return;
     }
     if (selectedMedicalCenter === 'Otro' && !customMedicalCenter.trim()) {
-      setError('Por favor especifique el centro médico de origen.');
+      setError('Por favor especifique la institución de origen.');
       return;
     }
     if (selectedAgreementType === 'Otro' && !customAgreementType.trim()) {
@@ -1512,7 +1512,7 @@ export default function RegisterCasePage() {
                   {/* Medical Center */}
                   <div className="form-group" id="medical_center_group" tabIndex={-1} style={{ outline: 'none' }}>
                     <label className="form-label" htmlFor="medical_center_select" style={{ color: medicalCenterError ? 'hsl(var(--danger-hsl))' : undefined }}>
-                      Centro Médico de Origen * {medicalCenterError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
+                      Institución de Origen * {medicalCenterError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                     </label>
                     {hasPreloadedMedicalCenter ? (
                       <>
@@ -1548,9 +1548,9 @@ export default function RegisterCasePage() {
                             { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
                             { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
                             { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
-                            { value: 'Otro', label: 'Otro Centro de Salud Familiar' }
+                            { value: 'Otro', label: 'Otra Institución / CESFAM' }
                           ]}
-                          placeholder="Seleccione un Centro..."
+                          placeholder="Seleccione una Institución..."
                           disabled={loading}
                           id="medical_center_select"
                           hasError={!!medicalCenterError}
@@ -1558,12 +1558,12 @@ export default function RegisterCasePage() {
 
                         {selectedMedicalCenter === 'Otro' && (
                           <div className="form-group animate-fade-in" style={{ marginTop: '10px' }}>
-                            <label className="form-label" htmlFor="custom_medical_center" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique el Centro Médico *</label>
+                            <label className="form-label" htmlFor="custom_medical_center" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique la Institución *</label>
                             <input
                               className={`form-input ${medicalCenterError ? 'animate-shake-error' : ''}`}
                               type="text"
                               id="custom_medical_center"
-                              placeholder="Escriba el nombre del centro médico"
+                              placeholder="Escriba el nombre de la institución"
                               value={customMedicalCenter}
                               onChange={(e) => {
                                 setCustomMedicalCenter(e.target.value);
@@ -1590,7 +1590,7 @@ export default function RegisterCasePage() {
                   {/* Agreement Type */}
                   <div className="form-group" id="agreement_type_group" tabIndex={-1} style={{ outline: 'none' }}>
                     <label className="form-label" htmlFor="agreement_type_select" style={{ color: agreementTypeError ? 'hsl(var(--danger-hsl))' : undefined }}>
-                      Convenio sin Costo de * {agreementTypeError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
+                      Convenio * {agreementTypeError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
                     </label>
                     {hasPreloadedMedicalCenter ? (
                       <>
@@ -1767,7 +1767,7 @@ export default function RegisterCasePage() {
                     color: 'var(--foreground-hsl)'
                   }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><path d="M3 21h18" /><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" /><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" /><path d="M10 9h4" /><path d="M12 7v4" /></svg>
-                    Centro Médico de Origen
+                    Institución de Origen
                   </span>
                   <strong style={{ fontSize: '0.94rem', paddingLeft: '19px' }}>{selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter}</strong>
                 </div>
@@ -1887,7 +1887,7 @@ export default function RegisterCasePage() {
                     <input className="form-input" type="email" id="professional_email" name="professional_email" required readOnly={true} value={profEmail} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="professional_address">Dirección del Centro *</label>
+                    <label className="form-label" htmlFor="professional_address">Dirección de la Institución *</label>
                     <input className="form-input" type="text" id="professional_address" name="professional_address" required readOnly={true} value={profAddress} style={{ opacity: 0.65, cursor: 'not-allowed', backgroundColor: 'rgba(255, 255, 255, 0.02)' }} />
                   </div>
                   <div className="form-group">
@@ -2165,7 +2165,7 @@ export default function RegisterCasePage() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" /><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" /><path d="M10 9h4" /><path d="M12 7v4" /></svg>
                 </div>
                 <div>
-                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Centro Médico de Origen</span>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Institución de Origen</span>
                   <strong style={{ fontSize: '0.92rem' }}>{formDataObj.medicalCenter}</strong>
                 </div>
               </div>

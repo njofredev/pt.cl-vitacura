@@ -144,10 +144,34 @@ export default function Sidebar({ user }: SidebarProps) {
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
       )
+    },
+    {
+      name: 'Ingreso Automático',
+      path: '/dashboard/ingreso-automatico',
+      roles: ['admin', 'internal'],
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h20"/><path d="M5 17V5a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v12"/><path d="M9 17v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4"/></svg>
+      )
+    },
+    {
+      name: 'Auditoría',
+      path: '/dashboard/audit',
+      roles: ['admin'],
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      )
     }
   ];
 
-  const filteredMenu = menuItems.filter(item => item.roles.includes(user.role));
+  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@tabancura.cl'];
+  const showAutomaticIngreso = allowedEmails.includes(user.email);
+
+  const filteredMenu = menuItems.filter(item => {
+    if (item.path === '/dashboard/ingreso-automatico') {
+      return showAutomaticIngreso;
+    }
+    return item.roles.includes(user.role);
+  });
 
   const roleLabels = {
     admin: 'Administrador General',

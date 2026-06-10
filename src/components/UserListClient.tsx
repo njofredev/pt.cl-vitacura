@@ -41,7 +41,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
   const [editRole, setEditRole] = useState('internal');
   const [newMedicalCenter, setNewMedicalCenter] = useState('');
   const [editMedicalCenter, setEditMedicalCenter] = useState('');
-  
+
   const [newAgreements, setNewAgreements] = useState<{ value: string; label: string }[]>([]);
   const [editAgreements, setEditAgreements] = useState<{ value: string; label: string }[]>([]);
   const [newAgreementType, setNewAgreementType] = useState('');
@@ -137,13 +137,13 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
     setLoading(true);
 
     const formData = new FormData(formElement);
-    
+
     try {
       const result = await createUserAction(formData);
       if (result.success) {
         setSuccess('Usuario creado exitosamente.');
         formElement.reset();
-        
+
         // Let's reload users dynamically or tell them to refresh.
         // Actually, since we updated server cache via revalidatePath, 
         // we can just reload the window or manually append to state for immediate responsiveness.
@@ -152,7 +152,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         const role = formData.get('role') as any;
         const medical_center = formData.get('medical_center') as string;
         const agreement_type = formData.get('agreement_type') as string;
-        
+
         const newUser: User = {
           id: Math.random().toString(), // temporary, they'll get the real UUID on refresh
           name,
@@ -166,7 +166,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         setUsers([newUser, ...users]);
         setNewMedicalCenter('');
         setNewAgreementType('');
-        
+
         setTimeout(() => {
           setIsModalOpen(false);
           setSuccess(null);
@@ -196,7 +196,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
       const result = await updateUserAction(editingUser.id, formData);
       if (result.success) {
         setSuccess('Usuario actualizado exitosamente.');
-        
+
         // Update user state dynamically
         const name = formData.get('name') as string;
         const email = formData.get('email') as string;
@@ -210,10 +210,10 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         const medical_center = formData.get('medical_center') as string;
         const agreement_type = formData.get('agreement_type') as string;
 
-        setUsers(users.map(u => u.id === editingUser.id ? { 
-          ...u, 
-          name, 
-          email, 
+        setUsers(users.map(u => u.id === editingUser.id ? {
+          ...u,
+          name,
+          email,
           role,
           professional_title,
           professional_position,
@@ -245,7 +245,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
+
       {/* Top Title Bar with Glowing Lucide Icon Container and Button inside */}
       <div
         className="glass-panel"
@@ -276,7 +276,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             border: '1px solid rgba(16, 185, 129, 0.2)',
             flexShrink: 0
           }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
@@ -290,7 +290,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         <button onClick={() => setIsModalOpen(true)} className="premium-action-btn">
           Nuevo Funcionario
           <div className="btn-badge">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
           </div>
         </button>
       </div>
@@ -304,7 +304,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                 <th>Nombre</th>
                 <th>Correo Electrónico</th>
                 <th>Rol</th>
-                <th>Centro Médico</th>
+                <th>Institución</th>
                 <th style={{ textAlign: 'center' }}>Estado</th>
                 <th style={{ textAlign: 'right' }}>Acciones</th>
               </tr>
@@ -315,10 +315,10 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                   <td style={{ fontWeight: 600 }}>{u.name}</td>
                   <td style={{ opacity: 0.8 }}>{u.email}</td>
                   <td>
-                    <span style={{ 
-                      fontSize: '0.8rem', 
-                      fontWeight: 600, 
-                      padding: '4px 8px', 
+                    <span style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      padding: '4px 8px',
                       borderRadius: '4px',
                       backgroundColor: 'rgba(255, 255, 255, 0.05)',
                       border: '1px solid var(--glass-border)',
@@ -339,7 +339,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <button 
+                      <button
                         onClick={() => {
                           setEditingUser(u);
                           setEditRole(u.role);
@@ -353,7 +353,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                         Editar
                       </button>
                       {u.id !== currentUserId ? (
-                        <button 
+                        <button
                           onClick={() => handleToggleStatus(u.id, u.active)}
                           className={u.active ? 'btn-secondary' : 'btn-accent'}
                           style={{ padding: '6px 12px', fontSize: '0.8rem' }}
@@ -375,7 +375,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
       {/* Add User Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Registrar Nuevo Funcionario" maxWidth="1000px">
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '75vh', overflowY: 'auto', paddingRight: '6px' }}>
-          
+
           {error && (
             <div className="badge-rechazado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600 }}>
               {error}
@@ -392,7 +392,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             <div className="user-form-column">
               <div className="user-column-header">
                 <h4 className="user-column-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                   Acceso y Seguridad
                 </h4>
               </div>
@@ -430,12 +430,12 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             <div className="user-form-column">
               <div className="user-column-header">
                 <h4 className="user-column-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
-                  Centro y Cargo
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /></svg>
+                  Institución y Cargo
                 </h4>
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="medical_center">Centro Médico Asignado</label>
+                <label className="form-label" htmlFor="medical_center">Institución</label>
                 <CustomSelect
                   value={newMedicalCenter}
                   onChange={setNewMedicalCenter}
@@ -453,7 +453,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
 
               {newMedicalCenter && newAgreements.length > 0 && (
                 <div className="form-group">
-                  <label className="form-label" htmlFor="agreement_type">Convenio sin Costo Asignado</label>
+                  <label className="form-label" htmlFor="agreement_type">Convenio Asignado</label>
                   <CustomSelect
                     value={newAgreementType}
                     onChange={setNewAgreementType}
@@ -478,7 +478,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             <div className="user-form-column">
               <div className="user-column-header">
                 <h4 className="user-column-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                   Contacto Profesional
                 </h4>
               </div>
@@ -493,7 +493,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="professional_address">Dirección del Centro</label>
+                <label className="form-label" htmlFor="professional_address">Dirección de la Institución</label>
                 <input className="form-input" type="text" id="professional_address" name="professional_address" placeholder="Ej: Indiana Nº 1195, Vitacura" disabled={loading} />
               </div>
 
@@ -519,7 +519,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
       <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditingUser(null); }} title="Editar Funcionario" maxWidth="1000px">
         {editingUser && (
           <form onSubmit={onEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '75vh', overflowY: 'auto', paddingRight: '6px' }}>
-            
+
             {error && (
               <div className="badge-rechazado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600 }}>
                 {error}
@@ -536,7 +536,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
               <div className="user-form-column">
                 <div className="user-column-header">
                   <h4 className="user-column-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                     Acceso y Seguridad
                   </h4>
                 </div>
@@ -574,12 +574,12 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
               <div className="user-form-column">
                 <div className="user-column-header">
                   <h4 className="user-column-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
-                    Centro y Cargo
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /></svg>
+                    Institución y Cargo
                   </h4>
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="edit_medical_center">Centro Médico Asignado</label>
+                  <label className="form-label" htmlFor="edit_medical_center">Institución Asignada</label>
                   <CustomSelect
                     value={editMedicalCenter}
                     onChange={setEditMedicalCenter}
@@ -597,7 +597,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
 
                 {editMedicalCenter && editAgreements.length > 0 && (
                   <div className="form-group">
-                    <label className="form-label" htmlFor="edit_agreement_type">Convenio sin Costo Asignado</label>
+                    <label className="form-label" htmlFor="edit_agreement_type">Convenio Asignado</label>
                     <CustomSelect
                       value={editAgreementType}
                       onChange={setEditAgreementType}
@@ -622,7 +622,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
               <div className="user-form-column">
                 <div className="user-column-header">
                   <h4 className="user-column-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                     Contacto Profesional
                   </h4>
                 </div>
@@ -637,7 +637,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="edit_professional_address">Dirección del Centro</label>
+                  <label className="form-label" htmlFor="edit_professional_address">Dirección de la Institución</label>
                   <input className="form-input" type="text" id="edit_professional_address" name="professional_address" placeholder="Ej: Indiana Nº 1195, Vitacura" defaultValue={editingUser.professional_address} disabled={loading} />
                 </div>
 

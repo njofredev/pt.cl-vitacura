@@ -26,11 +26,12 @@ interface CaseRecord {
   dental_diagnosis: string | null;
   treatment_needed: string | null;
   professional_name: string | null;
-  status: 'pendiente' | 'en_revision' | 'aprobado' | 'rechazado';
+  status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado';
   observations: string | null;
   created_at: Date | string;
   registered_by_name: string | null;
   evaluator_name: string | null;
+  yearly_correlative?: number | string;
 }
 
 interface CaseListClientProps {
@@ -57,7 +58,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   // Modal & Edit state
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [evalStatus, setEvalStatus] = useState<'pendiente' | 'en_revision' | 'aprobado' | 'rechazado'>('pendiente');
+  const [evalStatus, setEvalStatus] = useState<'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado'>('ingresado');
   const [evalObs, setEvalObs] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -416,10 +417,11 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
               onChange={setStatusFilter}
               options={[
                 { value: 'todos', label: 'Todos los Estados' },
-                { value: 'pendiente', label: 'Pendientes' },
-                { value: 'en_revision', label: 'En Revisión' },
-                { value: 'aprobado', label: 'Aprobados' },
-                { value: 'rechazado', label: 'Rechazados' }
+                { value: 'ingresado', label: 'Ingresados' },
+                { value: 'sincronizado', label: 'Sincronizados' },
+                { value: 'agendado', label: 'Agendados' },
+                { value: 'en_tratamiento', label: 'En Tratamiento' },
+                { value: 'finalizado', label: 'Finalizados' }
               ]}
             />
           </div>
@@ -450,7 +452,14 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
               <tbody>
                 {filteredCases.map((c) => (
                   <tr key={c.id}>
-                    <td style={{ fontWeight: 600 }}>{c.first_names} {c.last_names}</td>
+                    <td style={{ fontWeight: 600 }}>
+                      {c.yearly_correlative && (
+                        <span style={{ opacity: 0.5, marginRight: '8px', fontWeight: 500, fontFamily: 'monospace' }}>
+                          {String(c.yearly_correlative).padStart(4, '0')}
+                        </span>
+                      )}
+                      {c.first_names} {c.last_names}
+                    </td>
                     <td style={{ whiteSpace: 'nowrap', opacity: 0.9 }}>{formatRUT(c.rut)}</td>
                     <td>{c.commune}</td>
                     <td style={{
@@ -468,7 +477,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     )}
                     <td>
                       <span className={`badge badge-${c.status}`}>
-                        {c.status.replace('_', ' ')}
+                        {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                       </span>
                     </td>
                     <td style={{ textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -588,7 +597,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   <div className="glass-panel" style={{ padding: '24px', backgroundColor: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Centro Médico</label>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Institución</label>
                         <CustomSelect
                           value={editMedicalCenterSelect}
                           onChange={(val) => {
@@ -599,16 +608,16 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                             { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
                             { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
                             { value: 'Policlinico Tabancura', label: 'Policlínico Tabancura' },
-                            { value: 'Otro', label: 'Otro Centro de Salud Familiar' }
+                            { value: 'Otro', label: 'Otra Institución / CESFAM' }
                           ]}
-                          placeholder="Seleccione Centro..."
+                          placeholder="Seleccione Institución..."
                         />
                         {editMedicalCenterSelect === 'Otro' && (
                           <div className="animate-fade-in" style={{ marginTop: '6px' }}>
                             <input
                               className="form-input"
                               type="text"
-                              placeholder="Especifique el centro médico"
+                              placeholder="Especifique la institución"
                               value={customEditMedicalCenter}
                               onChange={e => setCustomEditMedicalCenter(e.target.value)}
                               required
@@ -726,7 +735,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     {selectedCase.dental_diagnosis ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Centro Médico:</span>
+                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Institución:</span>
                           <span style={{ fontWeight: 600 }}>{selectedCase.medical_center}</span>
                         </div>
                         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
@@ -778,7 +787,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                      <span style={{ fontSize: '0.9rem', opacity: 0.7, fontWeight: 600 }}>Estado actual:</span>
                      <span className={`badge badge-${selectedCase.status}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
-                       {selectedCase.status.replace('_', ' ')}
+                       {selectedCase.status === 'en_tratamiento' ? 'En tratamiento' : selectedCase.status === 'sincronizado' ? 'Sincronizado' : selectedCase.status.charAt(0).toUpperCase() + selectedCase.status.slice(1)}
                      </span>
                    </div>
                    {selectedCase.observations ? (
@@ -812,10 +821,11 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         value={evalStatus}
                         onChange={(val) => setEvalStatus(val as any)}
                         options={[
-                          { value: 'pendiente', label: 'Pendiente (Sin Evaluación)' },
-                          { value: 'en_revision', label: 'En Revisión Administrativa' },
-                          { value: 'aprobado', label: 'Aprobado (Convenio Vigente)' },
-                          { value: 'rechazado', label: 'Rechazado (No Aplica)' }
+                          { value: 'ingresado', label: 'Ingresado' },
+                          { value: 'sincronizado', label: 'Sincronizado' },
+                          { value: 'agendado', label: 'Agendado' },
+                          { value: 'en_tratamiento', label: 'En Tratamiento' },
+                          { value: 'finalizado', label: 'Finalizado' }
                         ]}
                         disabled={loading}
                       />

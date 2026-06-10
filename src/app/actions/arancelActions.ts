@@ -13,6 +13,7 @@ export interface Arancel {
   price_base: number;
   price_pref: number;
   show_in_odontogram: boolean;
+  id_prestacion?: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -61,7 +62,7 @@ export async function getArancelesAction(
 
     // Get matching rows
     const dataQuery = `
-      SELECT id, name, category, source, price_base, price_pref, show_in_odontogram, created_at, updated_at
+      SELECT id, name, category, source, price_base, price_pref, show_in_odontogram, id_prestacion, created_at, updated_at
       FROM arancel
       ${whereClause}
       ORDER BY category ASC, name ASC
@@ -181,7 +182,7 @@ export async function getOdontogramPrestacionesAction(): Promise<{ success: bool
     `);
 
     const res = await pool.query(`
-      SELECT id, name, category, source, price_base, price_pref, show_in_odontogram
+      SELECT id, name, category, source, price_base, price_pref, show_in_odontogram, id_prestacion
       FROM arancel
       WHERE show_in_odontogram = TRUE
         AND category NOT IN (SELECT category FROM hidden_categories)
