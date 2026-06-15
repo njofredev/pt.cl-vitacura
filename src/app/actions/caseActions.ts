@@ -60,6 +60,34 @@ export async function registerPersonAndCaseAction(formData: FormData) {
     try {
       await client.query('BEGIN');
 
+      // Calculate dental and xray counts from selected treatment ids
+      const selectedTreatmentIdsStr = formData.get('selected_treatment_ids') as string || '';
+      const treatmentIds = selectedTreatmentIdsStr.split(',').filter(Boolean).map(Number);
+      
+      let dentalCount = 0;
+      let xrayCount = 0;
+
+      if (treatmentIds.length > 0) {
+        const arancelesRes = await client.query(
+          'SELECT id, category FROM arancel WHERE id = ANY($1)',
+          [treatmentIds]
+        );
+        
+        const idToCategory = new Map<number, string>();
+        arancelesRes.rows.forEach((row: any) => {
+          idToCategory.set(row.id, row.category);
+        });
+
+        treatmentIds.forEach((tid) => {
+          const cat = idToCategory.get(tid) || '';
+          if (cat === 'Radiología') {
+            xrayCount++;
+          } else {
+            dentalCount++;
+          }
+        });
+      }
+
       // Validate and deduct professional quotas based on the professional email of the case
       const profEmailRaw = formData.get('professional_email') as string || '';
       const profEmail = profEmailRaw.trim().toLowerCase();
@@ -77,33 +105,6 @@ export async function registerPersonAndCaseAction(formData: FormData) {
       }
 
       if (targetProfessionalUser) {
-        const selectedTreatmentIdsStr = formData.get('selected_treatment_ids') as string || '';
-        const treatmentIds = selectedTreatmentIdsStr.split(',').filter(Boolean).map(Number);
-        
-        let dentalCount = 0;
-        let xrayCount = 0;
-
-        if (treatmentIds.length > 0) {
-          const arancelesRes = await client.query(
-            'SELECT id, category FROM arancel WHERE id = ANY($1)',
-            [treatmentIds]
-          );
-          
-          const idToCategory = new Map<number, string>();
-          arancelesRes.rows.forEach((row: any) => {
-            idToCategory.set(row.id, row.category);
-          });
-
-          treatmentIds.forEach((tid) => {
-            const cat = idToCategory.get(tid) || '';
-            if (cat === 'Radiología') {
-              xrayCount++;
-            } else {
-              dentalCount++;
-            }
-          });
-        }
-
         const { id: profUserId, quota_dental, quota_xray, used_dental, used_xray } = targetProfessionalUser;
 
         const remainingDental = quota_dental - used_dental;
@@ -177,9 +178,9 @@ export async function registerPersonAndCaseAction(formData: FormData) {
           medical_center, agreement_type, dental_diagnosis, treatment_needed,
           professional_name, professional_title, professional_position,
           professional_email, professional_phone, professional_website, professional_address,
-          registered_by
+          registered_by, dental_count, xray_count
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       `, [
         personId, 
         description ? description.trim() : '', 
@@ -196,7 +197,9 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         professionalPhone?.trim() || null,
         professionalWebsite?.trim() || null,
         professionalAddress?.trim() || null,
-        session.id
+        session.id,
+        dentalCount,
+        xrayCount
       ]);
 
       await client.query('COMMIT');

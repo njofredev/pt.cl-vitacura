@@ -32,6 +32,8 @@ interface CaseRecord {
   registered_by_name: string | null;
   evaluator_name: string | null;
   yearly_correlative?: number | string;
+  dental_count?: number;
+  xray_count?: number;
 }
 
 interface CaseListClientProps {
@@ -441,6 +443,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   <th>RUT</th>
                   <th>Comuna</th>
                   <th>Descripción</th>
+                  <th>Prestaciones</th>
                   <th>Fecha Ingreso</th>
                   {user.role !== 'external' && <th>Inscrito Por</th>}
                   <th>Estado</th>
@@ -468,6 +471,16 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       opacity: 0.8
                     }}>
                       {c.dental_diagnosis ? `Derivación: ${c.agreement_type}` : c.description}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontWeight: 700, color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          🦷 {c.dental_count || 0} Dentales
+                        </span>
+                        <span style={{ fontWeight: 700, color: '#a855f7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          ⚡ {c.xray_count || 0} Rayos X
+                        </span>
+                      </div>
                     </td>
                     <td style={{ fontSize: '0.85rem', opacity: 0.7 }}>{formatDate(c.created_at)}</td>
                     {user.role !== 'external' && (

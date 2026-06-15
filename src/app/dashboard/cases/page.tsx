@@ -21,7 +21,7 @@ export default async function CasesPage() {
         WITH global_cases AS (
           SELECT c.id, p.rut, p.first_names, p.last_names, p.nationality, p.birth_date, p.commune, p.email, p.mobile, 
                  c.description, c.medical_center, c.agreement_type, c.dental_diagnosis, c.treatment_needed, c.professional_name,
-                 c.status, c.observations, c.created_at, 
+                 c.status, c.observations, c.created_at, c.dental_count, c.xray_count,
                  u_reg.name as registered_by_name, u_eval.name as evaluator_name,
                  ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
           FROM cases c
@@ -39,7 +39,7 @@ export default async function CasesPage() {
         WITH global_cases AS (
           SELECT c.id, p.rut, p.first_names, p.last_names, p.nationality, p.birth_date, p.commune, p.email, p.mobile, 
                  c.description, c.medical_center, c.agreement_type, c.dental_diagnosis, c.treatment_needed, c.professional_name,
-                 c.status, c.observations, c.created_at, 
+                 c.status, c.observations, c.created_at, c.dental_count, c.xray_count,
                  c.registered_by,
                  u_reg.name as registered_by_name, u_eval.name as evaluator_name,
                  ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative

@@ -94,6 +94,8 @@ async function setup() {
         observations TEXT,
         registered_by UUID REFERENCES users(id) ON DELETE SET NULL,
         updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        dental_count INT DEFAULT 0,
+        xray_count INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
