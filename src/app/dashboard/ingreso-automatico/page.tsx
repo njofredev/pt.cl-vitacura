@@ -16,7 +16,7 @@ export default async function IngresoAutomaticoPage() {
   const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
     ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
     : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
-  if (!allowedEmails.includes(session.email.toLowerCase())) {
+  if (!allowedEmails.includes(session.email.toLowerCase()) && session.role !== 'admin') {
     redirect('/dashboard');
   }
 
