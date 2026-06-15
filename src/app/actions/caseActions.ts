@@ -275,13 +275,57 @@ export async function deleteCaseAction(caseId: string) {
   }
 
   try {
-    await pool.query('DELETE FROM cases WHERE id = $1', [caseId]);
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
 
-    await logAuditAction('CASE_DELETED', { caseId });
+      // Fetch case details to restore quotas
+      const caseRes = await client.query(
+        'SELECT professional_email, dental_count, xray_count FROM cases WHERE id = $1',
+        [caseId]
+      );
 
-    revalidatePath('/dashboard');
-    revalidatePath('/dashboard/cases');
-    return { success: true };
+      if (caseRes.rows.length > 0) {
+        const { professional_email, dental_count, xray_count } = caseRes.rows[0];
+        const profEmail = professional_email ? professional_email.trim().toLowerCase() : '';
+
+        if (profEmail && ((dental_count || 0) > 0 || (xray_count || 0) > 0)) {
+          const userLookup = await client.query(
+            'SELECT id FROM users WHERE LOWER(email) = $1 AND role = $2',
+            [profEmail, 'external']
+          );
+
+          if (userLookup.rows.length > 0) {
+            const profUserId = userLookup.rows[0].id;
+            await client.query(
+              `UPDATE users 
+               SET 
+                 used_dental = GREATEST(0, used_dental - $1), 
+                 used_xray = GREATEST(0, used_xray - $2), 
+                 updated_at = NOW() 
+               WHERE id = $3`,
+              [dental_count || 0, xray_count || 0, profUserId]
+            );
+          }
+        }
+      }
+
+      await client.query('DELETE FROM cases WHERE id = $1', [caseId]);
+
+      await client.query('COMMIT');
+
+      await logAuditAction('CASE_DELETED', { caseId });
+
+      revalidatePath('/dashboard');
+      revalidatePath('/dashboard/cases');
+      return { success: true };
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('Error deleting case:', error);
     return { error: 'Error del servidor al eliminar el caso social' };
