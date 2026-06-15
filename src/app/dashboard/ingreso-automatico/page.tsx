@@ -13,8 +13,10 @@ export default async function IngresoAutomaticoPage() {
   }
 
   // Restrict to authorized users
-  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@tabancura.cl'];
-  if (!allowedEmails.includes(session.email)) {
+  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
+    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
+  if (!allowedEmails.includes(session.email.toLowerCase())) {
     redirect('/dashboard');
   }
 

@@ -163,8 +163,8 @@ export default function Sidebar({ user }: SidebarProps) {
     }
   ];
 
-  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@tabancura.cl'];
-  const showAutomaticIngreso = allowedEmails.includes(user.email);
+  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
+  const showAutomaticIngreso = allowedEmails.includes(user.email.toLowerCase()) || user.role === 'admin';
 
   const filteredMenu = menuItems.filter(item => {
     if (item.path === '/dashboard/ingreso-automatico') {

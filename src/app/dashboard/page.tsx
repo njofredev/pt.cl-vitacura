@@ -121,6 +121,41 @@ export default async function DashboardPage() {
   } catch (error) {
     console.error('Error fetching dashboard base stats:', error);
   }
+
+  // Fetch quotas based on role
+  let quotaDentalUsed = 0;
+  let quotaDentalTotal = 0;
+  let quotaXrayUsed = 0;
+  let quotaXrayTotal = 0;
+
+  try {
+    if (user.role === 'external') {
+      const quotaRes = await pool.query(
+        'SELECT quota_dental, used_dental, quota_xray, used_xray FROM users WHERE id = $1',
+        [user.id]
+      );
+      if (quotaRes.rows.length > 0) {
+        quotaDentalTotal = parseInt(quotaRes.rows[0].quota_dental) || 0;
+        quotaDentalUsed = parseInt(quotaRes.rows[0].used_dental) || 0;
+        quotaXrayTotal = parseInt(quotaRes.rows[0].quota_xray) || 0;
+        quotaXrayUsed = parseInt(quotaRes.rows[0].used_xray) || 0;
+      }
+    } else {
+      // admin or internal: sum of all professionals
+      const quotaRes = await pool.query(
+        "SELECT SUM(quota_dental) as quota_dental, SUM(used_dental) as used_dental, SUM(quota_xray) as quota_xray, SUM(used_xray) as used_xray FROM users WHERE role = 'external'"
+      );
+      if (quotaRes.rows.length > 0) {
+        quotaDentalTotal = parseInt(quotaRes.rows[0].quota_dental) || 0;
+        quotaDentalUsed = parseInt(quotaRes.rows[0].used_dental) || 0;
+        quotaXrayTotal = parseInt(quotaRes.rows[0].quota_xray) || 0;
+        quotaXrayUsed = parseInt(quotaRes.rows[0].used_xray) || 0;
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching quota metrics:', err);
+  }
+
   // 1. Rendimiento Derivación Query
   let topProfessional = 'Sin derivaciones';
   let topProfessionalCount = 0;
@@ -407,11 +442,9 @@ export default async function DashboardPage() {
         </div>
 
         {(user.role === 'admin' || user.role === 'external') && (
-          <Link href="/dashboard/register" className="premium-action-btn">
+          <Link href="/dashboard/register" className="login-pill-btn" style={{ gap: '8px' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Nueva Derivación
-            <div className="btn-badge">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
-            </div>
           </Link>
         )}
       </div>
@@ -448,20 +481,20 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* KPI 2: Rendimiento Derivación */}
+            {/* KPI 2: Procedimientos Dentales */}
             <div className="telemetry-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Rendimiento Derivación
+                  Procedimientos Dentales
                 </span>
                 <div style={{ color: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.08)', padding: '8px', borderRadius: '50%' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2.5 3.19-2.5 5.5h20c0-2.31-1-4.24-2.5-5.5M12 2C7.58 2 4 5.58 4 10c0 3.5 2.5 6 4.5 7.5l3.5 3.5 3.5-3.5c2-1.5 4.5-4 4.5-7.5 0-4.42-3.58-8-8-8z"/></svg>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                 <span style={{
-                  fontSize: '1.45rem',
-                  fontWeight: 800,
+                  fontSize: '2.4rem',
+                  fontWeight: 850,
                   fontFamily: 'var(--font-display)',
                   color: 'hsl(var(--foreground-hsl))',
                   whiteSpace: 'nowrap',
@@ -469,29 +502,29 @@ export default async function DashboardPage() {
                   textOverflow: 'ellipsis',
                   lineHeight: '2.4rem',
                   height: '2.4rem'
-                }} title={topProfessional}>
-                  {topProfessional}
+                }}>
+                  {quotaDentalUsed} / {quotaDentalTotal}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: 700 }}>
-                  {topProfessionalSub}
+                <span style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: 750 }}>
+                  {Math.max(0, quotaDentalTotal - quotaDentalUsed)} disponibles
                 </span>
               </div>
             </div>
 
-            {/* KPI 3: Convenio Preferido */}
+            {/* KPI 3: Prestaciones de Radiología */}
             <div className="telemetry-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Convenio Preferido
+                  Prestaciones de Radiología
                 </span>
                 <div style={{ color: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.08)', padding: '8px', borderRadius: '50%' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                 <span style={{
-                  fontSize: '1.45rem',
-                  fontWeight: 800,
+                  fontSize: '2.4rem',
+                  fontWeight: 850,
                   fontFamily: 'var(--font-display)',
                   color: 'hsl(var(--foreground-hsl))',
                   whiteSpace: 'nowrap',
@@ -499,11 +532,11 @@ export default async function DashboardPage() {
                   textOverflow: 'ellipsis',
                   lineHeight: '2.4rem',
                   height: '2.4rem'
-                }} title={topAgreement}>
-                  {topAgreement}
+                }}>
+                  {quotaXrayUsed} / {quotaXrayTotal}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: '#a855f7', fontWeight: 700 }}>
-                  {topAgreementSub}
+                <span style={{ fontSize: '0.75rem', color: '#a855f7', fontWeight: 750 }}>
+                  {Math.max(0, quotaXrayTotal - quotaXrayUsed)} disponibles
                 </span>
               </div>
             </div>
@@ -729,88 +762,6 @@ export default async function DashboardPage() {
                     <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 500 }}>Crear y gestionar cuentas de usuarios</span>
                   </div>
                 </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Distribución de Casos por Comuna inside column 2 */}
-          <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                Distribución por Comuna
-              </h3>
-              <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
-                Procedencia territorial de los pacientes
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
-              {communeTotalVal === 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', opacity: 0.6, padding: '40px 0', textAlign: 'center', justifyContent: 'center', width: '100%', minHeight: '220px' }}>
-                  <div style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#10b981',
-                    border: '1px solid rgba(16, 185, 129, 0.1)',
-                    marginBottom: '8px'
-                  }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                  </div>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'hsl(var(--foreground-hsl))' }}>Sin datos de procedencia</span>
-                  <span style={{ fontSize: '0.78rem', color: 'hsl(var(--foreground-hsl))', opacity: 0.5, maxWidth: '240px', lineHeight: '1.25rem' }}>
-                    Una vez ingresados los primeros casos, se graficará automáticamente la distribución por comuna.
-                  </span>
-                </div>
-              ) : (
-                <>
-                  {/* SVG Donut */}
-                  <svg viewBox="0 0 240 240" width="150" height="150" style={{ display: 'block', flexShrink: 0 }}>
-                    {donutSegments.map((seg, idx) => (
-                      <circle
-                        key={idx}
-                        cx="120"
-                        cy="120"
-                        r="70"
-                        fill="transparent"
-                        stroke={seg.color}
-                        strokeWidth="16"
-                        strokeDasharray={`${seg.strokeLength} 439.82`}
-                        strokeDashoffset={seg.strokeOffset}
-                        transform="rotate(-90 120 120)"
-                        strokeLinecap={seg.percent > 0 && seg.percent < 100 ? 'butt' : 'round'}
-                        style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                      />
-                    ))}
-
-                    {/* Inner Label */}
-                    <circle cx="120" cy="120" r="56" fill="hsl(var(--card-hsl))" />
-                    <text x="120" y="123" textAnchor="middle" fill="hsl(var(--foreground-hsl))" fontSize="20" fontWeight="900" fontFamily="var(--font-display)">
-                      {communeTotalVal}
-                    </text>
-                    <text x="120" y="140" textAnchor="middle" fill="hsl(var(--foreground-hsl))" opacity="0.4" fontSize="9" fontWeight="800" letterSpacing="0.05em">
-                      CASOS
-                    </text>
-                  </svg>
-
-                  {/* Sidebar legend list */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-                    {donutSegments.map((seg, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: seg.color }} />
-                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--foreground-hsl))' }}>{seg.label}</span>
-                        </div>
-                        <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 600 }}>{seg.count} ({Math.round(seg.percent)}%)</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
               )}
             </div>
           </div>

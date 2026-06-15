@@ -60,6 +60,74 @@ export async function registerPersonAndCaseAction(formData: FormData) {
     try {
       await client.query('BEGIN');
 
+      // Validate and deduct professional quotas based on the professional email of the case
+      const profEmailRaw = formData.get('professional_email') as string || '';
+      const profEmail = profEmailRaw.trim().toLowerCase();
+      
+      let targetProfessionalUser: any = null;
+      
+      if (profEmail) {
+        const userLookup = await client.query(
+          'SELECT id, role, quota_dental, quota_xray, used_dental, used_xray FROM users WHERE LOWER(email) = $1',
+          [profEmail]
+        );
+        if (userLookup.rows.length > 0 && userLookup.rows[0].role === 'external') {
+          targetProfessionalUser = userLookup.rows[0];
+        }
+      }
+
+      if (targetProfessionalUser) {
+        const selectedTreatmentIdsStr = formData.get('selected_treatment_ids') as string || '';
+        const treatmentIds = selectedTreatmentIdsStr.split(',').filter(Boolean).map(Number);
+        
+        let dentalCount = 0;
+        let xrayCount = 0;
+
+        if (treatmentIds.length > 0) {
+          const arancelesRes = await client.query(
+            'SELECT id, category FROM arancel WHERE id = ANY($1)',
+            [treatmentIds]
+          );
+          
+          const idToCategory = new Map<number, string>();
+          arancelesRes.rows.forEach((row: any) => {
+            idToCategory.set(row.id, row.category);
+          });
+
+          treatmentIds.forEach((tid) => {
+            const cat = idToCategory.get(tid) || '';
+            if (cat === 'Radiología') {
+              xrayCount++;
+            } else {
+              dentalCount++;
+            }
+          });
+        }
+
+        const { id: profUserId, quota_dental, quota_xray, used_dental, used_xray } = targetProfessionalUser;
+
+        const remainingDental = quota_dental - used_dental;
+        const remainingXray = quota_xray - used_xray;
+
+        if (dentalCount > 0 && remainingDental < dentalCount) {
+          await client.query('ROLLBACK');
+          return { error: `Cupo insuficiente para Procedimientos Dentales. Al profesional le quedan ${remainingDental} cupos e intentó registrar ${dentalCount}.` };
+        }
+        if (xrayCount > 0 && remainingXray < xrayCount) {
+          await client.query('ROLLBACK');
+          return { error: `Cupo insuficiente para Radiología (Rayos X). Al profesional le quedan ${remainingXray} cupos e intentó registrar ${xrayCount}.` };
+        }
+
+        if (dentalCount > 0 || xrayCount > 0) {
+          await client.query(
+            `UPDATE users 
+             SET used_dental = used_dental + $1, used_xray = used_xray + $2, updated_at = NOW() 
+             WHERE id = $3`,
+            [dentalCount, xrayCount, profUserId]
+          );
+        }
+      }
+
       // 1. Check if person already exists by RUT
       let personId: string;
       const personCheck = await client.query('SELECT id FROM persons WHERE rut = $1', [cleanedRUT]);

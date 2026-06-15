@@ -23,7 +23,7 @@ export default async function UsersPage() {
       SELECT id, name, email, role, active, created_at,
              professional_title, professional_position, professional_email,
              professional_address, professional_website, professional_phone,
-             medical_center, agreement_type
+             medical_center, agreement_type, quota_dental, quota_xray, used_dental, used_xray
       FROM users 
       ORDER BY created_at DESC
     `);

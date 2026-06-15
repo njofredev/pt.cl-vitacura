@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { handleLogin, checkEmailExists } from '@/app/actions/authActions';
 import ShowcaseInteractive from '@/components/ShowcaseInteractive';
+import { Search } from 'lucide-react';
 
 const partnerLogos = [
   { name: 'Municipalidad de Vitacura', path: '/logos_convenios_prevision/mivita_trans.png' },
@@ -43,6 +44,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Sincronizar el tema inicial desde localStorage o preferencia de sistema
+    document.body.classList.add('login-page-active');
+    
     const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     if (storedTheme) {
       setTheme(storedTheme);
@@ -55,6 +58,10 @@ export default function LoginPage() {
       document.documentElement.classList.remove('light', 'dark');
       document.documentElement.classList.add(initialTheme);
     }
+
+    return () => {
+      document.body.classList.remove('login-page-active');
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -358,29 +365,20 @@ export default function LoginPage() {
                 {/* Verify / Search Button */}
                 <button
                   type="submit"
-                  className="premium-action-btn"
+                  className="login-pill-btn"
                   style={{
                     marginTop: '10px',
-                    width: '200px',
-                    margin: '10px auto 0 auto'
+                    width: '260px',
+                    margin: '10px auto 0 auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
                   }}
                   disabled={checking}
                 >
+                  <Search size={16} />
                   {checking ? 'Buscando cuenta...' : 'Buscar cuenta'}
-                  <div className="btn-badge">
-                    {checking ? (
-                      <div style={{
-                        width: '16px',
-                        height: '16px',
-                        border: '2.5px solid rgba(255, 255, 255, 0.2)',
-                        borderTop: '2.5px solid white',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }} />
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                    )}
-                  </div>
                 </button>
               </>
             ) : (
@@ -513,29 +511,15 @@ export default function LoginPage() {
                 {/* Final Submit Button */}
                 <button
                   type="submit"
-                  className="premium-action-btn"
+                  className="login-pill-btn"
                   style={{
                     marginTop: '10px',
-                    width: '200px',
+                    width: '260px',
                     margin: '10px auto 0 auto'
                   }}
                   disabled={loading}
                 >
                   {loading ? 'Iniciando sesión...' : 'Ingresar al Portal'}
-                  <div className="btn-badge">
-                    {loading ? (
-                      <div style={{
-                        width: '16px',
-                        height: '16px',
-                        border: '2.5px solid rgba(255, 255, 255, 0.2)',
-                        borderTop: '2.5px solid white',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }} />
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
-                    )}
-                  </div>
                 </button>
               </>
             )}
@@ -636,94 +620,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <style jsx global>{`
-        body {
-          padding-left: 0 !important; /* Anula el padding del sidebar en la pantalla de login */
-        }
-
-        .dark .login-form-panel {
-          background-color: #0c0e12 !important;
-        }
-
-        .light .login-form-panel {
-          background-color: #f7f5f0 !important;
-        }
-
-        .dark .glass-card {
-          background: rgba(18, 22, 28, 0.65) !important;
-          border: 1px solid rgba(255, 255, 255, 0.05) !important;
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
-        }
-
-        .light .glass-card {
-          background: rgba(255, 255, 255, 0.7) !important;
-          border: 1px solid rgba(139, 131, 114, 0.12) !important;
-          box-shadow: 0 10px 30px rgba(139, 131, 114, 0.05) !important;
-        }
-
-        .dark .form-input {
-          background-color: rgba(3, 6, 12, 0.8) !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
-          color: #ffffff !important;
-        }
-
-        .dark .form-input:focus {
-          border-color: rgba(255, 255, 255, 0.25) !important;
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
-        }
-
-
-
-        .marquee-container {
-          overflow: hidden;
-          user-select: none;
-          display: flex;
-          position: relative;
-          width: 100%;
-          mask-image: linear-gradient(to right, transparent, white 15%, white 85%, transparent);
-          -webkit-mask-image: linear-gradient(to right, transparent, white 15%, white 85%, transparent);
-        }
-
-        .marquee-track {
-          display: flex;
-          align-items: center;
-          gap: 48px;
-          width: max-content;
-          animation: marquee-scroll 55s linear infinite;
-        }
-
-        @keyframes marquee-scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-
-        .marquee-item {
-          flex-shrink: 0;
-          height: 58px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .marquee-img {
-          max-height: 100%;
-          max-width: 175px;
-          width: auto;
-          object-fit: contain;
-          opacity: 0.45;
-          filter: grayscale(100%) brightness(1.8) contrast(0.8);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .marquee-img:hover {
-          opacity: 0.85;
-          filter: grayscale(0%) brightness(1.2);
-        }
-      `}</style>
     </main>
   );
 }

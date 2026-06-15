@@ -44,6 +44,10 @@ async function setup() {
         professional_address VARCHAR(255),
         professional_website VARCHAR(255),
         professional_phone VARCHAR(255),
+        quota_dental INT DEFAULT 0,
+        quota_xray INT DEFAULT 0,
+        used_dental INT DEFAULT 0,
+        used_xray INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
@@ -187,10 +191,10 @@ async function setup() {
 
     // Create Seed Super Admin User
     console.log('Checking for existing admin user...');
-    const adminCheck = await client.query(`SELECT id FROM users WHERE email = $1`, ['admin@tabancura.cl']);
+    const adminCheck = await client.query(`SELECT id FROM users WHERE email = $1`, ['admin@policlinicotabancura.cl']);
     
     if (adminCheck.rows.length === 0) {
-      console.log('Seeding initial admin user (admin@tabancura.cl)...');
+      console.log('Seeding initial admin user (admin@policlinicotabancura.cl)...');
       const salt = await bcrypt.genSalt(10);
       const adminPassword = process.env.INITIAL_ADMIN_PASSWORD || 'admin123';
       const passwordHash = await bcrypt.hash(adminPassword, salt);
@@ -198,7 +202,7 @@ async function setup() {
       await client.query(`
         INSERT INTO users (name, email, password_hash, role, active)
         VALUES ($1, $2, $3, $4, $5)
-      `, ['Administrador General', 'admin@tabancura.cl', passwordHash, 'admin', true]);
+      `, ['Administrador General', 'admin@policlinicotabancura.cl', passwordHash, 'admin', true]);
       console.log(`Admin user seeded successfully with password "${adminPassword}"!`);
     } else {
       console.log('Admin user already exists.');

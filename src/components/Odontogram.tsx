@@ -153,6 +153,9 @@ interface OdontogramProps {
     dentalDiagnosis: string;
     treatmentNeeded: string;
     description: string;
+    selectedTreatmentIds: string;
+    dentalCount: number;
+    xrayCount: number;
   }) => void;
 }
 
@@ -171,6 +174,12 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const [chartState, setChartState] = useState<Record<number, SelectedToothState>>({});
   const [generalObservations, setGeneralObservations] = useState('');
+  const [localObservations, setLocalObservations] = useState('');
+
+  useEffect(() => {
+    setLocalObservations(generalObservations);
+  }, [generalObservations]);
+
   const [hoveredFace, setHoveredFace] = useState<keyof SelectedToothState['faces'] | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -555,6 +564,9 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
     const diagnosisList: string[] = [];
     const treatmentList: string[] = [];
 
+    let dentalCount = 0;
+    let xrayCount = 0;
+
     // Compile pseudo-IDs (arches or whole mouth) first to keep it elegant and structured
     const pseudoIds = [101, 102, 103];
     pseudoIds.forEach((id) => {
@@ -570,7 +582,16 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
         if (state.treatments.length > 0) {
           const treatmentNames = state.treatments.map((tid) => {
             const opt = treatmentOptions.find((o) => o.id === tid);
-            return opt ? opt.name : tid;
+            if (opt) {
+              const typeLabel = opt.category === 'Radiología' ? 'Rayos X' : 'Dental';
+              if (opt.category === 'Radiología') {
+                xrayCount++;
+              } else {
+                dentalCount++;
+              }
+              return `${opt.name} [${typeLabel}]`;
+            }
+            return tid;
           });
           treatmentList.push(`${name}: Realizar [${treatmentNames.join(', ')}]`);
         }
@@ -608,7 +629,16 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
         if (state.treatments.length > 0) {
           const treatmentNames = state.treatments.map((tid) => {
             const opt = treatmentOptions.find((o) => o.id === tid);
-            return opt ? opt.name : tid;
+            if (opt) {
+              const typeLabel = opt.category === 'Radiología' ? 'Rayos X' : 'Dental';
+              if (opt.category === 'Radiología') {
+                xrayCount++;
+              } else {
+                dentalCount++;
+              }
+              return `${opt.name} [${typeLabel}]`;
+            }
+            return tid;
           });
           treatmentList.push(`Pieza ${tooth.id}: Realizar [${treatmentNames.join(', ')}]`);
         }
@@ -623,10 +653,22 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
       ? treatmentList.join('\n')
       : '';
 
+    const allSelectedTreatmentIds: string[] = [];
+    Object.entries(chartState).forEach(([id, state]) => {
+      if (state.treatments && state.treatments.length > 0) {
+        state.treatments.forEach(tid => {
+          allSelectedTreatmentIds.push(tid);
+        });
+      }
+    });
+
     onChange({
       dentalDiagnosis: fullDiagnosis || 'Sin patologías o piezas ingresadas en odontograma interactivo.',
       treatmentNeeded: fullTreatments || 'Sin prestaciones asignadas en odontograma.',
-      description: generalObservations
+      description: generalObservations,
+      selectedTreatmentIds: allSelectedTreatmentIds.join(','),
+      dentalCount,
+      xrayCount
     });
   }, [chartState, activeTab, generalObservations]);
 
@@ -789,7 +831,7 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
         className={interactive ? "odont-circle-svg" : ""}
         style={{
           cursor: interactive ? 'pointer' : 'default',
-          filter: isFocused ? 'drop-shadow(0 0 5px rgba(59, 130, 246, 0.4))' : (isMultiSelected ? 'drop-shadow(0 0 6px rgba(20, 184, 166, 0.6))' : (isToothModified(id) ? 'drop-shadow(0 0 4px rgba(20, 184, 166, 0.25))' : 'none')),
+          filter: 'none',
           transition: 'all 0.2s ease',
           overflow: 'visible'
         }}
@@ -2503,8 +2545,9 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
           className="form-textarea"
           id="odontogram_observations"
           rows={2}
-          value={generalObservations}
-          onChange={(e) => setGeneralObservations(e.target.value)}
+          value={localObservations}
+          onChange={(e) => setLocalObservations(e.target.value)}
+          onBlur={() => setGeneralObservations(localObservations)}
           placeholder="Detalles complementarios clínicos, anomalías, derivaciones preferenciales o del caso..."
         />
       </div>

@@ -27,6 +27,9 @@ export async function createUserAction(formData: FormData) {
   const medicalCenter = formData.get('medical_center') as string;
   const agreementType = formData.get('agreement_type') as string;
 
+  const quotaDental = parseInt(formData.get('quota_dental') as string || '0', 10);
+  const quotaXray = parseInt(formData.get('quota_xray') as string || '0', 10);
+
   if (!name || !email || !password || !role) {
     return { error: 'Por favor complete todos los campos requeridos' };
   }
@@ -48,9 +51,9 @@ export async function createUserAction(formData: FormData) {
         name, email, password_hash, role, active, password_plain,
         professional_title, professional_position, professional_email,
         professional_address, professional_website, professional_phone,
-        medical_center, agreement_type
+        medical_center, agreement_type, quota_dental, quota_xray, used_dental, used_xray
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 0, 0)
     `, [
       name.trim(), 
       email.toLowerCase().trim(), 
@@ -65,7 +68,9 @@ export async function createUserAction(formData: FormData) {
       professionalWebsite ? professionalWebsite.trim() : null,
       professionalPhone ? professionalPhone.trim() : null,
       medicalCenter ? medicalCenter.trim() : null,
-      agreementType ? agreementType.trim() : null
+      agreementType ? agreementType.trim() : null,
+      quotaDental,
+      quotaXray
     ]);
 
     revalidatePath('/dashboard/users');
@@ -109,7 +114,7 @@ export async function getCurrentUserAction() {
       `SELECT id, name, email, role, active,
               professional_title, professional_position, professional_email,
               professional_address, professional_website, professional_phone,
-              medical_center, agreement_type
+              medical_center, agreement_type, quota_dental, quota_xray, used_dental, used_xray
        FROM users 
        WHERE id = $1`,
       [session.id]
@@ -145,6 +150,9 @@ export async function updateUserAction(userId: string, formData: FormData) {
   const medicalCenter = formData.get('medical_center') as string;
   const agreementType = formData.get('agreement_type') as string;
 
+  const quotaDental = parseInt(formData.get('quota_dental') as string || '0', 10);
+  const quotaXray = parseInt(formData.get('quota_xray') as string || '0', 10);
+
   if (!name || !email || !role) {
     return { error: 'Por favor complete todos los campos requeridos (Nombre, Correo, Rol)' };
   }
@@ -177,8 +185,10 @@ export async function updateUserAction(userId: string, formData: FormData) {
           professional_phone = $11,
           medical_center = $12,
           agreement_type = $13,
+          quota_dental = $14,
+          quota_xray = $15,
           updated_at = NOW()
-        WHERE id = $14
+        WHERE id = $16
       `, [
         name.trim(), 
         email.toLowerCase().trim(), 
@@ -193,6 +203,8 @@ export async function updateUserAction(userId: string, formData: FormData) {
         professionalPhone ? professionalPhone.trim() : null,
         medicalCenter ? medicalCenter.trim() : null,
         agreementType ? agreementType.trim() : null,
+        quotaDental,
+        quotaXray,
         userId
       ]);
     } else {
@@ -210,8 +222,10 @@ export async function updateUserAction(userId: string, formData: FormData) {
           professional_phone = $9,
           medical_center = $10,
           agreement_type = $11,
+          quota_dental = $12,
+          quota_xray = $13,
           updated_at = NOW()
-        WHERE id = $12
+        WHERE id = $14
       `, [
         name.trim(), 
         email.toLowerCase().trim(), 
@@ -224,6 +238,8 @@ export async function updateUserAction(userId: string, formData: FormData) {
         professionalPhone ? professionalPhone.trim() : null,
         medicalCenter ? medicalCenter.trim() : null,
         agreementType ? agreementType.trim() : null,
+        quotaDental,
+        quotaXray,
         userId
       ]);
     }

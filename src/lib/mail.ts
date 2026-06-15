@@ -33,9 +33,11 @@ export async function sendAutomaticReferralEmail(caseData: {
     }
   });
 
+  const referralRecipient = process.env.REFERRAL_NOTIFICATION_EMAIL || 'derivaciones@policlinicotabancura.cl';
+
   const mailOptions = {
     from: `"Derivación Digital Vitacura" <${user}>`,
-    to: 'njofre@policlinicotabancura.cl',
+    to: referralRecipient,
     subject: `Nueva Derivación Digital Registrada - ${caseData.firstNames} ${caseData.lastNames}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
@@ -88,7 +90,7 @@ export async function sendAutomaticReferralEmail(caseData: {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`[SMTP] Correo de derivación enviado exitosamente a njofre@policlinicotabancura.cl`);
+    console.log(`[SMTP] Correo de derivación enviado exitosamente a ${referralRecipient}`);
   } catch (error) {
     console.error('[SMTP Error] Error al enviar correo de derivación:', error);
   }

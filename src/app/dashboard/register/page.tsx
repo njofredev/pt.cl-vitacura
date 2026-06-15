@@ -28,7 +28,7 @@ export default function RegisterCasePage() {
 
   // Pre-submission review summary states
   const [showSummary, setShowSummary] = useState(false);
-  const [formDataObj, setFormDataObj] = useState<Record<string, string>>({});
+  const [formDataObj, setFormDataObj] = useState<Record<string, any>>({});
   const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
 
   // States for professional defaults
@@ -43,10 +43,13 @@ export default function RegisterCasePage() {
   const [birthDateInput, setBirthDateInput] = useState('');
   const [pickerDate, setPickerDate] = useState('');
   const [odontogramType, setOdontogramType] = useState<'adult' | 'child'>('adult');
-  const [odontogramData, setOdontogramData] = useState({
+  const [odontogramData, setOdontogramData] = useState<any>({
     dentalDiagnosis: '',
     treatmentNeeded: '',
-    description: ''
+    description: '',
+    selectedTreatmentIds: '',
+    dentalCount: 0,
+    xrayCount: 0
   });
 
   // States for dynamic "Other" selects
@@ -652,7 +655,7 @@ export default function RegisterCasePage() {
 
     // Intercept submission to show confirmation summary modal
     const formData = new FormData(formElement);
-    const data: Record<string, string> = {
+    const data: Record<string, any> = {
       rut: formatRUT(rut),
       firstNames: formData.get('first_names') as string || '',
       lastNames: formData.get('last_names') as string || '',
@@ -665,7 +668,9 @@ export default function RegisterCasePage() {
       agreementType: selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType,
       dentalDiagnosis: odontogramData.dentalDiagnosis || 'Sin patologías registradas en odontograma.',
       treatmentNeeded: odontogramData.treatmentNeeded || 'Sin prestaciones asignadas.',
-      description: odontogramData.description || 'Derivación ingresada mediante odontograma interactivo.'
+      description: odontogramData.description || 'Derivación ingresada mediante odontograma interactivo.',
+      dentalCount: odontogramData.dentalCount || 0,
+      xrayCount: odontogramData.xrayCount || 0
     };
 
     setFormDataObj(data);
@@ -1828,9 +1833,34 @@ export default function RegisterCasePage() {
                     Prestaciones Requeridas (Odontograma)
                   </span>
                   <div style={{ paddingLeft: '19px' }}>
-                    <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4' }}>
+                    <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4', marginBottom: '8px' }}>
                       {odontogramData.treatmentNeeded || 'Sin prestaciones asignadas.'}
                     </p>
+                    
+                    {(odontogramData.dentalCount > 0 || odontogramData.xrayCount > 0) && (
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(20, 184, 166, 0.03)',
+                        border: '1px solid rgba(20, 184, 166, 0.15)',
+                        marginTop: '10px'
+                      }}>
+                        <span style={{ fontSize: '0.76rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', opacity: 0.8, color: '#14b8a6' }}>
+                          Estimación de Descuento de Cupos:
+                        </span>
+                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--primary-hsl))', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            🦷 Procedimientos Dentales: <strong style={{ fontSize: '0.94rem' }}>{odontogramData.dentalCount || 0}</strong>
+                          </span>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fb923c', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            ⚡ Rayos X / Radiología: <strong style={{ fontSize: '0.94rem' }}>{odontogramData.xrayCount || 0}</strong>
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1841,6 +1871,7 @@ export default function RegisterCasePage() {
               <input type="hidden" name="dental_diagnosis" value={odontogramData.dentalDiagnosis || 'Sin patologías registradas en odontograma.'} />
               <input type="hidden" name="treatment_needed" value={odontogramData.treatmentNeeded || 'Sin tratamientos asignados.'} />
               <input type="hidden" name="description" value={odontogramData.description || 'Derivación ingresada mediante odontograma interactivo.'} />
+              <input type="hidden" name="selected_treatment_ids" value={odontogramData.selectedTreatmentIds || ''} />
             </div>
           )}
 
@@ -2241,9 +2272,35 @@ export default function RegisterCasePage() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg>
                   Prestaciones Requeridas (Odontograma)
                 </span>
-                <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4', paddingLeft: '19px' }}>
+                <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4', paddingLeft: '19px', marginBottom: '8px' }}>
                   {formDataObj.treatmentNeeded}
                 </p>
+                
+                {(formDataObj.dentalCount > 0 || formDataObj.xrayCount > 0) && (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(59, 130, 246, 0.03)',
+                    border: '1px solid rgba(59, 130, 246, 0.15)',
+                    marginTop: '10px',
+                    marginLeft: '19px'
+                  }}>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', opacity: 0.8, color: 'hsl(var(--primary-hsl))' }}>
+                      Estimación de Descuento de Cupos:
+                    </span>
+                    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--primary-hsl))', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        🦷 Procedimientos Dentales: <strong style={{ fontSize: '0.94rem' }}>{formDataObj.dentalCount || 0}</strong>
+                      </span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fb923c', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        ⚡ Rayos X / Radiología: <strong style={{ fontSize: '0.94rem' }}>{formDataObj.xrayCount || 0}</strong>
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
               {formDataObj.description && formDataObj.description !== 'Derivación ingresada mediante odontograma interactivo.' && (
                 <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', paddingTop: '12px' }}>

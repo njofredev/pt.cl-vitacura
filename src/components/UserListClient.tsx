@@ -21,6 +21,10 @@ interface User {
   professional_phone?: string;
   medical_center?: string;
   agreement_type?: string;
+  quota_dental?: number;
+  quota_xray?: number;
+  used_dental?: number;
+  used_xray?: number;
 }
 
 interface UserListClientProps {
@@ -152,6 +156,8 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         const role = formData.get('role') as any;
         const medical_center = formData.get('medical_center') as string;
         const agreement_type = formData.get('agreement_type') as string;
+        const quota_dental = parseInt(formData.get('quota_dental') as string || '0', 10);
+        const quota_xray = parseInt(formData.get('quota_xray') as string || '0', 10);
 
         const newUser: User = {
           id: Math.random().toString(), // temporary, they'll get the real UUID on refresh
@@ -162,6 +168,10 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
           created_at: new Date(),
           medical_center,
           agreement_type,
+          quota_dental,
+          quota_xray,
+          used_dental: 0,
+          used_xray: 0,
         };
         setUsers([newUser, ...users]);
         setNewMedicalCenter('');
@@ -209,6 +219,8 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         const professional_phone = formData.get('professional_phone') as string;
         const medical_center = formData.get('medical_center') as string;
         const agreement_type = formData.get('agreement_type') as string;
+        const quota_dental = parseInt(formData.get('quota_dental') as string || '0', 10);
+        const quota_xray = parseInt(formData.get('quota_xray') as string || '0', 10);
 
         setUsers(users.map(u => u.id === editingUser.id ? {
           ...u,
@@ -222,7 +234,9 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
           professional_website,
           professional_phone,
           medical_center,
-          agreement_type
+          agreement_type,
+          quota_dental,
+          quota_xray
         } : u));
 
         setTimeout(() => {
@@ -287,11 +301,9 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             </p>
           </div>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="premium-action-btn">
+        <button onClick={() => setIsModalOpen(true)} className="login-pill-btn" style={{ gap: '8px' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Nuevo Funcionario
-          <div className="btn-badge">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
-          </div>
         </button>
       </div>
 
@@ -305,6 +317,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                 <th>Correo Electrónico</th>
                 <th>Rol</th>
                 <th>Institución</th>
+                <th>Cupos (Usado / Total)</th>
                 <th style={{ textAlign: 'center' }}>Estado</th>
                 <th style={{ textAlign: 'right' }}>Acciones</th>
               </tr>
@@ -331,6 +344,20 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                     <span style={{ fontSize: '0.85rem', opacity: u.medical_center ? 0.9 : 0.5, fontWeight: u.medical_center ? 500 : 400 }}>
                       {u.medical_center || 'No asignado'}
                     </span>
+                  </td>
+                  <td>
+                    {u.role === 'external' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.82rem' }}>
+                        <span>
+                          <strong>Dentales:</strong> {u.used_dental || 0} / {u.quota_dental || 0}
+                        </span>
+                        <span>
+                          <strong>Rayos X:</strong> {u.used_xray || 0} / {u.quota_xray || 0}
+                        </span>
+                      </div>
+                    ) : (
+                      <span style={{ opacity: 0.4, fontSize: '0.82rem' }}>N/A</span>
+                    )}
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <span className={`badge ${u.active ? 'badge-aprobado' : 'badge-rechazado'}`}>
@@ -425,6 +452,20 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                 />
                 <input type="hidden" name="role" value={newRole} />
               </div>
+
+              {newRole === 'external' && (
+                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px', padding: '12px', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255, 255, 255, 0.01)' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'hsl(var(--accent-hsl))', letterSpacing: '0.04em' }}>Asignación de Cupos</span>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" htmlFor="quota_dental">Cupo Procedimientos Dentales</label>
+                    <input className="form-input" type="number" id="quota_dental" name="quota_dental" defaultValue={0} min={0} disabled={loading} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" htmlFor="quota_xray">Cupo Radiología (Rayos X)</label>
+                    <input className="form-input" type="number" id="quota_xray" name="quota_xray" defaultValue={0} min={0} disabled={loading} />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="user-form-column">
@@ -569,6 +610,20 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                   />
                   <input type="hidden" name="role" value={editRole} />
                 </div>
+
+                {editRole === 'external' && editingUser && (
+                  <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px', padding: '12px', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255, 255, 255, 0.01)' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'hsl(var(--accent-hsl))', letterSpacing: '0.04em' }}>Asignación de Cupos</span>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" htmlFor="edit_quota_dental">Cupo Procedimientos Dentales</label>
+                      <input className="form-input" type="number" id="edit_quota_dental" name="quota_dental" defaultValue={editingUser.quota_dental || 0} min={0} disabled={loading} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" htmlFor="edit_quota_xray">Cupo Radiología (Rayos X)</label>
+                      <input className="form-input" type="number" id="edit_quota_xray" name="quota_xray" defaultValue={editingUser.quota_xray || 0} min={0} disabled={loading} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="user-form-column">

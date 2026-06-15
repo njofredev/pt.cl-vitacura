@@ -109,8 +109,10 @@ export async function checkDentalinkPatientAction(rut: string) {
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@tabancura.cl'];
-  if (!allowedEmails.includes(session.email)) {
+  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
+    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
+  if (!allowedEmails.includes(session.email.toLowerCase())) {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -186,8 +188,10 @@ export async function createDentalinkPatientAction(patientData: {
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@tabancura.cl'];
-  if (!allowedEmails.includes(session.email)) {
+  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
+    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
+  if (!allowedEmails.includes(session.email.toLowerCase())) {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -254,8 +258,10 @@ export async function getDentalinkPatientTreatmentsAction(idPaciente: number | s
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@tabancura.cl'];
-  if (!allowedEmails.includes(session.email)) {
+  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
+    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
+  if (!allowedEmails.includes(session.email.toLowerCase())) {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -295,15 +301,24 @@ export async function getDentalinkPatientTreatmentsAction(idPaciente: number | s
 
 export async function createDentalinkPatientTreatmentAction(
   idPaciente: number | string, 
-  treatmentData: { nombre: string; id_convenio?: number }
+  treatmentData: { 
+    nombre: string; 
+    id_sucursal: number;
+    id_dentista: number;
+    comentario?: string;
+    finalizado?: number;
+    id_convenio?: number;
+  }
 ) {
   const session = await getSession();
   if (!session) {
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@tabancura.cl'];
-  if (!allowedEmails.includes(session.email)) {
+  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
+    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
+  if (!allowedEmails.includes(session.email.toLowerCase())) {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -313,11 +328,16 @@ export async function createDentalinkPatientTreatmentAction(
   }
 
   const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
-  const url = `https://api.dentalink.healthatom.com/api/v1/pacientes/${idPaciente}/tratamientos`;
+  const url = `https://api.dentalink.healthatom.com/api/v1/tratamientos`;
 
   const payload = {
+    id_paciente: Number(idPaciente),
+    id_sucursal: Number(treatmentData.id_sucursal),
+    id_dentista: Number(treatmentData.id_dentista),
     nombre: treatmentData.nombre,
-    id_convenio: treatmentData.id_convenio || 0,
+    comentario: treatmentData.comentario || '',
+    finalizado: treatmentData.finalizado !== undefined ? treatmentData.finalizado : 0,
+    ...(treatmentData.id_convenio !== undefined && treatmentData.id_convenio !== 0 ? { id_convenio: treatmentData.id_convenio } : {})
   };
 
   try {
@@ -357,8 +377,10 @@ export async function addDentalinkTreatmentDetailAction(id_tratamiento: number, 
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@tabancura.cl'];
-  if (!allowedEmails.includes(session.email)) {
+  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
+    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
+  if (!allowedEmails.includes(session.email.toLowerCase())) {
     return { success: false, error: 'No autorizado para esta función' };
   }
 

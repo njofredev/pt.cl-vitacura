@@ -95,6 +95,10 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const [isCreateTreatmentFormOpen, setIsCreateTreatmentFormOpen] = useState(false);
   const [newTreatmentName, setNewTreatmentName] = useState('');
   const [newTreatmentConvenioId, setNewTreatmentConvenioId] = useState<number>(0);
+  const [newTreatmentSucursalId, setNewTreatmentSucursalId] = useState<number>(3); // Default to Vitacura (id: 3)
+  const [newTreatmentDentistaId, setNewTreatmentDentistaId] = useState<string>('');
+  const [newTreatmentComentario, setNewTreatmentComentario] = useState<string>('');
+  const [newTreatmentFinalizado, setNewTreatmentFinalizado] = useState<number>(0); // Default to Active (0)
 
   // Service assignment states (Step 3)
   const [selectedTreatmentForServices, setSelectedTreatmentForServices] = useState<any | null>(null);
@@ -149,10 +153,35 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
 
   const parseOdontogramServices = (treatmentNeededStr: string | null): string[] => {
     if (!treatmentNeededStr) return [];
-    return treatmentNeededStr
+    const lines = treatmentNeededStr
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0 && !line.includes('Sin prestaciones asignadas'));
+
+    const parsedServices: string[] = [];
+
+    for (const line of lines) {
+      const match = line.match(/^(.*?)\[(.*?)\](.*)$/);
+      if (match) {
+        const prefix = match[1];
+        const servicesContent = match[2];
+        const suffix = match[3];
+
+        const individualServices = servicesContent.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        
+        if (individualServices.length > 1) {
+          for (const service of individualServices) {
+            parsedServices.push(`${prefix}[${service}]${suffix}`);
+          }
+        } else {
+          parsedServices.push(line);
+        }
+      } else {
+        parsedServices.push(line);
+      }
+    }
+
+    return parsedServices;
   };
 
   const startWizard = (c: CaseRecord) => {
@@ -164,6 +193,10 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setIsCreateTreatmentFormOpen(false);
     setNewTreatmentName(c.agreement_type || 'Nuevo plan de tratamiento');
     setNewTreatmentConvenioId(0);
+    setNewTreatmentSucursalId(3);
+    setNewTreatmentDentistaId('');
+    setNewTreatmentComentario('');
+    setNewTreatmentFinalizado(0);
     setSelectedTreatmentForServices(null);
     setPendingServices([]);
     setLinkedServices([]);
@@ -235,15 +268,26 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const handleCreateTreatment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!wizardPatientData?.id) return;
+    if (!newTreatmentDentistaId) {
+      setWizardError('Debe ingresar el ID del dentista');
+      return;
+    }
     setWizardLoading(true);
     setWizardError(null);
     try {
       const res = await createDentalinkPatientTreatmentAction(wizardPatientData.id, {
         nombre: newTreatmentName,
+        id_sucursal: newTreatmentSucursalId,
+        id_dentista: Number(newTreatmentDentistaId),
+        comentario: newTreatmentComentario,
+        finalizado: newTreatmentFinalizado,
         id_convenio: newTreatmentConvenioId
       });
       if (res.success) {
         setIsCreateTreatmentFormOpen(false);
+        setNewTreatmentComentario('');
+        setNewTreatmentDentistaId('');
+        setNewTreatmentFinalizado(0);
         // Reload treatments list
         goToTreatmentsStep();
       } else {
@@ -1148,32 +1192,107 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                       Nuevo Plan de Tratamiento para el Paciente
                     </h4>
                     <p style={{ margin: 0, fontSize: '0.82rem', opacity: 0.6 }}>
-                      Ingrese la descripción o nombre del plan de tratamiento para registrarlo directamente en la ficha clínica de Dentalink.
+                      Ingrese los detalles del plan de tratamiento para registrarlo directamente en la ficha clínica de Dentalink.
                     </p>
 
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="new_treatment_name">Nombre o Descripción del Tratamiento *</label>
-                      <input 
-                        type="text" 
-                        id="new_treatment_name"
-                        className="form-input" 
-                        required 
-                        value={newTreatmentName} 
-                        onChange={e => setNewTreatmentName(e.target.value)} 
-                        placeholder="Ej: PLAN DE TRATAMIENTO SOCIAL VITACURA"
-                      />
-                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label className="form-label" htmlFor="new_treatment_name">Nombre o Descripción del Tratamiento *</label>
+                        <input 
+                          type="text" 
+                          id="new_treatment_name"
+                          className="form-input" 
+                          required 
+                          value={newTreatmentName} 
+                          onChange={e => setNewTreatmentName(e.target.value)} 
+                          placeholder="Ej: PLAN DE TRATAMIENTO SOCIAL VITACURA"
+                        />
+                      </div>
 
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="new_treatment_convenio">ID del Convenio Dentalink (Opcional - Escriba 0 si no aplica)</label>
-                      <input 
-                        type="number" 
-                        id="new_treatment_convenio"
-                        className="form-input" 
-                        value={newTreatmentConvenioId} 
-                        onChange={e => setNewTreatmentConvenioId(Number(e.target.value))} 
-                        placeholder="Ej: 0"
-                      />
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="new_treatment_sucursal">Sucursal *</label>
+                        <select 
+                          id="new_treatment_sucursal"
+                          className="form-select" 
+                          value={newTreatmentSucursalId} 
+                          onChange={e => setNewTreatmentSucursalId(Number(e.target.value))}
+                          required
+                          style={{
+                            backgroundColor: 'rgba(0,0,0,0.2)',
+                            color: 'inherit',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '8px 12px',
+                            width: '100%',
+                            height: '42px'
+                          }}
+                        >
+                          <option value={3} style={{ backgroundColor: 'black' }}>Vitacura (id: 3)</option>
+                          <option value={2} style={{ backgroundColor: 'black' }}>Los Tribunales (id: 2)</option>
+                          <option value={1} style={{ backgroundColor: 'black' }}>Sucursal 1 (id: 1)</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="new_treatment_dentista">ID del Dentista *</label>
+                        <input 
+                          type="number" 
+                          id="new_treatment_dentista"
+                          className="form-input" 
+                          required
+                          value={newTreatmentDentistaId} 
+                          onChange={e => setNewTreatmentDentistaId(e.target.value)} 
+                          placeholder="Ej: 626"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="new_treatment_estado">Estado *</label>
+                        <select 
+                          id="new_treatment_estado"
+                          className="form-select" 
+                          value={newTreatmentFinalizado} 
+                          onChange={e => setNewTreatmentFinalizado(Number(e.target.value))}
+                          required
+                          style={{
+                            backgroundColor: 'rgba(0,0,0,0.2)',
+                            color: 'inherit',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '8px 12px',
+                            width: '100%',
+                            height: '42px'
+                          }}
+                        >
+                          <option value={0} style={{ backgroundColor: 'black' }}>Activo (0)</option>
+                          <option value={1} style={{ backgroundColor: 'black' }}>Finalizado (1)</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="new_treatment_convenio">ID del Convenio (Opcional)</label>
+                        <input 
+                          type="number" 
+                          id="new_treatment_convenio"
+                          className="form-input" 
+                          value={newTreatmentConvenioId} 
+                          onChange={e => setNewTreatmentConvenioId(Number(e.target.value))} 
+                          placeholder="Ej: 0"
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label className="form-label" htmlFor="new_treatment_comentario">Comentario (Opcional)</label>
+                        <textarea 
+                          id="new_treatment_comentario"
+                          className="form-textarea" 
+                          rows={2}
+                          value={newTreatmentComentario} 
+                          onChange={e => setNewTreatmentComentario(e.target.value)} 
+                          placeholder="Ingrese algún comentario adicional para este tratamiento..."
+                          style={{ width: '100%', resize: 'vertical' }}
+                        />
+                      </div>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>

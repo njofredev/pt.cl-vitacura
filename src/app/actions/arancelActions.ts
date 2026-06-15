@@ -63,7 +63,11 @@ export async function getArancelesAction(
     // Get matching rows
     const dataQuery = `
       SELECT id, name, category, source, price_base, price_pref, show_in_odontogram, id_prestacion, created_at, updated_at
-      FROM arancel
+      FROM (
+        SELECT DISTINCT ON (name) id, name, category, source, price_base, price_pref, show_in_odontogram, id_prestacion, created_at, updated_at
+        FROM arancel
+        ORDER BY name ASC, price_base DESC NULLS LAST
+      ) as sub
       ${whereClause}
       ORDER BY category ASC, name ASC
       LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
@@ -71,7 +75,7 @@ export async function getArancelesAction(
     
     // Get total count
     const countQuery = `
-      SELECT COUNT(*) as total FROM arancel ${whereClause}
+      SELECT COUNT(DISTINCT name) as total FROM arancel ${whereClause}
     `;
 
     const dataParams = [...queryParams, limit, offset];
@@ -183,9 +187,13 @@ export async function getOdontogramPrestacionesAction(): Promise<{ success: bool
 
     const res = await pool.query(`
       SELECT id, name, category, source, price_base, price_pref, show_in_odontogram, id_prestacion
-      FROM arancel
-      WHERE show_in_odontogram = TRUE
-        AND category NOT IN (SELECT category FROM hidden_categories)
+      FROM (
+        SELECT DISTINCT ON (name) id, name, category, source, price_base, price_pref, show_in_odontogram, id_prestacion
+        FROM arancel
+        WHERE show_in_odontogram = TRUE
+          AND category NOT IN (SELECT category FROM hidden_categories)
+        ORDER BY name ASC, price_base DESC NULLS LAST
+      ) as sub
       ORDER BY category ASC, name ASC
     `);
 
