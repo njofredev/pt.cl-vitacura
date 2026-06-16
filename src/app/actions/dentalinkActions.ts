@@ -459,3 +459,93 @@ export async function getDentalinkPatientEvolutionsAction(idPaciente: number | s
     return { success: false, error: error.message || 'Error de red' };
   }
 }
+
+export async function getDentalinkTreatmentDetailsAction(idTratamiento: number | string) {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: 'No autorizado' };
+  }
+
+  if (session.role !== 'admin' && session.role !== 'internal') {
+    return { success: false, error: 'No autorizado para esta función' };
+  }
+
+  const apiToken = process.env.DENTALINK_API_TOKEN || '';
+  if (!apiToken) {
+    return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
+  }
+
+  const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
+  const url = `https://api.dentalink.healthatom.com/api/v1/tratamientos/${idTratamiento}/detalles`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': formattedToken,
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `Error del servidor Dentalink: ${response.statusText}`, details: errorText };
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      details: result.data || []
+    };
+  } catch (error: any) {
+    console.error('Error fetching Dentalink treatment details:', error);
+    return { success: false, error: error.message || 'Error de red' };
+  }
+}
+
+export async function getDentalinkTreatmentEvolutionsAction(idTratamiento: number | string) {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: 'No autorizado' };
+  }
+
+  if (session.role !== 'admin' && session.role !== 'internal') {
+    return { success: false, error: 'No autorizado para esta función' };
+  }
+
+  const apiToken = process.env.DENTALINK_API_TOKEN || '';
+  if (!apiToken) {
+    return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
+  }
+
+  const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
+  const url = `https://api.dentalink.healthatom.com/api/v1/tratamientos/${idTratamiento}/evoluciones`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': formattedToken,
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `Error del servidor Dentalink: ${response.statusText}`, details: errorText };
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      evolutions: result.data || []
+    };
+  } catch (error: any) {
+    console.error('Error fetching Dentalink treatment evolutions:', error);
+    return { success: false, error: error.message || 'Error de red' };
+  }
+}
+
+

@@ -102,6 +102,7 @@ const CHILD_TEETH: ToothInfo[] = [
 // Available treatments grouped by category
 interface TreatmentOption {
   id: string;
+  id_prestacion?: number;
   name: string;
   category: string;
   color: string;
@@ -320,6 +321,7 @@ export default function Odontogram({
           if (res.data.length > 0) {
             const mapped: TreatmentOption[] = res.data.map(item => ({
               id: item.id.toString(),
+              id_prestacion: item.id_prestacion,
               name: item.name,
               category: item.category,
               color: getCategoryColor(item.category)
@@ -1615,7 +1617,7 @@ export default function Odontogram({
                           fontWeight: 700,
                           textTransform: 'none'
                         }}>
-                          Arcada Completa: {opt ? opt.name.split(' (')[0] : tid}
+                          Arcada Superior: {opt ? (opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name.split(' (')[0]}` : opt.name.split(' (')[0]) : tid}
                         </span>
                       );
                     })}
@@ -1718,7 +1720,7 @@ export default function Odontogram({
                           fontWeight: 700,
                           textTransform: 'none'
                         }}>
-                          Arcada Completa: {opt ? opt.name.split(' (')[0] : tid}
+                          Arcada Inferior: {opt ? (opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name.split(' (')[0]}` : opt.name.split(' (')[0]) : tid}
                         </span>
                       );
                     })}
@@ -2247,7 +2249,7 @@ export default function Odontogram({
                                             color: isAssigned ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)',
                                             fontWeight: isAssigned ? 600 : 500
                                           }}>
-                                            {opt.name}
+                                            {opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name}` : opt.name}
                                           </span>
                                           <span style={{
                                             fontSize: '0.72rem',
@@ -2417,7 +2419,7 @@ export default function Odontogram({
                                         color: isAssigned ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)',
                                         fontWeight: isAssigned ? 600 : 500
                                       }}>
-                                        {opt.name}
+                                        {opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name}` : opt.name}
                                       </span>
                                     </div>
                                   );
@@ -2558,10 +2560,10 @@ export default function Odontogram({
                   if (isPseudo) {
                     if (id === 101) {
                       nameLabel = 'Arcada Superior';
-                      typeLabel = 'Arcada Completa';
+                      typeLabel = 'Arcada Superior';
                     } else if (id === 102) {
                       nameLabel = 'Arcada Inferior';
-                      typeLabel = 'Arcada Completa';
+                      typeLabel = 'Arcada Inferior';
                     } else {
                       nameLabel = 'Toda la Boca';
                       typeLabel = 'Dentición Completa';
@@ -2614,7 +2616,7 @@ export default function Odontogram({
                                     borderColor: opt ? `${opt.color}44` : 'rgba(255,255,255,0.1)'
                                   }}
                                 >
-                                  {opt ? opt.name.split(' (')[0] : tid}
+                                  {opt ? (opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name.split(' (')[0]}` : opt.name.split(' (')[0]) : tid}
                                 </span>
                               );
                             })}

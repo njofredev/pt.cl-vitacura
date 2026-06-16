@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction, getDentalinkPatientEvolutionsAction } from '@/app/actions/dentalinkActions';
+import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction, getDentalinkPatientEvolutionsAction, getDentalinkTreatmentDetailsAction, getDentalinkTreatmentEvolutionsAction } from '@/app/actions/dentalinkActions';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 import { updateCaseStatusAction } from '@/app/actions/caseActions';
 import { formatRUT, formatDate } from '@/lib/utils';
@@ -95,7 +95,8 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const [wizardPatientExists, setWizardPatientExists] = useState<boolean | null>(null);
   const [wizardPatientData, setWizardPatientData] = useState<any | null>(null);
   const [wizardTreatments, setWizardTreatments] = useState<any[]>([]);
-  const [wizardEvolutions, setWizardEvolutions] = useState<any[]>([]);
+  const [wizardTreatmentEvolutions, setWizardTreatmentEvolutions] = useState<Record<number, any[]>>({});
+  const [wizardTreatmentDetails, setWizardTreatmentDetails] = useState<Record<number, any[]>>({});
   const [wizardLoading, setWizardLoading] = useState(false);
   const [wizardError, setWizardError] = useState<string | null>(null);
 
@@ -201,7 +202,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setWizardPatientExists(null);
     setWizardPatientData(null);
     setWizardTreatments([]);
-    setWizardEvolutions([]);
+    setWizardTreatmentEvolutions({});
     setIsCreateTreatmentFormOpen(false);
     
     const caseId = c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '';
@@ -224,6 +225,80 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setIsWizardOpen(true);
 
     checkExistence(c.rut);
+  };
+
+  const startReview = async (c: CaseRecord) => {
+    setWizardCase(c);
+    setWizardStep(2);
+    setWizardPatientExists(true);
+    setWizardPatientData(null);
+    setWizardTreatments([]);
+    setWizardTreatmentEvolutions({});
+    setIsCreateTreatmentFormOpen(false);
+
+    
+    const caseId = c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '';
+    const dateObj = new Date(c.created_at);
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    const calculatedName = `${caseId} DERIVACIÓN DIGITAL ${month}/${year}`.trim();
+    
+    setNewTreatmentName(calculatedName);
+    setNewTreatmentConvenioId(0);
+    setNewTreatmentSucursalId(2);
+    setNewTreatmentDentistaId('');
+    setNewTreatmentComentario('');
+    setNewTreatmentFinalizado(0);
+    setSelectedTreatmentForServices(null);
+    setPendingServices([]);
+    setLinkedServices([]);
+    setWizardLoading(true);
+    setWizardError(null);
+    setIsWizardOpen(true);
+
+    try {
+      const resExist = await checkDentalinkPatientAction(c.rut);
+      if (resExist.success && resExist.exists) {
+        setWizardPatientData(resExist.patient);
+        const resTreatments = await getDentalinkPatientTreatmentsAction(resExist.patient.id);
+        if (resTreatments.success) {
+          const treatmentsList = resTreatments.treatments || [];
+          setWizardTreatments(treatmentsList);
+          
+          // Fetch treatment details and evolutions
+          const detailsMap: Record<number, any[]> = {};
+          const evolutionsMap: Record<number, any[]> = {};
+          await Promise.all(
+            treatmentsList.map(async (t: any) => {
+              try {
+                const [detailsRes, evsRes] = await Promise.all([
+                  getDentalinkTreatmentDetailsAction(t.id),
+                  getDentalinkTreatmentEvolutionsAction(t.id)
+                ]);
+                if (detailsRes.success && detailsRes.details) {
+                  detailsMap[t.id] = detailsRes.details;
+                }
+                if (evsRes.success && evsRes.evolutions) {
+                  evolutionsMap[t.id] = evsRes.evolutions;
+                }
+              } catch (err) {
+                console.error(`Error loading details/evolutions for treatment ${t.id}:`, err);
+              }
+            })
+          );
+          setWizardTreatmentDetails(detailsMap);
+          setWizardTreatmentEvolutions(evolutionsMap);
+        } else {
+          setWizardError(resTreatments.error || 'Error al obtener tratamientos');
+        }
+      } else {
+        setWizardError(resExist.error || 'Paciente no encontrado en Dentalink');
+      }
+    } catch (err: any) {
+      setWizardError(err.message || 'Error de red');
+    } finally {
+      setWizardLoading(false);
+    }
   };
 
   const handleSelectTreatment = async (treatment: any) => {
@@ -424,14 +499,35 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setWizardError(null);
     try {
       const res = await getDentalinkPatientTreatmentsAction(wizardPatientData.id);
-      const evRes = await getDentalinkPatientEvolutionsAction(wizardPatientData.id);
       if (res.success) {
-        setWizardTreatments(res.treatments || []);
+        const treatmentsList = res.treatments || [];
+        setWizardTreatments(treatmentsList);
+        
+        // Fetch treatment details and evolutions
+        const detailsMap: Record<number, any[]> = {};
+        const evolutionsMap: Record<number, any[]> = {};
+        await Promise.all(
+          treatmentsList.map(async (t: any) => {
+            try {
+              const [detailsRes, evsRes] = await Promise.all([
+                getDentalinkTreatmentDetailsAction(t.id),
+                getDentalinkTreatmentEvolutionsAction(t.id)
+              ]);
+              if (detailsRes.success && detailsRes.details) {
+                detailsMap[t.id] = detailsRes.details;
+              }
+              if (evsRes.success && evsRes.evolutions) {
+                evolutionsMap[t.id] = evsRes.evolutions;
+              }
+            } catch (err) {
+              console.error(`Error loading details/evolutions for treatment ${t.id}:`, err);
+            }
+          })
+        );
+        setWizardTreatmentDetails(detailsMap);
+        setWizardTreatmentEvolutions(evolutionsMap);
       } else {
         setWizardError(res.error || 'Error al obtener tratamientos');
-      }
-      if (evRes.success) {
-        setWizardEvolutions(evRes.evolutions || []);
       }
     } catch (err: any) {
       setWizardError(err.message || 'Error de red');
@@ -804,26 +900,41 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                         )}
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button
-                          onClick={() => startWizard(c)}
-                          className="btn btn-primary"
-                          disabled={c.status === 'sincronizado'}
-                          style={{ 
-                            padding: '6px 16px', 
-                            fontSize: '0.82rem', 
-                            height: '32px',
-                            background: c.status === 'sincronizado' 
-                              ? 'rgba(255, 255, 255, 0.05)' 
-                              : 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)',
-                            color: c.status === 'sincronizado' ? 'rgba(255, 255, 255, 0.3)' : 'inherit',
-                            border: c.status === 'sincronizado' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(255, 255, 255, 0.08)',
-                            boxShadow: c.status === 'sincronizado' ? 'none' : '0 4px 12px rgba(30, 58, 138, 0.25)',
-                            fontWeight: 700,
-                            cursor: c.status === 'sincronizado' ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          Inicio
-                        </button>
+                        {c.status === 'sincronizado' ? (
+                          <button
+                            onClick={() => startReview(c)}
+                            className="btn btn-secondary"
+                            style={{ 
+                              padding: '6px 16px', 
+                              fontSize: '0.82rem', 
+                              height: '32px',
+                              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.15) 100%)',
+                              color: '#60a5fa',
+                              border: '1px solid rgba(59, 130, 246, 0.3)',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Revisar
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => startWizard(c)}
+                            className="btn btn-primary"
+                            style={{ 
+                              padding: '6px 16px', 
+                              fontSize: '0.82rem', 
+                              height: '32px',
+                              background: 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              boxShadow: '0 4px 12px rgba(30, 58, 138, 0.25)',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Inicio
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -1339,6 +1450,22 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             {/* Step 2 Content */}
             {wizardStep === 2 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {wizardCase && wizardCase.status === 'sincronizado' && (
+                  <div style={{ 
+                    padding: '12px 16px', 
+                    borderRadius: '8px', 
+                    background: 'rgba(59, 130, 246, 0.1)', 
+                    border: '1px solid rgba(59, 130, 246, 0.2)', 
+                    fontSize: '0.88rem', 
+                    color: '#60a5fa', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px' 
+                  }}>
+                    <Info size={16} />
+                    <span><strong>Modo Consulta/Revisión:</strong> Este caso ya se encuentra sincronizado. Puede revisar las evoluciones y tratamientos registrados abajo.</span>
+                  </div>
+                )}
                 {wizardLoading ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0', gap: '12px' }}>
                     <RefreshCw className="animate-spin" size={32} style={{ color: 'hsl(var(--primary-hsl))' }} />
@@ -1556,8 +1683,35 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                                       Convenio: {t.nombre_convenio}
                                     </div>
                                   )}
+                                  
+                                  {/* Render treatment details (loaded prestations) */}
                                   {(() => {
-                                    const evs = wizardEvolutions.filter((ev: any) => Number(ev.id_tratamiento) === Number(t.id));
+                                    const details = wizardTreatmentDetails[t.id] || [];
+                                    if (details.length > 0) {
+                                      return (
+                                        <div style={{ marginTop: '8px', padding: '6px 8px', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.15)', textAlign: 'left' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#60a5fa', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            <CheckCircle2 size={12} /> Prestaciones Cargadas ({details.length})
+                                          </div>
+                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                                            {details.map((dt: any, idx: number) => (
+                                              <div key={idx} style={{ fontSize: '0.72rem', fontWeight: 500, opacity: 0.85, color: 'var(--foreground)' }}>
+                                                • {dt.nombre_prestacion || dt.prestacion?.nombre || `Prestación #${dt.id_prestacion}`}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return (
+                                      <div style={{ marginTop: '6px', fontSize: '0.7rem', opacity: 0.5, fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '4px', textAlign: 'left' }}>
+                                        <CheckCircle2 size={10} /> Sin prestaciones cargadas
+                                      </div>
+                                    );
+                                  })()}
+
+                                  {(() => {
+                                    const evs = wizardTreatmentEvolutions[t.id] || [];
                                     if (evs.length > 0) {
                                       return (
                                         <div style={{ marginTop: '8px', padding: '6px 8px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', textAlign: 'left' }}>
@@ -1593,14 +1747,20 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                                   </span>
                                 </td>
                                 <td style={{ fontSize: '0.82rem', padding: '10px 14px', textAlign: 'center' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSelectTreatment(t)}
-                                    className="btn btn-primary"
-                                    style={{ padding: '4px 10px', fontSize: '0.75rem', height: 'auto', backgroundColor: '#10b981', borderColor: '#10b981', color: '#022c22', fontWeight: 'bold' }}
-                                  >
-                                    Gestionar
-                                  </button>
+                                  {wizardCase.status !== 'sincronizado' ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSelectTreatment(t)}
+                                      className="btn btn-primary"
+                                      style={{ padding: '4px 10px', fontSize: '0.75rem', height: 'auto', backgroundColor: '#10b981', borderColor: '#10b981', color: '#022c22', fontWeight: 'bold' }}
+                                    >
+                                      Gestionar
+                                    </button>
+                                  ) : (
+                                    <span className="badge badge-sincronizado" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)', fontSize: '0.75rem', padding: '4px 8px' }}>
+                                      Sincronizado
+                                    </span>
+                                  )}
                                 </td>
                               </tr>
                             ))}
