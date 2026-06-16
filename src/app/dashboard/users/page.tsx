@@ -18,24 +18,33 @@ export default async function UsersPage() {
   }
 
   let users: any[] = [];
+  let institutions: any[] = [];
   try {
     const res = await pool.query(`
-      SELECT id, name, email, role, active, created_at,
-             professional_title, professional_position, professional_email,
-             professional_address, professional_website, professional_phone,
-             medical_center, agreement_type, quota_dental, quota_xray, used_dental, used_xray
-      FROM users 
-      ORDER BY created_at DESC
+      SELECT u.id, u.name, u.email, u.role, u.active, u.created_at,
+             u.professional_title, u.professional_position, u.professional_email,
+             u.professional_address, u.professional_website, u.professional_phone,
+             u.medical_center, u.agreement_type, u.quota_dental, u.quota_xray, u.used_dental, u.used_xray,
+             u.institution_id, i.name as institution_name,
+             i.quota_dental as inst_quota_dental, i.quota_xray as inst_quota_xray,
+             i.used_dental as inst_used_dental, i.used_xray as inst_used_xray
+      FROM users u
+      LEFT JOIN institutions i ON u.institution_id = i.id
+      ORDER BY u.created_at DESC
     `);
     users = res.rows;
+
+    const instRes = await pool.query('SELECT id, name, quota_dental, quota_xray, used_dental, used_xray FROM institutions ORDER BY name ASC');
+    institutions = instRes.rows;
   } catch (error) {
-    console.error('Error fetching users in server page:', error);
+    console.error('Error fetching users/institutions in server page:', error);
   }
 
   return (
     <UserListClient 
       initialUsers={users} 
       currentUserId={session.id} 
+      initialInstitutions={institutions}
     />
   );
 }

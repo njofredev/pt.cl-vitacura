@@ -5,6 +5,8 @@ import Modal from '@/components/ui/Modal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { createUserAction, toggleUserStatusAction, updateUserAction } from '@/app/actions/userActions';
 import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
+import { createInstitutionAction, updateInstitutionAction, deleteInstitutionAction } from '@/app/actions/institutionActions';
+import { Users, Building } from 'lucide-react';
 
 interface User {
   id: string;
@@ -25,18 +27,42 @@ interface User {
   quota_xray?: number;
   used_dental?: number;
   used_xray?: number;
+  institution_id?: number | null;
+  institution_name?: string | null;
+  inst_quota_dental?: number;
+  inst_quota_xray?: number;
+  inst_used_dental?: number;
+  inst_used_xray?: number;
+}
+
+interface Institution {
+  id: number;
+  name: string;
+  quota_dental: number;
+  quota_xray: number;
+  used_dental: number;
+  used_xray: number;
 }
 
 interface UserListClientProps {
   initialUsers: User[];
   currentUserId: string;
+  initialInstitutions: Institution[];
 }
 
-export default function UserListClient({ initialUsers, currentUserId }: UserListClientProps) {
+export default function UserListClient({ initialUsers, currentUserId, initialInstitutions }: UserListClientProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
+  const [institutions, setInstitutions] = useState<Institution[]>(initialInstitutions);
+  const [activeTab, setActiveTab] = useState<'users' | 'institutions'>('users');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  
+  // Institution Modals/States
+  const [isInstModalOpen, setIsInstModalOpen] = useState(false);
+  const [isEditInstModalOpen, setIsEditInstModalOpen] = useState(false);
+  const [editingInst, setEditingInst] = useState<Institution | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,6 +71,8 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
   const [editRole, setEditRole] = useState('internal');
   const [newMedicalCenter, setNewMedicalCenter] = useState('');
   const [editMedicalCenter, setEditMedicalCenter] = useState('');
+  const [newInstitutionId, setNewInstitutionId] = useState('');
+  const [editInstitutionId, setEditInstitutionId] = useState('');
 
   const [newAgreements, setNewAgreements] = useState<{ value: string; label: string }[]>([]);
   const [editAgreements, setEditAgreements] = useState<{ value: string; label: string }[]>([]);
@@ -148,9 +176,6 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         setSuccess('Usuario creado exitosamente.');
         formElement.reset();
 
-        // Let's reload users dynamically or tell them to refresh.
-        // Actually, since we updated server cache via revalidatePath, 
-        // we can just reload the window or manually append to state for immediate responsiveness.
         const name = formData.get('name') as string;
         const email = formData.get('email') as string;
         const role = formData.get('role') as any;
@@ -158,6 +183,9 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         const agreement_type = formData.get('agreement_type') as string;
         const quota_dental = parseInt(formData.get('quota_dental') as string || '0', 10);
         const quota_xray = parseInt(formData.get('quota_xray') as string || '0', 10);
+        const institutionIdRaw = formData.get('institution_id') as string;
+        const institution_id = institutionIdRaw ? parseInt(institutionIdRaw, 10) : null;
+        const selectedInst = institutions.find(i => i.id === institution_id);
 
         const newUser: User = {
           id: Math.random().toString(), // temporary, they'll get the real UUID on refresh
@@ -172,10 +200,17 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
           quota_xray,
           used_dental: 0,
           used_xray: 0,
+          institution_id,
+          institution_name: selectedInst ? selectedInst.name : null,
+          inst_quota_dental: selectedInst ? selectedInst.quota_dental : undefined,
+          inst_quota_xray: selectedInst ? selectedInst.quota_xray : undefined,
+          inst_used_dental: selectedInst ? selectedInst.used_dental : undefined,
+          inst_used_xray: selectedInst ? selectedInst.used_xray : undefined,
         };
         setUsers([newUser, ...users]);
         setNewMedicalCenter('');
         setNewAgreementType('');
+        setNewInstitutionId('');
 
         setTimeout(() => {
           setIsModalOpen(false);
@@ -221,6 +256,9 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
         const agreement_type = formData.get('agreement_type') as string;
         const quota_dental = parseInt(formData.get('quota_dental') as string || '0', 10);
         const quota_xray = parseInt(formData.get('quota_xray') as string || '0', 10);
+        const institutionIdRaw = formData.get('institution_id') as string;
+        const institution_id = institutionIdRaw ? parseInt(institutionIdRaw, 10) : null;
+        const selectedInst = institutions.find(i => i.id === institution_id);
 
         setUsers(users.map(u => u.id === editingUser.id ? {
           ...u,
@@ -236,7 +274,13 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
           medical_center,
           agreement_type,
           quota_dental,
-          quota_xray
+          quota_xray,
+          institution_id,
+          institution_name: selectedInst ? selectedInst.name : null,
+          inst_quota_dental: selectedInst ? selectedInst.quota_dental : undefined,
+          inst_quota_xray: selectedInst ? selectedInst.quota_xray : undefined,
+          inst_used_dental: selectedInst ? selectedInst.used_dental : undefined,
+          inst_used_xray: selectedInst ? selectedInst.used_xray : undefined,
         } : u));
 
         setTimeout(() => {
@@ -244,6 +288,7 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
           setEditingUser(null);
           setEditMedicalCenter('');
           setEditAgreementType('');
+          setEditInstitutionId('');
           setSuccess(null);
         }, 1500);
       } else {
@@ -256,11 +301,122 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
     }
   }
 
+  async function onSubmitInstitution(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formElement = e.currentTarget;
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+
+    const formData = new FormData(formElement);
+
+    try {
+      const result = await createInstitutionAction(formData);
+      if (result.success) {
+        setSuccess('Institución creada exitosamente.');
+        formElement.reset();
+        
+        const name = formData.get('name') as string;
+        const quotaDental = parseInt(formData.get('quota_dental') as string || '0', 10);
+        const quotaXray = parseInt(formData.get('quota_xray') as string || '0', 10);
+
+        const newInst: Institution = {
+          id: Math.random(), // Temporary
+          name,
+          quota_dental: quotaDental,
+          quota_xray: quotaXray,
+          used_dental: 0,
+          used_xray: 0
+        };
+
+        setInstitutions([...institutions, newInst]);
+
+        setTimeout(() => {
+          setIsInstModalOpen(false);
+          setSuccess(null);
+        }, 1500);
+      } else {
+        setError(result.error || 'Error al crear la institución');
+      }
+    } catch (err) {
+      setError('Error en el servidor.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onEditInstitutionSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editingInst) return;
+
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const result = await updateInstitutionAction(editingInst.id, formData);
+      if (result.success) {
+        setSuccess('Institución actualizada exitosamente.');
+
+        const name = formData.get('name') as string;
+        const quotaDental = parseInt(formData.get('quota_dental') as string || '0', 10);
+        const quotaXray = parseInt(formData.get('quota_xray') as string || '0', 10);
+
+        setInstitutions(institutions.map(i => i.id === editingInst.id ? {
+          ...i,
+          name,
+          quota_dental: quotaDental,
+          quota_xray: quotaXray
+        } : i));
+
+        setTimeout(() => {
+          setIsEditInstModalOpen(false);
+          setEditingInst(null);
+          setSuccess(null);
+        }, 1500);
+      } else {
+        setError(result.error || 'Error al actualizar la institución');
+      }
+    } catch (err) {
+      setError('Error en el servidor.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteInstitution(id: number) {
+    if (!confirm('¿Está seguro de eliminar esta institución? Los usuarios vinculados a ella quedarán sin institución y sus cupos se restablecerán.')) {
+      return;
+    }
+
+    try {
+      const result = await deleteInstitutionAction(id);
+      if (result.success) {
+        setInstitutions(institutions.filter(i => i.id !== id));
+        setUsers(users.map(u => u.institution_id === id ? {
+          ...u,
+          institution_id: null,
+          institution_name: null,
+          inst_quota_dental: undefined,
+          inst_quota_xray: undefined,
+          inst_used_dental: undefined,
+          inst_used_xray: undefined
+        } : u));
+      } else {
+        alert(result.error || 'Error al eliminar la institución');
+      }
+    } catch (err) {
+      alert('Error en el servidor al realizar esta acción.');
+    }
+  }
+
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-      {/* Top Title Bar with Glowing Lucide Icon Container and Button inside */}
+      {/* Top Title Bar with Dynamic Content */}
       <div
         className="glass-panel"
         style={{
@@ -290,114 +446,215 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
             border: '1px solid rgba(16, 185, 129, 0.2)',
             flexShrink: 0
           }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            {activeTab === 'users' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-              Gestión de Personal
+              {activeTab === 'users' ? 'Gestión de Personal' : 'Gestión de Instituciones'}
             </h2>
             <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
-              Registra y administra las cuentas de administrativos internos y profesionales.
+              {activeTab === 'users' 
+                ? 'Registra y administra las cuentas de administrativos internos y profesionales.' 
+                : 'Administra las instituciones afiliadas y define sus cuotas generales de atención.'}
             </p>
           </div>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="login-pill-btn" style={{ gap: '8px' }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Nuevo Funcionario
+        {activeTab === 'users' ? (
+          <button onClick={() => setIsModalOpen(true)} className="login-pill-btn" style={{ gap: '8px' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Nuevo Funcionario
+          </button>
+        ) : (
+          <button onClick={() => setIsInstModalOpen(true)} className="login-pill-btn" style={{ gap: '8px' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Nueva Institución
+          </button>
+        )}
+      </div>
+
+      {/* Tab Switcher */}
+      <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
+        <button
+          onClick={() => { setActiveTab('users'); setError(null); setSuccess(null); }}
+          className={`chart-toggle-btn ${activeTab === 'users' ? 'active' : ''}`}
+          style={{ borderRadius: 'var(--radius-sm)', padding: '8px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <Users size={16} />
+          Gestionar Personal
+        </button>
+        <button
+          onClick={() => { setActiveTab('institutions'); setError(null); setSuccess(null); }}
+          className={`chart-toggle-btn ${activeTab === 'institutions' ? 'active' : ''}`}
+          style={{ borderRadius: 'var(--radius-sm)', padding: '8px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <Building size={16} />
+          Gestionar Instituciones
         </button>
       </div>
 
-      {/* Main Glass Table Container */}
-      <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden' }}>
-        <div className="table-container">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Correo Electrónico</th>
-                <th>Rol</th>
-                <th>Institución</th>
-                <th>Cupos (Usado / Total)</th>
-                <th style={{ textAlign: 'center' }}>Estado</th>
-                <th style={{ textAlign: 'right' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td style={{ fontWeight: 600 }}>{u.name}</td>
-                  <td style={{ opacity: 0.8 }}>{u.email}</td>
-                  <td>
-                    <span style={{
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid var(--glass-border)',
-                      textTransform: 'uppercase'
-                    }}>
-                      {roleLabels[u.role] || u.role}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{ fontSize: '0.85rem', opacity: u.medical_center ? 0.9 : 0.5, fontWeight: u.medical_center ? 500 : 400 }}>
-                      {u.medical_center || 'No asignado'}
-                    </span>
-                  </td>
-                  <td>
-                    {u.role === 'external' ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.82rem' }}>
-                        <span>
-                          <strong>Dentales:</strong> {u.used_dental || 0} / {u.quota_dental || 0}
+      {activeTab === 'users' ? (
+        /* Users View */
+        <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden' }}>
+          <div className="table-container">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Correo Electrónico</th>
+                  <th>Rol</th>
+                  <th>Institución</th>
+                  <th>Cupos Institucionales (Usado / Total)</th>
+                  <th style={{ textAlign: 'center' }}>Estado</th>
+                  <th style={{ textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td style={{ fontWeight: 600 }}>{u.name}</td>
+                    <td style={{ opacity: 0.8 }}>{u.email}</td>
+                    <td>
+                      <span style={{
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid var(--glass-border)',
+                        textTransform: 'uppercase'
+                      }}>
+                        {roleLabels[u.role] || u.role}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.85rem', opacity: (u.institution_name || u.medical_center) ? 0.9 : 0.5, fontWeight: (u.institution_name || u.medical_center) ? 500 : 400 }}>
+                        {u.institution_name || u.medical_center || 'No asignado'}
+                      </span>
+                    </td>
+                    <td>
+                      {u.role === 'external' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.82rem' }}>
+                          <span>
+                            <strong>Dentales:</strong> {u.inst_used_dental ?? u.used_dental ?? 0} / {u.inst_quota_dental ?? u.quota_dental ?? 0}
+                          </span>
+                          <span>
+                            <strong>Rayos X:</strong> {u.inst_used_xray ?? u.used_xray ?? 0} / {u.inst_quota_xray ?? u.quota_xray ?? 0}
+                          </span>
+                        </div>
+                      ) : (
+                        <span style={{ opacity: 0.4, fontSize: '0.82rem' }}>N/A</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`badge ${u.active ? 'badge-aprobado' : 'badge-rechazado'}`}>
+                        {u.active ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <button
+                          onClick={() => {
+                            setEditingUser(u);
+                            setEditRole(u.role);
+                            setEditMedicalCenter(u.medical_center || '');
+                            setEditAgreementType(u.agreement_type || '');
+                            setEditInstitutionId(u.institution_id ? String(u.institution_id) : '');
+                            setIsEditModalOpen(true);
+                          }}
+                          className="btn btn-primary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981' }}
+                        >
+                          Editar
+                        </button>
+                        {u.id !== currentUserId ? (
+                          <button
+                            onClick={() => handleToggleStatus(u.id, u.active)}
+                            className={u.active ? 'btn-secondary' : 'btn-accent'}
+                            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                          >
+                            {u.active ? 'Desactivar' : 'Activar'}
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', opacity: 0.5, fontStyle: 'italic', padding: '0 8px' }}>Tu cuenta</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        /* Institutions View */
+        <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden' }}>
+          <div className="table-container">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>Nombre Institución</th>
+                  <th>Cupo Dental (Usado / Total)</th>
+                  <th>Cupo Radiología (Usado / Total)</th>
+                  <th>Estado Cupos</th>
+                  <th style={{ textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {institutions.map((i) => (
+                  <tr key={i.id}>
+                    <td style={{ fontWeight: 600 }}>{i.name}</td>
+                    <td>
+                      <span style={{ fontWeight: 500 }}>
+                        {i.used_dental} / {i.quota_dental}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: 500 }}>
+                        {i.used_xray} / {i.quota_xray}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem' }}>
+                        <span style={{ color: (i.quota_dental - i.used_dental > 0) ? '#10b981' : '#ef4444', fontWeight: 700 }}>
+                          {(i.quota_dental - i.used_dental)} dentales libres
                         </span>
-                        <span>
-                          <strong>Rayos X:</strong> {u.used_xray || 0} / {u.quota_xray || 0}
+                        <span style={{ color: (i.quota_xray - i.used_xray > 0) ? '#10b981' : '#ef4444', fontWeight: 700 }}>
+                          {(i.quota_xray - i.used_xray)} rayos X libres
                         </span>
                       </div>
-                    ) : (
-                      <span style={{ opacity: 0.4, fontSize: '0.82rem' }}>N/A</span>
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span className={`badge ${u.active ? 'badge-aprobado' : 'badge-rechazado'}`}>
-                      {u.active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <button
-                        onClick={() => {
-                          setEditingUser(u);
-                          setEditRole(u.role);
-                          setEditMedicalCenter(u.medical_center || '');
-                          setEditAgreementType(u.agreement_type || '');
-                          setIsEditModalOpen(true);
-                        }}
-                        className="btn btn-primary"
-                        style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981' }}
-                      >
-                        Editar
-                      </button>
-                      {u.id !== currentUserId ? (
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
                         <button
-                          onClick={() => handleToggleStatus(u.id, u.active)}
-                          className={u.active ? 'btn-secondary' : 'btn-accent'}
+                          onClick={() => {
+                            setEditingInst(i);
+                            setIsEditInstModalOpen(true);
+                          }}
+                          className="btn btn-primary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981' }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteInstitution(i.id)}
+                          className="btn-accent"
                           style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                         >
-                          {u.active ? 'Desactivar' : 'Activar'}
+                          Eliminar
                         </button>
-                      ) : (
-                        <span style={{ fontSize: '0.8rem', opacity: 0.5, fontStyle: 'italic', padding: '0 8px' }}>Tu cuenta</span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Add User Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Registrar Nuevo Funcionario" maxWidth="1000px">
@@ -452,20 +709,6 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                 />
                 <input type="hidden" name="role" value={newRole} />
               </div>
-
-              {newRole === 'external' && (
-                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px', padding: '12px', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255, 255, 255, 0.01)' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'hsl(var(--accent-hsl))', letterSpacing: '0.04em' }}>Asignación de Cupos</span>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" htmlFor="quota_dental">Cupo Procedimientos Dentales</label>
-                    <input className="form-input" type="number" id="quota_dental" name="quota_dental" defaultValue={0} min={0} disabled={loading} />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" htmlFor="quota_xray">Cupo Radiología (Rayos X)</label>
-                    <input className="form-input" type="number" id="quota_xray" name="quota_xray" defaultValue={0} min={0} disabled={loading} />
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="user-form-column">
@@ -476,19 +719,21 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                 </h4>
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="medical_center">Institución</label>
+                <label className="form-label" htmlFor="institution_id">Institución *</label>
                 <CustomSelect
-                  value={newMedicalCenter}
-                  onChange={setNewMedicalCenter}
+                  value={newInstitutionId}
+                  onChange={(val) => {
+                    setNewInstitutionId(val);
+                    const instObj = institutions.find(i => String(i.id) === val);
+                    setNewMedicalCenter(instObj ? instObj.name : '');
+                  }}
                   options={[
-                    { value: '', label: 'Ninguno (Selección libre)' },
-                    { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
-                    { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
-                    { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
-                    { value: 'Policlinico Tabancura', label: 'Policlínico Tabancura' }
+                    { value: '', label: 'Seleccione una institución...' },
+                    ...institutions.map(i => ({ value: String(i.id), label: i.name }))
                   ]}
                   disabled={loading}
                 />
+                <input type="hidden" name="institution_id" value={newInstitutionId} />
                 <input type="hidden" name="medical_center" value={newMedicalCenter} />
               </div>
 
@@ -610,20 +855,6 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                   />
                   <input type="hidden" name="role" value={editRole} />
                 </div>
-
-                {editRole === 'external' && editingUser && (
-                  <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px', padding: '12px', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255, 255, 255, 0.01)' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'hsl(var(--accent-hsl))', letterSpacing: '0.04em' }}>Asignación de Cupos</span>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" htmlFor="edit_quota_dental">Cupo Procedimientos Dentales</label>
-                      <input className="form-input" type="number" id="edit_quota_dental" name="quota_dental" defaultValue={editingUser.quota_dental || 0} min={0} disabled={loading} />
-                    </div>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" htmlFor="edit_quota_xray">Cupo Radiología (Rayos X)</label>
-                      <input className="form-input" type="number" id="edit_quota_xray" name="quota_xray" defaultValue={editingUser.quota_xray || 0} min={0} disabled={loading} />
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="user-form-column">
@@ -634,19 +865,21 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
                   </h4>
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="edit_medical_center">Institución Asignada</label>
+                  <label className="form-label" htmlFor="edit_institution_id">Institución Asignada</label>
                   <CustomSelect
-                    value={editMedicalCenter}
-                    onChange={setEditMedicalCenter}
+                    value={editInstitutionId}
+                    onChange={(val) => {
+                      setEditInstitutionId(val);
+                      const instObj = institutions.find(i => String(i.id) === val);
+                      setEditMedicalCenter(instObj ? instObj.name : '');
+                    }}
                     options={[
-                      { value: '', label: 'Ninguno (Selección libre)' },
-                      { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
-                      { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
-                      { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
-                      { value: 'Policlinico Tabancura', label: 'Policlínico Tabancura' }
+                      { value: '', label: 'Ninguno' },
+                      ...institutions.map(i => ({ value: String(i.id), label: i.name }))
                     ]}
                     disabled={loading}
                   />
+                  <input type="hidden" name="institution_id" value={editInstitutionId} />
                   <input type="hidden" name="medical_center" value={editMedicalCenter} />
                 </div>
 
@@ -714,6 +947,65 @@ export default function UserListClient({ initialUsers, currentUserId }: UserList
           </form>
         )}
       </Modal>
+
+      {/* Add Institution Modal */}
+      <Modal isOpen={isInstModalOpen} onClose={() => setIsInstModalOpen(false)} title="Registrar Nueva Institución" maxWidth="500px">
+        <form onSubmit={onSubmitInstitution} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {error && <div className="badge-rechazado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>{error}</div>}
+          {success && <div className="badge-aprobado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>{success}</div>}
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="inst_name">Nombre de Institución *</label>
+            <input className="form-input" type="text" id="inst_name" name="name" required placeholder="Ej: CESFAM Vitacura" disabled={loading} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="inst_quota_dental">Cupo Dental General *</label>
+            <input className="form-input" type="number" id="inst_quota_dental" name="quota_dental" required min={0} defaultValue={100} disabled={loading} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="inst_quota_xray">Cupo Radiología General *</label>
+            <input className="form-input" type="number" id="inst_quota_xray" name="quota_xray" required min={0} defaultValue={100} disabled={loading} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+            <button type="button" onClick={() => setIsInstModalOpen(false)} className="btn-secondary" disabled={loading}>Cancelar</button>
+            <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Guardando...' : 'Crear Institución'}</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Institution Modal */}
+      <Modal isOpen={isEditInstModalOpen} onClose={() => { setIsEditInstModalOpen(false); setEditingInst(null); }} title="Editar Institución" maxWidth="500px">
+        {editingInst && (
+          <form onSubmit={onEditInstitutionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {error && <div className="badge-rechazado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>{error}</div>}
+            {success && <div className="badge-aprobado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>{success}</div>}
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="edit_inst_name">Nombre de Institución *</label>
+              <input className="form-input" type="text" id="edit_inst_name" name="name" required defaultValue={editingInst.name} disabled={loading} />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="edit_inst_quota_dental">Cupo Dental General *</label>
+              <input className="form-input" type="number" id="edit_inst_quota_dental" name="quota_dental" required min={0} defaultValue={editingInst.quota_dental} disabled={loading} />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="edit_inst_quota_xray">Cupo Radiología General *</label>
+              <input className="form-input" type="number" id="edit_inst_quota_xray" name="quota_xray" required min={0} defaultValue={editingInst.quota_xray} disabled={loading} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" onClick={() => { setIsEditInstModalOpen(false); setEditingInst(null); }} className="btn-secondary" disabled={loading}>Cancelar</button>
+              <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Guardando...' : 'Guardar Cambios'}</button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
     </div>
   );
 }

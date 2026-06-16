@@ -27,6 +27,21 @@ async function setup() {
     // Enable pgcrypto for UUID generation if needed, though we can use gen_random_uuid() natively in PG 13+
     await client.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
 
+    // Create INSTITUTIONS Table
+    console.log('Creating "institutions" table...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS institutions (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) UNIQUE NOT NULL,
+        quota_dental INT DEFAULT 0,
+        quota_xray INT DEFAULT 0,
+        used_dental INT DEFAULT 0,
+        used_xray INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
     // Create USERS Table
     console.log('Creating "users" table...');
     await client.query(`
@@ -48,6 +63,7 @@ async function setup() {
         quota_xray INT DEFAULT 0,
         used_dental INT DEFAULT 0,
         used_xray INT DEFAULT 0,
+        institution_id INT REFERENCES institutions(id) ON DELETE SET NULL,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );

@@ -30,6 +30,9 @@ export async function createUserAction(formData: FormData) {
   const quotaDental = parseInt(formData.get('quota_dental') as string || '0', 10);
   const quotaXray = parseInt(formData.get('quota_xray') as string || '0', 10);
 
+  const institutionIdRaw = formData.get('institution_id') as string;
+  const institutionId = institutionIdRaw ? parseInt(institutionIdRaw, 10) : null;
+
   if (!name || !email || !password || !role) {
     return { error: 'Por favor complete todos los campos requeridos' };
   }
@@ -51,9 +54,10 @@ export async function createUserAction(formData: FormData) {
         name, email, password_hash, role, active, password_plain,
         professional_title, professional_position, professional_email,
         professional_address, professional_website, professional_phone,
-        medical_center, agreement_type, quota_dental, quota_xray, used_dental, used_xray
+        medical_center, agreement_type, quota_dental, quota_xray, used_dental, used_xray,
+        institution_id
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 0, 0)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 0, 0, $17)
     `, [
       name.trim(), 
       email.toLowerCase().trim(), 
@@ -70,7 +74,8 @@ export async function createUserAction(formData: FormData) {
       medicalCenter ? medicalCenter.trim() : null,
       agreementType ? agreementType.trim() : null,
       quotaDental,
-      quotaXray
+      quotaXray,
+      isNaN(Number(institutionId)) ? null : institutionId
     ]);
 
     revalidatePath('/dashboard/users');
@@ -111,12 +116,19 @@ export async function getCurrentUserAction() {
   }
   try {
     const res = await pool.query(
-      `SELECT id, name, email, role, active,
-              professional_title, professional_position, professional_email,
-              professional_address, professional_website, professional_phone,
-              medical_center, agreement_type, quota_dental, quota_xray, used_dental, used_xray
-       FROM users 
-       WHERE id = $1`,
+      `SELECT u.id, u.name, u.email, u.role, u.active,
+              u.professional_title, u.professional_position, u.professional_email,
+              u.professional_address, u.professional_website, u.professional_phone,
+              u.medical_center, u.agreement_type, u.quota_dental, u.quota_xray, u.used_dental, u.used_xray,
+              u.institution_id,
+              i.name AS institution_name,
+              i.quota_dental AS inst_quota_dental,
+              i.quota_xray AS inst_quota_xray,
+              i.used_dental AS inst_used_dental,
+              i.used_xray AS inst_used_xray
+       FROM users u
+       LEFT JOIN institutions i ON u.institution_id = i.id
+       WHERE u.id = $1`,
       [session.id]
     );
     if (res.rows.length === 0) {
@@ -153,6 +165,9 @@ export async function updateUserAction(userId: string, formData: FormData) {
   const quotaDental = parseInt(formData.get('quota_dental') as string || '0', 10);
   const quotaXray = parseInt(formData.get('quota_xray') as string || '0', 10);
 
+  const institutionIdRaw = formData.get('institution_id') as string;
+  const institutionId = institutionIdRaw ? parseInt(institutionIdRaw, 10) : null;
+
   if (!name || !email || !role) {
     return { error: 'Por favor complete todos los campos requeridos (Nombre, Correo, Rol)' };
   }
@@ -163,6 +178,8 @@ export async function updateUserAction(userId: string, formData: FormData) {
     if (emailCheck.rows.length > 0) {
       return { error: 'El correo electrónico ya está registrado por otro usuario' };
     }
+
+    const instIdVal = isNaN(Number(institutionId)) ? null : institutionId;
 
     if (password && password.trim() !== '') {
       // Hash new password
@@ -187,8 +204,9 @@ export async function updateUserAction(userId: string, formData: FormData) {
           agreement_type = $13,
           quota_dental = $14,
           quota_xray = $15,
+          institution_id = $16,
           updated_at = NOW()
-        WHERE id = $16
+        WHERE id = $17
       `, [
         name.trim(), 
         email.toLowerCase().trim(), 
@@ -205,6 +223,7 @@ export async function updateUserAction(userId: string, formData: FormData) {
         agreementType ? agreementType.trim() : null,
         quotaDental,
         quotaXray,
+        instIdVal,
         userId
       ]);
     } else {
@@ -224,8 +243,9 @@ export async function updateUserAction(userId: string, formData: FormData) {
           agreement_type = $11,
           quota_dental = $12,
           quota_xray = $13,
+          institution_id = $14,
           updated_at = NOW()
-        WHERE id = $14
+        WHERE id = $15
       `, [
         name.trim(), 
         email.toLowerCase().trim(), 
@@ -240,6 +260,7 @@ export async function updateUserAction(userId: string, formData: FormData) {
         agreementType ? agreementType.trim() : null,
         quotaDental,
         quotaXray,
+        instIdVal,
         userId
       ]);
     }

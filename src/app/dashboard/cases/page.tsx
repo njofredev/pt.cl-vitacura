@@ -34,7 +34,7 @@ export default async function CasesPage() {
       `);
       cases = res.rows;
     } else if (session.role === 'external') {
-      // Externals see only the cases registered by themselves
+      // Externals see cases registered by anyone from the same institution (or fallback to themselves if they have no institution)
       const res = await pool.query(`
         WITH global_cases AS (
           SELECT c.id, p.rut, p.first_names, p.last_names, p.nationality, p.birth_date, p.commune, p.email, p.mobile, 
@@ -42,6 +42,7 @@ export default async function CasesPage() {
                  c.status, c.observations, c.created_at, c.dental_count, c.xray_count,
                  c.registered_by,
                  u_reg.name as registered_by_name, u_eval.name as evaluator_name,
+                 u_reg.institution_id as registered_by_institution_id,
                  ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
           FROM cases c
           JOIN persons p ON c.person_id = p.id
@@ -49,7 +50,8 @@ export default async function CasesPage() {
           LEFT JOIN users u_eval ON c.updated_by = u_eval.id
         )
         SELECT * FROM global_cases
-        WHERE registered_by = $1
+        WHERE registered_by_institution_id = (SELECT institution_id FROM users WHERE id = $1)
+           OR (registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
         ORDER BY created_at DESC
       `, [session.id]);
       cases = res.rows;

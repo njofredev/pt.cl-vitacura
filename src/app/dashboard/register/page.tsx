@@ -680,7 +680,6 @@ export default function RegisterCasePage() {
 
   async function confirmRegistration() {
     if (!formRef) return;
-    setShowSummary(false);
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -704,13 +703,16 @@ export default function RegisterCasePage() {
         setPickerDate('');
 
         setTimeout(() => {
+          setShowSummary(false);
           router.push('/dashboard/cases');
-        }, 2000);
+        }, 3000);
       } else {
         setError(result.error || 'Error al guardar los datos');
+        setShowSummary(false); // Close summary modal on error to show error message
       }
     } catch (err) {
       setError('Error en el servidor al procesar la solicitud.');
+      setShowSummary(false); // Close summary modal on error
     } finally {
       setLoading(false);
     }
@@ -1509,168 +1511,9 @@ export default function RegisterCasePage() {
                   2. Detalle del Caso o Convenio
                 </h3>
 
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: '20px'
-                }}>
-                  {/* Medical Center */}
-                  <div className="form-group" id="medical_center_group" tabIndex={-1} style={{ outline: 'none' }}>
-                    <label className="form-label" htmlFor="medical_center_select" style={{ color: medicalCenterError ? 'hsl(var(--danger-hsl))' : undefined }}>
-                      Institución de Origen * {medicalCenterError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
-                    </label>
-                    {hasPreloadedMedicalCenter ? (
-                      <>
-                        <input
-                          className="form-input"
-                          type="text"
-                          id="medical_center_display"
-                          readOnly={true}
-                          value={selectedMedicalCenter}
-                          style={{
-                            opacity: 0.8,
-                            cursor: 'not-allowed',
-                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                            fontWeight: 600,
-                            borderColor: 'var(--glass-border)'
-                          }}
-                        />
-                        <input
-                          type="hidden"
-                          name="medical_center"
-                          value={selectedMedicalCenter}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <CustomSelect
-                          value={selectedMedicalCenter}
-                          onChange={(val) => {
-                            setSelectedMedicalCenter(val);
-                            clearFieldError('medical_center_select', setMedicalCenterError);
-                          }}
-                          options={[
-                            { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
-                            { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
-                            { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
-                            { value: 'Otro', label: 'Otra Institución / CESFAM' }
-                          ]}
-                          placeholder="Seleccione una Institución..."
-                          disabled={loading}
-                          id="medical_center_select"
-                          hasError={!!medicalCenterError}
-                        />
-
-                        {selectedMedicalCenter === 'Otro' && (
-                          <div className="form-group animate-fade-in" style={{ marginTop: '10px' }}>
-                            <label className="form-label" htmlFor="custom_medical_center" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique la Institución *</label>
-                            <input
-                              className={`form-input ${medicalCenterError ? 'animate-shake-error' : ''}`}
-                              type="text"
-                              id="custom_medical_center"
-                              placeholder="Escriba el nombre de la institución"
-                              value={customMedicalCenter}
-                              onChange={(e) => {
-                                setCustomMedicalCenter(e.target.value);
-                                clearFieldError('custom_medical_center', setMedicalCenterError);
-                              }}
-                              required
-                              disabled={loading}
-                              style={{
-                                borderColor: medicalCenterError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
-                                boxShadow: medicalCenterError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
-                              }}
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {medicalCenterError && (
-                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>
-                        {medicalCenterError}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Agreement Type */}
-                  <div className="form-group" id="agreement_type_group" tabIndex={-1} style={{ outline: 'none' }}>
-                    <label className="form-label" htmlFor="agreement_type_select" style={{ color: agreementTypeError ? 'hsl(var(--danger-hsl))' : undefined }}>
-                      Convenio * {agreementTypeError && <span className="animate-fade-in" style={{ marginLeft: '4px' }}>⚠️</span>}
-                    </label>
-                    {hasPreloadedMedicalCenter ? (
-                      <>
-                        <input
-                          className="form-input"
-                          type="text"
-                          id="agreement_type_display"
-                          readOnly={true}
-                          value={selectedAgreementType}
-                          style={{
-                            opacity: 0.8,
-                            cursor: 'not-allowed',
-                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                            fontWeight: 600,
-                            borderColor: 'var(--glass-border)'
-                          }}
-                        />
-                        <input
-                          type="hidden"
-                          name="agreement_type"
-                          value={selectedAgreementType}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <CustomSelect
-                          value={selectedAgreementType}
-                          onChange={(val) => {
-                            setSelectedAgreementType(val);
-                            clearFieldError('agreement_type_select', setAgreementTypeError);
-                          }}
-                          options={agreements.length > 0 ? agreements : [
-                            { value: 'Confección de Prótesis Removibles', label: 'Confección de Prótesis Removibles' },
-                            { value: 'Atención Dental Básica', label: 'Atención Dental Básica' },
-                            { value: 'Tratamiento de Endodoncia', label: 'Tratamiento de Endodoncia' },
-                            { value: 'Implantes Dentales', label: 'Implantes Dentales' },
-                            { value: 'Otro', label: 'Otro Convenio' }
-                          ]}
-                          placeholder="Seleccione tipo de convenio..."
-                          disabled={loading}
-                          id="agreement_type_select"
-                          hasError={!!agreementTypeError}
-                        />
-                      </>
-                    )}
-
-                    {selectedAgreementType === 'Otro' && (
-                      <div className="form-group animate-fade-in" style={{ marginTop: '10px' }}>
-                        <label className="form-label" htmlFor="custom_agreement_type" style={{ fontSize: '0.78rem', opacity: 0.8 }}>Especifique el Convenio *</label>
-                        <input
-                          className={`form-input ${agreementTypeError ? 'animate-shake-error' : ''}`}
-                          type="text"
-                          id="custom_agreement_type"
-                          placeholder="Escriba el tipo de convenio"
-                          value={customAgreementType}
-                          onChange={(e) => {
-                            setCustomAgreementType(e.target.value);
-                            clearFieldError('custom_agreement_type', setAgreementTypeError);
-                          }}
-                          required
-                          disabled={loading}
-                          style={{
-                            borderColor: agreementTypeError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
-                            boxShadow: agreementTypeError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
-                          }}
-                        />
-                      </div>
-                    )}
-                    {agreementTypeError && (
-                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600, marginTop: '4px' }}>
-                        {agreementTypeError}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                {/* Hidden inputs for medical center and agreement type as they are preloaded and no longer need to be displayed */}
+                <input type="hidden" name="medical_center" value={selectedMedicalCenter === 'Otro' ? customMedicalCenter : selectedMedicalCenter} />
+                <input type="hidden" name="agreement_type" value={selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType} />
 
                 <p style={{
                   fontSize: '0.86rem',
@@ -2091,7 +1934,62 @@ export default function RegisterCasePage() {
         title="🔍 Revisión y Confirmación de Inscripción"
         maxWidth="750px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative' }}>
+          {(loading || success) && (
+            <div style={{
+              position: 'absolute',
+              top: '-24px', left: '-24px', right: '-24px', bottom: '-24px',
+              backgroundColor: 'rgba(10, 17, 36, 0.95)',
+              backdropFilter: 'blur(10px)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '20px',
+              zIndex: 9999,
+              borderRadius: '8px',
+              animation: 'fadeIn 0.2s ease',
+              padding: '40px',
+              textAlign: 'center'
+            }}>
+              {!success ? (
+                <>
+                  <div className="animate-spin" style={{ width: '56px', height: '56px', border: '4px solid rgba(16, 185, 129, 0.1)', borderTopColor: '#10b981', borderRadius: '50%' }}></div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#10b981' }}>Registrando Derivación</h4>
+                    <p style={{ margin: '6px 0 0 0', opacity: 0.7, fontSize: '0.9rem', fontWeight: 500 }}>Por favor, espere mientras se guardan los datos en el sistema...</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#10b981',
+                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    animation: 'pulse 2s infinite'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#10b981' }}>¡Registro Exitoso!</h4>
+                    <p style={{ margin: '8px 0 0 0', opacity: 0.9, fontSize: '0.92rem', fontWeight: 600, color: '#ffffff' }}>
+                      La derivación ha sido ingresada de forma definitiva.
+                    </p>
+                    <p style={{ margin: '6px 0 0 0', opacity: 0.6, fontSize: '0.82rem', fontWeight: 500 }}>
+                      Será redirigido automáticamente a la bandeja de casos sociales...
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Banner */}
           <div style={{

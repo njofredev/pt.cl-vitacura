@@ -1,4 +1,9 @@
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
+
+// Parse TIMESTAMP without timezone (OID 1114) as UTC Date objects instead of Node server local time
+types.setTypeParser(1114, function(stringValue) {
+  return new Date(stringValue.replace(' ', 'T') + 'Z');
+});
 
 let pool: Pool;
 

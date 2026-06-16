@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction } from '@/app/actions/dentalinkActions';
+import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction, getDentalinkPatientEvolutionsAction } from '@/app/actions/dentalinkActions';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 import { updateCaseStatusAction } from '@/app/actions/caseActions';
 import { formatRUT, formatDate } from '@/lib/utils';
@@ -88,6 +88,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const [wizardPatientExists, setWizardPatientExists] = useState<boolean | null>(null);
   const [wizardPatientData, setWizardPatientData] = useState<any | null>(null);
   const [wizardTreatments, setWizardTreatments] = useState<any[]>([]);
+  const [wizardEvolutions, setWizardEvolutions] = useState<any[]>([]);
   const [wizardLoading, setWizardLoading] = useState(false);
   const [wizardError, setWizardError] = useState<string | null>(null);
 
@@ -95,7 +96,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const [isCreateTreatmentFormOpen, setIsCreateTreatmentFormOpen] = useState(false);
   const [newTreatmentName, setNewTreatmentName] = useState('');
   const [newTreatmentConvenioId, setNewTreatmentConvenioId] = useState<number>(0);
-  const [newTreatmentSucursalId, setNewTreatmentSucursalId] = useState<number>(3); // Default to Vitacura (id: 3)
+  const [newTreatmentSucursalId, setNewTreatmentSucursalId] = useState<number>(2); // Default to Vitacura (id: 2)
   const [newTreatmentDentistaId, setNewTreatmentDentistaId] = useState<string>('');
   const [newTreatmentComentario, setNewTreatmentComentario] = useState<string>('');
   const [newTreatmentFinalizado, setNewTreatmentFinalizado] = useState<number>(0); // Default to Active (0)
@@ -118,9 +119,14 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   }, []);
 
   const getPrestacionIdFromName = (serviceString: string) => {
-    const match = serviceString.match(/\[(.*?)\]/);
-    if (match && match[1]) {
-      const serviceName = match[1].toLowerCase().trim();
+    const firstBracket = serviceString.indexOf('[');
+    const lastBracket = serviceString.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+      let content = serviceString.substring(firstBracket + 1, lastBracket).trim();
+      // Remove trailing metadata like [Dental] or [Rayos X]
+      content = content.replace(/\s*\[(Dental|Rayos X)\]\s*$/i, '').trim();
+      
+      const serviceName = content.toLowerCase();
       const matches = localAranceles.filter(a => a.name.toLowerCase().trim() === serviceName);
       
       if (matches.length > 0) {
@@ -161,20 +167,18 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     const parsedServices: string[] = [];
 
     for (const line of lines) {
-      const match = line.match(/^(.*?)\[(.*?)\](.*)$/);
-      if (match) {
-        const prefix = match[1];
-        const servicesContent = match[2];
-        const suffix = match[3];
+      const firstBracket = line.indexOf('[');
+      const lastBracket = line.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        const prefix = line.substring(0, firstBracket).trim();
+        const innerContent = line.substring(firstBracket + 1, lastBracket).trim();
 
-        const individualServices = servicesContent.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        // Split by comma if there are multiple services
+        // e.g. "Limpieza [Dental], Obturación [Dental]"
+        const individualServices = innerContent.split(',').map(s => s.trim()).filter(s => s.length > 0);
         
-        if (individualServices.length > 1) {
-          for (const service of individualServices) {
-            parsedServices.push(`${prefix}[${service}]${suffix}`);
-          }
-        } else {
-          parsedServices.push(line);
+        for (const service of individualServices) {
+          parsedServices.push(`${prefix} [${service}]`);
         }
       } else {
         parsedServices.push(line);
@@ -190,10 +194,18 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setWizardPatientExists(null);
     setWizardPatientData(null);
     setWizardTreatments([]);
+    setWizardEvolutions([]);
     setIsCreateTreatmentFormOpen(false);
-    setNewTreatmentName(c.agreement_type || 'Nuevo plan de tratamiento');
+    
+    const caseId = c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '';
+    const dateObj = new Date(c.created_at);
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    const calculatedName = `${caseId} DERIVACIÓN DIGITAL ${month}/${year}`.trim();
+    
+    setNewTreatmentName(calculatedName);
     setNewTreatmentConvenioId(0);
-    setNewTreatmentSucursalId(3);
+    setNewTreatmentSucursalId(2);
     setNewTreatmentDentistaId('');
     setNewTreatmentComentario('');
     setNewTreatmentFinalizado(0);
@@ -325,10 +337,14 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setWizardError(null);
     try {
       const res = await getDentalinkPatientTreatmentsAction(wizardPatientData.id);
+      const evRes = await getDentalinkPatientEvolutionsAction(wizardPatientData.id);
       if (res.success) {
         setWizardTreatments(res.treatments || []);
       } else {
         setWizardError(res.error || 'Error al obtener tratamientos');
+      }
+      if (evRes.success) {
+        setWizardEvolutions(evRes.evolutions || []);
       }
     } catch (err: any) {
       setWizardError(err.message || 'Error de red');
@@ -1227,9 +1243,8 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                             height: '42px'
                           }}
                         >
-                          <option value={3} style={{ backgroundColor: 'black' }}>Vitacura (id: 3)</option>
-                          <option value={2} style={{ backgroundColor: 'black' }}>Los Tribunales (id: 2)</option>
-                          <option value={1} style={{ backgroundColor: 'black' }}>Sucursal 1 (id: 1)</option>
+                          <option value={2} style={{ backgroundColor: 'black' }}>Vitacura (id: 2)</option>
+                          <option value={1} style={{ backgroundColor: 'black' }}>Los Tribunales (id: 1)</option>
                         </select>
                       </div>
 
@@ -1323,7 +1338,16 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                         <button
                           type="button"
                           onClick={() => {
-                            setNewTreatmentName(wizardCase.agreement_type || 'Nuevo plan de tratamiento');
+                            if (wizardCase) {
+                              const caseId = wizardCase.yearly_correlative ? String(wizardCase.yearly_correlative).padStart(4, '0') : '';
+                              const dateObj = new Date(wizardCase.created_at);
+                              const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                              const year = dateObj.getFullYear();
+                              const calculatedName = `${caseId} DERIVACIÓN DIGITAL ${month}/${year}`.trim();
+                              setNewTreatmentName(calculatedName);
+                            } else {
+                              setNewTreatmentName('Nuevo plan de tratamiento');
+                            }
                             setIsCreateTreatmentFormOpen(true);
                           }}
                           className="btn btn-primary"
@@ -1347,7 +1371,16 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                         <button
                           type="button"
                           onClick={() => {
-                            setNewTreatmentName(wizardCase.agreement_type || 'Nuevo plan de tratamiento');
+                            if (wizardCase) {
+                              const caseId = wizardCase.yearly_correlative ? String(wizardCase.yearly_correlative).padStart(4, '0') : '';
+                              const dateObj = new Date(wizardCase.created_at);
+                              const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                              const year = dateObj.getFullYear();
+                              const calculatedName = `${caseId} DERIVACIÓN DIGITAL ${month}/${year}`.trim();
+                              setNewTreatmentName(calculatedName);
+                            } else {
+                              setNewTreatmentName('Nuevo plan de tratamiento');
+                            }
                             setIsCreateTreatmentFormOpen(true);
                           }}
                           className="btn btn-primary"
@@ -1380,6 +1413,31 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                                       Convenio: {t.nombre_convenio}
                                     </div>
                                   )}
+                                  {(() => {
+                                    const evs = wizardEvolutions.filter((ev: any) => Number(ev.id_tratamiento) === Number(t.id));
+                                    if (evs.length > 0) {
+                                      return (
+                                        <div style={{ marginTop: '8px', padding: '6px 8px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', textAlign: 'left' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            <Activity size={12} /> Evoluciones ({evs.length})
+                                          </div>
+                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                                            {evs.map((ev: any, idx: number) => (
+                                              <div key={idx} style={{ fontSize: '0.72rem', fontWeight: 500, opacity: 0.85, borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingTop: idx > 0 ? '4px' : '0', color: 'var(--foreground)' }}>
+                                                <span style={{ opacity: 0.6, marginRight: '4px' }}>{ev.fecha}:</span> {ev.datos}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      );
+                                    } else {
+                                      return (
+                                        <div style={{ marginTop: '6px', fontSize: '0.7rem', opacity: 0.5, fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '4px', textAlign: 'left' }}>
+                                          <Activity size={10} /> Sin evoluciones registradas
+                                        </div>
+                                      );
+                                    }
+                                  })()}
                                 </td>
                                 <td style={{ fontSize: '0.82rem', padding: '10px 14px' }}>{t.fecha ? formatDate(t.fecha) : 'Sin fecha'}</td>
                                 <td style={{ fontSize: '0.82rem', padding: '10px 14px' }}>

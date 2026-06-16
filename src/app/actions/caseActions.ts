@@ -88,7 +88,7 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         });
       }
 
-      // Validate and deduct professional quotas based on the professional email of the case
+      // Validate and deduct institution quotas based on the professional email of the case
       const profEmailRaw = formData.get('professional_email') as string || '';
       const profEmail = profEmailRaw.trim().toLowerCase();
       
@@ -96,36 +96,46 @@ export async function registerPersonAndCaseAction(formData: FormData) {
       
       if (profEmail) {
         const userLookup = await client.query(
-          'SELECT id, role, quota_dental, quota_xray, used_dental, used_xray FROM users WHERE LOWER(email) = $1',
+          'SELECT id, role, institution_id FROM users WHERE LOWER(email) = $1',
           [profEmail]
         );
         if (userLookup.rows.length > 0 && userLookup.rows[0].role === 'external') {
           targetProfessionalUser = userLookup.rows[0];
         }
       }
-
+ 
       if (targetProfessionalUser) {
-        const { id: profUserId, quota_dental, quota_xray, used_dental, used_xray } = targetProfessionalUser;
-
-        const remainingDental = quota_dental - used_dental;
-        const remainingXray = quota_xray - used_xray;
-
-        if (dentalCount > 0 && remainingDental < dentalCount) {
-          await client.query('ROLLBACK');
-          return { error: `Cupo insuficiente para Procedimientos Dentales. Al profesional le quedan ${remainingDental} cupos e intentó registrar ${dentalCount}.` };
-        }
-        if (xrayCount > 0 && remainingXray < xrayCount) {
-          await client.query('ROLLBACK');
-          return { error: `Cupo insuficiente para Radiología (Rayos X). Al profesional le quedan ${remainingXray} cupos e intentó registrar ${xrayCount}.` };
-        }
-
-        if (dentalCount > 0 || xrayCount > 0) {
-          await client.query(
-            `UPDATE users 
-             SET used_dental = used_dental + $1, used_xray = used_xray + $2, updated_at = NOW() 
-             WHERE id = $3`,
-            [dentalCount, xrayCount, profUserId]
+        const { institution_id } = targetProfessionalUser;
+ 
+        if (institution_id) {
+          const instLookup = await client.query(
+            'SELECT id, name, quota_dental, quota_xray, used_dental, used_xray FROM institutions WHERE id = $1',
+            [institution_id]
           );
+ 
+          if (instLookup.rows.length > 0) {
+            const institution = instLookup.rows[0];
+            const remainingDental = institution.quota_dental - institution.used_dental;
+            const remainingXray = institution.quota_xray - institution.used_xray;
+ 
+            if (dentalCount > 0 && remainingDental < dentalCount) {
+              await client.query('ROLLBACK');
+              return { error: `Cupo insuficiente para Procedimientos Dentales. A la institución ${institution.name} le quedan ${remainingDental} cupos e intentó registrar ${dentalCount}.` };
+            }
+            if (xrayCount > 0 && remainingXray < xrayCount) {
+              await client.query('ROLLBACK');
+              return { error: `Cupo insuficiente para Radiología (Rayos X). A la institución ${institution.name} le quedan ${remainingXray} cupos e intentó registrar ${xrayCount}.` };
+            }
+ 
+            if (dentalCount > 0 || xrayCount > 0) {
+              await client.query(
+                `UPDATE institutions 
+                 SET used_dental = used_dental + $1, used_xray = used_xray + $2, updated_at = NOW() 
+                 WHERE id = $3`,
+                [dentalCount, xrayCount, institution.id]
+              );
+            }
+          }
         }
       }
 
@@ -292,21 +302,23 @@ export async function deleteCaseAction(caseId: string) {
 
         if (profEmail && ((dental_count || 0) > 0 || (xray_count || 0) > 0)) {
           const userLookup = await client.query(
-            'SELECT id FROM users WHERE LOWER(email) = $1 AND role = $2',
+            'SELECT id, institution_id FROM users WHERE LOWER(email) = $1 AND role = $2',
             [profEmail, 'external']
           );
 
           if (userLookup.rows.length > 0) {
-            const profUserId = userLookup.rows[0].id;
-            await client.query(
-              `UPDATE users 
-               SET 
-                 used_dental = GREATEST(0, used_dental - $1), 
-                 used_xray = GREATEST(0, used_xray - $2), 
-                 updated_at = NOW() 
-               WHERE id = $3`,
-              [dental_count || 0, xray_count || 0, profUserId]
-            );
+            const { institution_id } = userLookup.rows[0];
+            if (institution_id) {
+              await client.query(
+                `UPDATE institutions 
+                 SET 
+                   used_dental = GREATEST(0, used_dental - $1), 
+                   used_xray = GREATEST(0, used_xray - $2), 
+                   updated_at = NOW() 
+                 WHERE id = $3`,
+                [dental_count || 0, xray_count || 0, institution_id]
+              );
+            }
           }
         }
       }

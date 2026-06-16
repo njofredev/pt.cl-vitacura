@@ -12,11 +12,8 @@ export default async function IngresoAutomaticoPage() {
     redirect('/login');
   }
 
-  // Restrict to authorized users
-  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
-    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
-    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
-  if (!allowedEmails.includes(session.email.toLowerCase()) && session.role !== 'admin') {
+  // Restrict to authorized users (admin and internal roles only)
+  if (session.role !== 'admin' && session.role !== 'internal') {
     redirect('/dashboard');
   }
 

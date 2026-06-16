@@ -109,10 +109,7 @@ export async function checkDentalinkPatientAction(rut: string) {
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
-    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
-    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
-  if (!allowedEmails.includes(session.email.toLowerCase()) && session.role !== 'admin') {
+  if (session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -188,10 +185,7 @@ export async function createDentalinkPatientAction(patientData: {
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
-    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
-    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
-  if (!allowedEmails.includes(session.email.toLowerCase()) && session.role !== 'admin') {
+  if (session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -258,10 +252,7 @@ export async function getDentalinkPatientTreatmentsAction(idPaciente: number | s
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
-    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
-    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
-  if (!allowedEmails.includes(session.email.toLowerCase()) && session.role !== 'admin') {
+  if (session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -315,10 +306,7 @@ export async function createDentalinkPatientTreatmentAction(
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
-    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
-    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
-  if (!allowedEmails.includes(session.email.toLowerCase()) && session.role !== 'admin') {
+  if (session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -377,10 +365,7 @@ export async function addDentalinkTreatmentDetailAction(id_tratamiento: number, 
     return { success: false, error: 'No autorizado' };
   }
 
-  const allowedEmails = process.env.ALLOWED_DENTALINK_EMAILS 
-    ? process.env.ALLOWED_DENTALINK_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
-    : ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
-  if (!allowedEmails.includes(session.email.toLowerCase()) && session.role !== 'admin') {
+  if (session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -427,6 +412,50 @@ export async function addDentalinkTreatmentDetailAction(id_tratamiento: number, 
     };
   } catch (error: any) {
     console.error('Error adding Dentalink treatment detail:', error);
+    return { success: false, error: error.message || 'Error de red' };
+  }
+}
+
+export async function getDentalinkPatientEvolutionsAction(idPaciente: number | string) {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: 'No autorizado' };
+  }
+
+  if (session.role !== 'admin' && session.role !== 'internal') {
+    return { success: false, error: 'No autorizado para esta función' };
+  }
+
+  const apiToken = process.env.DENTALINK_API_TOKEN || '';
+  if (!apiToken) {
+    return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
+  }
+
+  const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
+  const url = `https://api.dentalink.healthatom.com/api/v1/pacientes/${idPaciente}/evoluciones`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': formattedToken,
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `Error del servidor Dentalink: ${response.statusText}`, details: errorText };
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      evolutions: result.data || []
+    };
+  } catch (error: any) {
+    console.error('Error fetching Dentalink patient evolutions:', error);
     return { success: false, error: error.message || 'Error de red' };
   }
 }

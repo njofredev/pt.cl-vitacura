@@ -131,7 +131,10 @@ export default async function DashboardPage() {
   try {
     if (user.role === 'external') {
       const quotaRes = await pool.query(
-        'SELECT quota_dental, used_dental, quota_xray, used_xray FROM users WHERE id = $1',
+        `SELECT i.quota_dental, i.used_dental, i.quota_xray, i.used_xray 
+         FROM users u 
+         JOIN institutions i ON u.institution_id = i.id 
+         WHERE u.id = $1`,
         [user.id]
       );
       if (quotaRes.rows.length > 0) {
@@ -141,9 +144,9 @@ export default async function DashboardPage() {
         quotaXrayUsed = parseInt(quotaRes.rows[0].used_xray) || 0;
       }
     } else {
-      // admin or internal: sum of all professionals
+      // admin or internal: sum of all institutions
       const quotaRes = await pool.query(
-        "SELECT SUM(quota_dental) as quota_dental, SUM(used_dental) as used_dental, SUM(quota_xray) as quota_xray, SUM(used_xray) as used_xray FROM users WHERE role = 'external'"
+        "SELECT SUM(quota_dental) as quota_dental, SUM(used_dental) as used_dental, SUM(quota_xray) as quota_xray, SUM(used_xray) as used_xray FROM institutions"
       );
       if (quotaRes.rows.length > 0) {
         quotaDentalTotal = parseInt(quotaRes.rows[0].quota_dental) || 0;
@@ -204,28 +207,13 @@ export default async function DashboardPage() {
     console.error('Error fetching top agreement:', err);
   }
 
-  // 3. Peak de Solicitudes Query
-  let peakDateStr = 'Sin registros';
-  let peakDateCount = 0;
-  let peakDateSub = 'No hay registros en el sistema';
+  // 3. Total de Instituciones Query
+  let totalInstitutions = 0;
   try {
-    const peakRes = await pool.query(`
-      SELECT DATE(created_at) as peak_date, COUNT(id) as count
-      FROM cases
-      GROUP BY DATE(created_at)
-      ORDER BY count DESC
-      LIMIT 1
-    `);
-    if (peakRes.rows.length > 0) {
-      const dateVal = new Date(peakRes.rows[0].peak_date);
-      peakDateCount = parseInt(peakRes.rows[0].count);
-      const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-      peakDateStr = `${days[dateVal.getDay()]}, ${dateVal.getDate()} ${months[dateVal.getMonth()]}`;
-      peakDateSub = `Peak de ${peakDateCount} registros`;
-    }
+    const instCountRes = await pool.query('SELECT COUNT(*) FROM institutions');
+    totalInstitutions = parseInt(instCountRes.rows[0].count) || 0;
   } catch (err) {
-    console.error('Error fetching peak date:', err);
+    console.error('Error fetching institutions count:', err);
   }
 
   // 4. Fetch all case dates for interactive client-side Trend Chart
@@ -541,20 +529,20 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* KPI 4: Peak de Solicitudes */}
+            {/* KPI 4: Instituciones Inscritas */}
             <div className="telemetry-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Peak de Solicitudes
+                  Instituciones Inscritas
                 </span>
                 <div style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.08)', padding: '8px', borderRadius: '50%' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                 <span style={{
-                  fontSize: '1.45rem',
-                  fontWeight: 800,
+                  fontSize: '2.4rem',
+                  fontWeight: 850,
                   fontFamily: 'var(--font-display)',
                   color: 'hsl(var(--foreground-hsl))',
                   whiteSpace: 'nowrap',
@@ -562,57 +550,13 @@ export default async function DashboardPage() {
                   textOverflow: 'ellipsis',
                   lineHeight: '2.4rem',
                   height: '2.4rem'
-                }} title={peakDateStr}>
-                  {peakDateStr}
+                }}>
+                  {totalInstitutions}
                 </span>
                 <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 700 }}>
-                  {peakDateSub}
+                  Establecimientos activos
                 </span>
               </div>
-            </div>
-          </div>
-
-          {/* Temporal Trend Line Chart */}
-          <TrendChartClient caseDates={caseDates} isDemoData={isDemoData} />
-
-
-          {/* Left Sub-panel: Flujo de Trabajo por Estado */}
-          <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                Flujo de Trabajo por Estado
-              </h3>
-              <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
-                Distribución actual de las solicitudes según estado de revisión
-              </span>
-            </div>
-
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <svg viewBox="0 0 320 200" width="100%" height="200" style={{ display: 'block', maxWidth: '320px' }}>
-                {/* Baseline axis */}
-                <line x1="30" y1="160" x2="290" y2="160" stroke="var(--glass-border)" />
-
-                {/* Bar 1: Ingresado */}
-                <rect x="42" y={160 - barHeights.pending} width="28" height={barHeights.pending} rx="4" fill="#f59e0b" fillOpacity="0.85" stroke="#f59e0b" strokeWidth="1" />
-                <text x="56" y={150 - barHeights.pending} textAnchor="middle" fontSize="10" fill="#f59e0b" fontWeight="800">{stateCounts.pending}</text>
-                <text x="56" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">INGRESADO</text>
-
-                {/* Bar 2: Agendado */}
-                <rect x="106" y={160 - barHeights.inRevision} width="28" height={barHeights.inRevision} rx="4" fill="#3b82f6" fillOpacity="0.85" stroke="#3b82f6" strokeWidth="1" />
-                <text x="120" y={150 - barHeights.inRevision} textAnchor="middle" fontSize="10" fill="#3b82f6" fontWeight="800">{stateCounts.inRevision}</text>
-                <text x="120" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">AGENDADO</text>
-
-                {/* Bar 3: En Tratamiento */}
-                <rect x="170" y={160 - barHeights.approved} width="28" height={barHeights.approved} rx="4" fill="#10b981" fillOpacity="0.85" stroke="#10b981" strokeWidth="1" />
-                <text x="184" y={150 - barHeights.approved} textAnchor="middle" fontSize="10" fill="#10b981" fontWeight="800">{stateCounts.approved}</text>
-                <text x="184" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">TRATAMIENTO</text>
-
-                {/* Bar 4: Finalizado */}
-                <rect x="234" y={160 - barHeights.rejected} width="28" height={barHeights.rejected} rx="4" fill="#ef4444" fillOpacity="0.85" stroke="#ef4444" strokeWidth="1" />
-                <text x="248" y={150 - barHeights.rejected} textAnchor="middle" fontSize="10" fill="#ef4444" fontWeight="800">{stateCounts.rejected}</text>
-                <text x="248" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">FINALIZADO</text>
-              </svg>
             </div>
           </div>
 
@@ -684,6 +628,50 @@ export default async function DashboardPage() {
                 </table>
               </div>
             )}
+          </div>
+
+          {/* Temporal Trend Line Chart */}
+          <TrendChartClient caseDates={caseDates} isDemoData={isDemoData} />
+
+
+          {/* Left Sub-panel: Flujo de Trabajo por Estado */}
+          <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Flujo de Trabajo por Estado
+              </h3>
+              <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
+                Distribución actual de las solicitudes según estado de revisión
+              </span>
+            </div>
+
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <svg viewBox="0 0 320 200" width="100%" height="200" style={{ display: 'block', maxWidth: '320px' }}>
+                {/* Baseline axis */}
+                <line x1="30" y1="160" x2="290" y2="160" stroke="var(--glass-border)" />
+
+                {/* Bar 1: Ingresado */}
+                <rect x="42" y={160 - barHeights.pending} width="28" height={barHeights.pending} rx="4" fill="#f59e0b" fillOpacity="0.85" stroke="#f59e0b" strokeWidth="1" />
+                <text x="56" y={150 - barHeights.pending} textAnchor="middle" fontSize="10" fill="#f59e0b" fontWeight="800">{stateCounts.pending}</text>
+                <text x="56" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">INGRESADO</text>
+
+                {/* Bar 2: Agendado */}
+                <rect x="106" y={160 - barHeights.inRevision} width="28" height={barHeights.inRevision} rx="4" fill="#3b82f6" fillOpacity="0.85" stroke="#3b82f6" strokeWidth="1" />
+                <text x="120" y={150 - barHeights.inRevision} textAnchor="middle" fontSize="10" fill="#3b82f6" fontWeight="800">{stateCounts.inRevision}</text>
+                <text x="120" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">AGENDADO</text>
+
+                {/* Bar 3: En Tratamiento */}
+                <rect x="170" y={160 - barHeights.approved} width="28" height={barHeights.approved} rx="4" fill="#10b981" fillOpacity="0.85" stroke="#10b981" strokeWidth="1" />
+                <text x="184" y={150 - barHeights.approved} textAnchor="middle" fontSize="10" fill="#10b981" fontWeight="800">{stateCounts.approved}</text>
+                <text x="184" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">TRATAMIENTO</text>
+
+                {/* Bar 4: Finalizado */}
+                <rect x="234" y={160 - barHeights.rejected} width="28" height={barHeights.rejected} rx="4" fill="#ef4444" fillOpacity="0.85" stroke="#ef4444" strokeWidth="1" />
+                <text x="248" y={150 - barHeights.rejected} textAnchor="middle" fontSize="10" fill="#ef4444" fontWeight="800">{stateCounts.rejected}</text>
+                <text x="248" y="176" textAnchor="middle" fontSize="9" fill="hsl(var(--foreground-hsl))" opacity="0.5" fontWeight="700">FINALIZADO</text>
+              </svg>
+            </div>
           </div>
 
         </div>

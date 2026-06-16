@@ -122,7 +122,7 @@ export default function Sidebar({ user }: SidebarProps) {
       )
     },
     {
-      name: 'Inscribir Persona',
+      name: 'Derivación digital',
       path: '/dashboard/register',
       roles: ['admin', 'external'],
       icon: (
@@ -130,7 +130,7 @@ export default function Sidebar({ user }: SidebarProps) {
       )
     },
     {
-      name: 'Gestionar Usuarios',
+      name: 'Instituciones y usuarios',
       path: '/dashboard/users',
       roles: ['admin'],
       icon: (
@@ -138,7 +138,7 @@ export default function Sidebar({ user }: SidebarProps) {
       )
     },
     {
-      name: 'Aranceles Odontograma',
+      name: 'Aranceles y Prestaciones',
       path: '/dashboard/aranceles',
       roles: ['admin'],
       icon: (
@@ -146,11 +146,11 @@ export default function Sidebar({ user }: SidebarProps) {
       )
     },
     {
-      name: 'Ingreso Automático',
+      name: 'Ingreso Dentalink',
       path: '/dashboard/ingreso-automatico',
       roles: ['admin', 'internal'],
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h20"/><path d="M5 17V5a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v12"/><path d="M9 17v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/></svg>
       )
     },
     {
@@ -163,8 +163,7 @@ export default function Sidebar({ user }: SidebarProps) {
     }
   ];
 
-  const allowedEmails = ['njofre@policlinicotabancura.cl', 'admin@policlinicotabancura.cl'];
-  const showAutomaticIngreso = allowedEmails.includes(user.email.toLowerCase()) || user.role === 'admin';
+  const showAutomaticIngreso = user.role === 'admin' || user.role === 'internal';
 
   const filteredMenu = menuItems.filter(item => {
     if (item.path === '/dashboard/ingreso-automatico') {
