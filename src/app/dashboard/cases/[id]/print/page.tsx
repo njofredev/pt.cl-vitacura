@@ -16,14 +16,18 @@ export default async function PrintCasePage({ params }: { params: { id: string }
   let caseData;
   try {
     const res = await pool.query(`
-      SELECT 
-        c.*, 
-        p.rut, p.first_names, p.last_names, p.nationality, p.birth_date, p.commune, p.email as person_email, p.mobile,
-        u.name as registered_by_name
-      FROM cases c
-      JOIN persons p ON c.person_id = p.id
-      LEFT JOIN users u ON c.registered_by = u.id
-      WHERE c.id = $1
+      WITH global_cases AS (
+        SELECT 
+          c.*, 
+          p.rut, p.first_names, p.last_names, p.nationality, p.birth_date, p.commune, p.email as person_email, p.mobile,
+          u.name as registered_by_name,
+          ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
+        FROM cases c
+        JOIN persons p ON c.person_id = p.id
+        LEFT JOIN users u ON c.registered_by = u.id
+      )
+      SELECT * FROM global_cases
+      WHERE id = $1
     `, [id]);
 
     if (res.rows.length === 0) {

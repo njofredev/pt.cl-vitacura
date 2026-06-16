@@ -407,6 +407,18 @@ export default function Sidebar({ user }: SidebarProps) {
                 }}>
                   {roleLabels[user.role]}
                 </span>
+                {user.institutionName && (
+                  <span style={{ 
+                    fontSize: '0.65rem', 
+                    opacity: 0.5,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    fontWeight: 500
+                  }}>
+                    {user.institutionName}
+                  </span>
+                )}
               </div>
             )}
           </div>

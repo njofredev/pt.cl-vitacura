@@ -86,14 +86,18 @@ export default async function DashboardPage() {
       const casesCountRes = await pool.query(`
         SELECT COUNT(*) 
         FROM cases c 
-        WHERE c.registered_by = $1
+        JOIN users u ON c.registered_by = u.id
+        WHERE u.institution_id = (SELECT institution_id FROM users WHERE id = $1)
+           OR (c.registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
       `, [user.id]);
       stats.totalCases = parseInt(casesCountRes.rows[0].count);
 
       const statusRes = await pool.query(`
         SELECT c.status, COUNT(*) 
         FROM cases c 
-        WHERE c.registered_by = $1
+        JOIN users u ON c.registered_by = u.id
+        WHERE u.institution_id = (SELECT institution_id FROM users WHERE id = $1)
+           OR (c.registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
         GROUP BY c.status
       `, [user.id]);
 
@@ -107,12 +111,16 @@ export default async function DashboardPage() {
       const recentRes = await pool.query(`
         WITH global_cases AS (
           SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, c.registered_by,
+                 u_reg.name as registered_by_name,
+                 u_reg.institution_id as registered_by_institution_id,
                  ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
           FROM cases c 
           JOIN persons p ON c.person_id = p.id 
+          LEFT JOIN users u_reg ON c.registered_by = u_reg.id
         )
         SELECT * FROM global_cases
-        WHERE registered_by = $1
+        WHERE registered_by_institution_id = (SELECT institution_id FROM users WHERE id = $1)
+           OR (registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
         ORDER BY created_at DESC 
         LIMIT 5
       `, [user.id]);
@@ -220,10 +228,14 @@ export default async function DashboardPage() {
   let caseDates: string[] = [];
   try {
     const datesRes = await pool.query(`
-      SELECT created_at
-      FROM cases
-      ${user.role === 'external' ? 'WHERE registered_by = $1' : ''}
-      ORDER BY created_at ASC
+      SELECT c.created_at
+      FROM cases c
+      ${user.role === 'external' ? `
+        JOIN users u ON c.registered_by = u.id
+        WHERE u.institution_id = (SELECT institution_id FROM users WHERE id = $1)
+           OR (c.registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
+      ` : ''}
+      ORDER BY c.created_at ASC
     `, user.role === 'external' ? [user.id] : []);
     caseDates = datesRes.rows.map((row: any) => new Date(row.created_at).toISOString());
   } catch (err) {
@@ -250,7 +262,11 @@ export default async function DashboardPage() {
       SELECT p.commune as label, COUNT(c.id) as count
       FROM cases c
       JOIN persons p ON c.person_id = p.id
-      ${user.role === 'external' ? 'WHERE c.registered_by = $1' : ''}
+      ${user.role === 'external' ? `
+        JOIN users u ON c.registered_by = u.id
+        WHERE u.institution_id = (SELECT institution_id FROM users WHERE id = $1)
+           OR (c.registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
+      ` : ''}
       GROUP BY p.commune
       ORDER BY count DESC
       LIMIT 4
@@ -529,14 +545,18 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* KPI 4: Instituciones Inscritas */}
+            {/* KPI 4: Instituciones Inscritas (Admin) / Casos Pendientes (Internal & External) */}
             <div className="telemetry-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Instituciones Inscritas
+                  {user.role === 'admin' ? 'Instituciones Inscritas' : 'Casos Pendientes'}
                 </span>
                 <div style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.08)', padding: '8px', borderRadius: '50%' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+                  {user.role === 'admin' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  )}
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
@@ -551,10 +571,10 @@ export default async function DashboardPage() {
                   lineHeight: '2.4rem',
                   height: '2.4rem'
                 }}>
-                  {totalInstitutions}
+                  {user.role === 'admin' ? totalInstitutions : stats.pendingCases}
                 </span>
                 <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 700 }}>
-                  Establecimientos activos
+                  {user.role === 'admin' ? 'Establecimientos activos' : 'Esperando revisión'}
                 </span>
               </div>
             </div>

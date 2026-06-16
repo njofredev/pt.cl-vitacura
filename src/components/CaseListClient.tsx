@@ -9,6 +9,7 @@ import { UserSession } from '@/lib/auth';
 import Link from 'next/link';
 import CustomSelect from '@/components/ui/CustomSelect';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
+import Odontogram from '@/components/Odontogram';
 
 interface CaseRecord {
   id: string;
@@ -491,34 +492,36 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <button 
-                        onClick={() => openDetails(c)}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                      >
-                        Ver Ficha
-                      </button>
-                      <a 
-                        href={`/dashboard/cases/${c.id}/print`}
-                        target="_blank"
-                        className="btn btn-primary"
-                        style={{ padding: '6px 12px', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                        Imprimir
-                      </a>
-                      {user.role === 'admin' && (
-                        <button
-                          onClick={() => handleDeleteCase(c.id, `${c.first_names} ${c.last_names}`)}
-                          className="btn btn-danger"
-                          style={{ padding: '6px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center' }}
-                          title="Eliminar Caso"
-                          disabled={loading}
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <button 
+                          onClick={() => openDetails(c)}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                          Ver Ficha
                         </button>
-                      )}
+                        <a 
+                          href={`/dashboard/cases/${c.id}/print`}
+                          target="_blank"
+                          className="btn btn-primary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          Imprimir
+                        </a>
+                        {user.role === 'admin' && (
+                          <button
+                            onClick={() => handleDeleteCase(c.id, `${c.first_names} ${c.last_names}`)}
+                            className="btn btn-danger"
+                            style={{ padding: '6px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center' }}
+                            title="Eliminar Caso"
+                            disabled={loading}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -534,7 +537,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
           title={`Ficha de Caso Social - ${selectedCase.first_names} ${selectedCase.last_names}`}
-          maxWidth="1000px"
+          maxWidth="1200px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
@@ -606,68 +609,25 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   </h4>
                   
                   <div className="glass-panel" style={{ padding: '24px', backgroundColor: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Institución</label>
-                        <CustomSelect
-                          value={editMedicalCenterSelect}
-                          onChange={(val) => {
-                            setEditMedicalCenterSelect(val);
-                          }}
-                          options={[
-                            { value: 'CESFAM Vitacura', label: 'CESFAM Vitacura' },
-                            { value: 'CESFAM Lo Barnechea', label: 'CESFAM Lo Barnechea' },
-                            { value: 'Consultorio Dr. Aníbal Ariztía', label: 'Consultorio Dr. Aníbal Ariztía' },
-                            { value: 'Policlinico Tabancura', label: 'Policlínico Tabancura' },
-                            { value: 'Otro', label: 'Otra Institución / CESFAM' }
-                          ]}
-                          placeholder="Seleccione Institución..."
-                        />
-                        {editMedicalCenterSelect === 'Otro' && (
-                          <div className="animate-fade-in" style={{ marginTop: '6px' }}>
-                            <input
-                              className="form-input"
-                              type="text"
-                              placeholder="Especifique la institución"
-                              value={customEditMedicalCenter}
-                              onChange={e => setCustomEditMedicalCenter(e.target.value)}
-                              required
-                              style={{ width: '100%' }}
-                            />
-                          </div>
-                        )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      
+                      {/* Interactive Odontogram Editor */}
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+                        <label style={{ fontSize: '0.88rem', fontWeight: 800, opacity: 0.9, color: 'hsl(var(--accent-hsl))' }}>Odontograma Clínico Interactivo</label>
+                        <div style={{ width: '100%', overflowX: 'auto', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', background: 'rgba(0, 0, 0, 0.2)' }}>
+                          <Odontogram 
+                            initialType="adult"
+                            initialDentalDiagnosis={selectedCase.dental_diagnosis}
+                            initialTreatmentNeeded={selectedCase.treatment_needed}
+                            onChange={(odontData) => {
+                              setEditDentalDiagnosis(odontData.dentalDiagnosis);
+                              setEditTreatmentNeeded(odontData.treatmentNeeded);
+                            }}
+                          />
+                        </div>
                       </div>
+
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Convenio Solicitado</label>
-                        <CustomSelect
-                          value={editAgreementTypeSelect}
-                          onChange={setEditAgreementTypeSelect}
-                          options={editAgreements}
-                          placeholder="Seleccione tipo de convenio..."
-                        />
-                        {editAgreementTypeSelect === 'Otro' && (
-                          <div className="animate-fade-in" style={{ marginTop: '6px' }}>
-                            <input
-                              className="form-input"
-                              type="text"
-                              placeholder="Especifique el convenio"
-                              value={customEditAgreementType}
-                              onChange={e => setCustomEditAgreementType(e.target.value)}
-                              required
-                              style={{ width: '100%' }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Diagnóstico Odontológico</label>
-                        <input type="text" className="form-input" value={editDentalDiagnosis} onChange={e => setEditDentalDiagnosis(e.target.value)} style={{ width: '100%' }} />
-                      </div>
-                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Prestación Requerida</label>
-                        <input type="text" className="form-input" value={editTreatmentNeeded} onChange={e => setEditTreatmentNeeded(e.target.value)} style={{ width: '100%' }} />
-                      </div>
-                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Observaciones Generales / Descripción</label>
                         <textarea className="form-textarea" rows={3} value={editDescription} onChange={e => setEditDescription(e.target.value)} style={{ width: '100%', resize: 'vertical' }} />
                       </div>
@@ -886,25 +846,43 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                           Cerrar
                         </button>
                         {user.role === 'admin' && (
-                          <button 
-                            type="button" 
-                            onClick={() => setIsEditing(true)} 
-                            className="btn-accent" 
-                            style={{ 
-                              padding: '10px 20px', 
+                          selectedCase.status === 'ingresado' ? (
+                            <button 
+                              type="button" 
+                              onClick={() => setIsEditing(true)} 
+                              className="btn-accent" 
+                              style={{ 
+                                padding: '10px 20px', 
+                                fontWeight: 700, 
+                                backgroundColor: '#4f46e5', 
+                                borderColor: '#4f46e5', 
+                                color: '#ffffff', 
+                                boxShadow: '0 4px 15px rgba(79, 70, 229, 0.25)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                              Editar Datos de Ficha
+                            </button>
+                          ) : (
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '6px', 
+                              fontSize: '0.82rem', 
+                              color: '#fb923c', 
                               fontWeight: 700, 
-                              backgroundColor: '#4f46e5', 
-                              borderColor: '#4f46e5', 
-                              color: '#ffffff', 
-                              boxShadow: '0 4px 15px rgba(79, 70, 229, 0.25)',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                            Editar Datos de Ficha
-                          </button>
+                              padding: '8px 14px', 
+                              background: 'rgba(251, 146, 60, 0.08)', 
+                              border: '1px solid rgba(251, 146, 60, 0.2)',
+                              borderRadius: '8px' 
+                            }}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                              Sincronizado con Dentalink (Edición bloqueada)
+                            </div>
+                          )
                         )}
                         <button type="submit" className="btn-accent" disabled={loading} style={{ padding: '10px 20px', fontWeight: 700, boxShadow: '0 4px 15px rgba(20, 184, 166, 0.25)' }}>
                           {loading ? 'Guardando...' : 'Guardar Evaluación'}

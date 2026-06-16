@@ -149,6 +149,8 @@ interface SelectedToothState {
 
 interface OdontogramProps {
   initialType?: 'adult' | 'child';
+  initialDentalDiagnosis?: string | null;
+  initialTreatmentNeeded?: string | null;
   onChange: (data: {
     dentalDiagnosis: string;
     treatmentNeeded: string;
@@ -169,7 +171,12 @@ function getCategoryColor(category: string): string {
   return '#10b981'; // Green
 }
 
-export default function Odontogram({ initialType = 'adult', onChange }: OdontogramProps) {
+export default function Odontogram({ 
+  initialType = 'adult', 
+  initialDentalDiagnosis, 
+  initialTreatmentNeeded, 
+  onChange 
+}: OdontogramProps) {
   const [activeTab, setActiveTab] = useState<'adult' | 'child'>(initialType);
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const [chartState, setChartState] = useState<Record<number, SelectedToothState>>({});
@@ -191,6 +198,110 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
   // Dynamic database aranceles states
   const [treatmentOptions, setTreatmentOptions] = useState<TreatmentOption[]>(TREATMENT_OPTIONS);
   const [categories, setCategories] = useState<string[]>(['prev', 'rest', 'endo', 'surg', 'prot']);
+
+  // Load initial data if provided
+  useEffect(() => {
+    if (!initialDentalDiagnosis && !initialTreatmentNeeded) {
+      setChartState({});
+      return;
+    }
+
+    const newChartState: Record<number, SelectedToothState> = {};
+    let parsedTab: 'adult' | 'child' = initialType;
+
+    const getOrCreateState = (id: number): SelectedToothState => {
+      if (!newChartState[id]) {
+        newChartState[id] = {
+          faces: { V: false, O: false, M: false, D: false, L: false },
+          treatments: []
+        };
+      }
+      return newChartState[id];
+    };
+
+    if (initialDentalDiagnosis) {
+      if (initialDentalDiagnosis.includes('[Odontogram Infantil]')) {
+        parsedTab = 'child';
+      } else if (initialDentalDiagnosis.includes('[Odontogram Adulto]')) {
+        parsedTab = 'adult';
+      }
+
+      const lines = initialDentalDiagnosis.split('\n');
+      lines.forEach(line => {
+        if (line.includes('Arcada Superior Completa')) {
+          getOrCreateState(101);
+        } else if (line.includes('Arcada Inferior Completa')) {
+          getOrCreateState(102);
+        } else if (line.includes('Boca Completa')) {
+          getOrCreateState(103);
+        } else {
+          const match = line.match(/Pieza\s+(\d+)/i);
+          if (match) {
+            const toothId = parseInt(match[1], 10);
+            const state = getOrCreateState(toothId);
+
+            if (line.includes('Ausente') || line.includes('Pérdida')) {
+              state.condition = 'ausente';
+            } else if (line.includes('Implante')) {
+              state.condition = 'implante';
+            } else if (line.includes('Corona Previa') || line.includes('Corona Existente')) {
+              state.condition = 'corona_existente';
+            }
+
+            if (line.includes('Caras:')) {
+              const facesPart = line.split('Caras:')[1];
+              if (facesPart.includes('Vestibular')) state.faces.V = true;
+              if (facesPart.includes('Oclusal') || facesPart.includes('Incisal')) state.faces.O = true;
+              if (facesPart.includes('Mesial')) state.faces.M = true;
+              if (facesPart.includes('Distal')) state.faces.D = true;
+              if (facesPart.includes('Lingual') || facesPart.includes('Palatina')) state.faces.L = true;
+            }
+          }
+        }
+      });
+    }
+
+    if (initialTreatmentNeeded) {
+      const lines = initialTreatmentNeeded.split('\n');
+      lines.forEach(line => {
+        let toothId: number | null = null;
+        if (line.includes('Arcada Superior Completa')) {
+          toothId = 101;
+        } else if (line.includes('Arcada Inferior Completa')) {
+          toothId = 102;
+        } else if (line.includes('Boca Completa')) {
+          toothId = 103;
+        } else {
+          const match = line.match(/Pieza\s+(\d+)/i);
+          if (match) {
+            toothId = parseInt(match[1], 10);
+          }
+        }
+
+        if (toothId !== null) {
+          const state = getOrCreateState(toothId);
+          const startIdx = line.indexOf('[');
+          const endIdx = line.lastIndexOf(']');
+          if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+            const treatmentsText = line.substring(startIdx + 1, endIdx);
+            const parts = treatmentsText.split(',').map(p => p.trim());
+            parts.forEach(part => {
+              const cleanPart = part.replace(/\s*\[(Dental|Rayos X)\]\s*$/i, '').trim();
+              const found = treatmentOptions.find(opt => opt.name.toLowerCase() === cleanPart.toLowerCase());
+              if (found) {
+                if (!state.treatments.includes(found.id)) {
+                  state.treatments.push(found.id);
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+
+    setChartState(newChartState);
+    setActiveTab(parsedTab);
+  }, [initialDentalDiagnosis, initialTreatmentNeeded, treatmentOptions, initialType]);
 
   // Mass selection states
   const [massSelectionType, setMassSelectionType] = useState<'upper' | 'lower' | 'full' | null>(null);
@@ -1204,11 +1315,13 @@ export default function Odontogram({ initialType = 'adult', onChange }: Odontogr
               display: 'flex',
               flexDirection: 'row',
               gap: '40px',
-              width: '100%',
+              width: 'max-content',
+              minWidth: '100%',
               alignItems: 'center',
               justifyContent: 'center',
               flexWrap: 'nowrap',
-              marginTop: '10px'
+              marginTop: '10px',
+              padding: '0 10px'
             }}>
 
           {/* Left Operations Panel */}

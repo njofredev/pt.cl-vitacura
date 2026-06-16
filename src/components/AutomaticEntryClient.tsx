@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction, getDentalinkPatientEvolutionsAction } from '@/app/actions/dentalinkActions';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 import { updateCaseStatusAction } from '@/app/actions/caseActions';
@@ -58,6 +58,13 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const [cases, setCases] = useState<CaseRecord[]>(initialCases);
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<Record<string, VerificationResult>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const [isBulkVerifying, setIsBulkVerifying] = useState(false);
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
@@ -219,16 +226,96 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     checkExistence(c.rut);
   };
 
-  const handleSelectTreatment = (treatment: any) => {
+  const handleSelectTreatment = async (treatment: any) => {
     setSelectedTreatmentForServices(treatment);
-    if (wizardCase) {
-      const parsed = parseOdontogramServices(wizardCase.treatment_needed);
-      setPendingServices(parsed);
-    } else {
-      setPendingServices([]);
+    if (!wizardCase) return;
+
+    setWizardLoading(true);
+    setWizardError(null);
+
+    const parsed = parseOdontogramServices(wizardCase.treatment_needed);
+    const successfullyLinked: string[] = [];
+    const failedToLink: { service: string; error?: string }[] = [];
+
+    // Determine if treatment is Preferencial
+    const isPreferencial = !!(
+      treatment.nombre_convenio?.toLowerCase().includes('preferencial') ||
+      treatment.nombre?.toLowerCase().includes('preferencial')
+    );
+
+    // Helper to get prestacion ID
+    const getPrestacionId = (serviceString: string) => {
+      const firstBracket = serviceString.indexOf('[');
+      const lastBracket = serviceString.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        let content = serviceString.substring(firstBracket + 1, lastBracket).trim();
+        content = content.replace(/\s*\[(Dental|Rayos X)\]\s*$/i, '').trim();
+        
+        const serviceName = content.toLowerCase();
+        const matches = localAranceles.filter(a => a.name.toLowerCase().trim() === serviceName);
+        
+        if (matches.length > 0) {
+          if (isPreferencial) {
+            const prefMatch = matches.find(a => a.price_pref !== null && a.price_pref !== undefined);
+            if (prefMatch && prefMatch.id_prestacion) return prefMatch.id_prestacion;
+          } else {
+            const baseMatch = matches.find(a => a.price_base !== null && a.price_base !== undefined);
+            if (baseMatch && baseMatch.id_prestacion) return baseMatch.id_prestacion;
+          }
+          return matches[0].id_prestacion || null;
+        }
+      }
+      return null;
+    };
+
+    // Attempt to link each service automatically
+    for (const serviceText of parsed) {
+      const prestacionId = getPrestacionId(serviceText);
+      if (!prestacionId) {
+        failedToLink.push({ service: serviceText, error: 'No se encontró la prestación en el arancel local' });
+        continue;
+      }
+
+      try {
+        const res = await addDentalinkTreatmentDetailAction(treatment.id, prestacionId, 0);
+        if (res.success) {
+          successfullyLinked.push(serviceText);
+        } else {
+          failedToLink.push({ service: serviceText, error: res.error });
+        }
+      } catch (err: any) {
+        failedToLink.push({ service: serviceText, error: err.message || 'Error de red' });
+      }
     }
-    setLinkedServices([]);
-    setWizardStep(3);
+
+    setLinkedServices(successfullyLinked);
+    setPendingServices(parsed.filter(s => !successfullyLinked.includes(s)));
+
+    // If ALL services were successfully linked automatically, finalize synchronization
+    if (failedToLink.length === 0 && parsed.length > 0) {
+      try {
+        const res = await updateCaseStatusAction(
+          wizardCase.id,
+          'sincronizado',
+          wizardCase.observations || 'Sincronizado automáticamente con Dentalink'
+        );
+        if (res.success) {
+          setCases(prev => prev.map(c => c.id === wizardCase.id ? { ...c, status: 'sincronizado' } : c));
+        }
+        setWizardStep(4);
+      } catch (err: any) {
+        console.error("Error finalizing wizard automatically:", err);
+        setWizardStep(4);
+      } finally {
+        setWizardLoading(false);
+      }
+    } else {
+      if (failedToLink.length > 0) {
+        setWizardError(`Se vincularon automáticamente ${successfullyLinked.length} de ${parsed.length} prestaciones. Por favor revise las restantes manualmente.`);
+      }
+      setWizardLoading(false);
+      setWizardStep(3);
+    }
   };
 
   const handleLinkService = async (serviceText: string) => {
@@ -456,6 +543,10 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     );
   });
 
+  const totalPages = Math.ceil(filteredCases.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCases = filteredCases.slice(startIndex, startIndex + itemsPerPage);
+
   // Check a single patient RUT in Dentalink
   const verifyPatient = async (caseId: string, rut: string) => {
     setResults(prev => ({
@@ -491,12 +582,12 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     }
   };
 
-  // Check all currently visible patients sequentially
+  // Check all currently visible patients sequentially (only current page items)
   const verifyAllVisible = async () => {
-    if (filteredCases.length === 0 || isBulkVerifying) return;
+    if (paginatedCases.length === 0 || isBulkVerifying) return;
     setIsBulkVerifying(true);
 
-    for (const c of filteredCases) {
+    for (const c of paginatedCases) {
       // If already verified as "exists", skip to save API requests
       if (results[c.id]?.state === 'exists') continue;
       await verifyPatient(c.id, c.rut);
@@ -611,7 +702,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                 </tr>
               </thead>
               <tbody>
-                {filteredCases.map((c) => {
+                {paginatedCases.map((c) => {
                   const checkResult = results[c.id] || { state: 'idle' };
 
                   return (
@@ -641,81 +732,94 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                         </span>
                       </td>
                       <td>
-                        {checkResult.state === 'idle' && (
-                          <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            No verificado
+                        {c.status === 'sincronizado' ? (
+                          <span className="badge badge-aprobado" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle2 size={12} /> Verificado
                           </span>
-                        )}
+                        ) : (
+                          <>
+                            {checkResult.state === 'idle' && (
+                              <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                No verificado
+                              </span>
+                            )}
 
-                        {checkResult.state === 'loading' && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'hsl(var(--accent-hsl))', fontSize: '0.85rem', fontWeight: 600 }}>
-                            <RefreshCw size={14} className="animate-spin" />
-                            Consultando API...
-                          </div>
-                        )}
+                            {checkResult.state === 'loading' && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'hsl(var(--accent-hsl))', fontSize: '0.85rem', fontWeight: 600 }}>
+                                <RefreshCw size={14} className="animate-spin" />
+                                Consultando API...
+                              </div>
+                            )}
 
-                        {checkResult.state === 'exists' && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <span className="badge badge-aprobado" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content' }}>
-                              <CheckCircle2 size={12} /> Existe en Dentalink
-                            </span>
-                            {checkResult.patientData && (
+                            {checkResult.state === 'exists' && (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <div style={{ fontSize: '0.72rem', opacity: 0.7, padding: '4px 8px', background: 'rgba(16, 185, 129, 0.04)', border: '1px solid rgba(16, 185, 129, 0.1)', borderRadius: '4px' }}>
-                                  <div><strong>ID:</strong> {checkResult.patientData.id}</div>
-                                  <div><strong>Ficha:</strong> {checkResult.patientData.numero_ficha || 'No reg.'}</div>
-                                </div>
+                                <span className="badge badge-aprobado" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content' }}>
+                                  <CheckCircle2 size={12} /> Existe en Dentalink
+                                </span>
+                                {checkResult.patientData && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <div style={{ fontSize: '0.72rem', opacity: 0.7, padding: '4px 8px', background: 'rgba(16, 185, 129, 0.04)', border: '1px solid rgba(16, 185, 129, 0.1)', borderRadius: '4px' }}>
+                                      <div><strong>ID:</strong> {checkResult.patientData.id}</div>
+                                      <div><strong>Ficha:</strong> {checkResult.patientData.numero_ficha || 'No reg.'}</div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedCase(c);
+                                        setSelectedPatient(checkResult.patientData);
+                                        setIsModalOpen(true);
+                                      }}
+                                      className="btn btn-secondary"
+                                      style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto', width: 'fit-content' }}
+                                    >
+                                      Ver datos
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {checkResult.state === 'not_exists' && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span className="badge badge-rechazado" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content' }}>
+                                  <XCircle size={12} /> No registrado
+                                </span>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    setSelectedCase(c);
-                                    setSelectedPatient(checkResult.patientData);
-                                    setIsModalOpen(true);
-                                  }}
-                                  className="btn btn-secondary"
-                                  style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto', width: 'fit-content' }}
+                                  onClick={() => openCreateModal(c)}
+                                  className="btn btn-primary"
+                                  style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto', width: 'fit-content', backgroundColor: '#10b981', borderColor: '#10b981', color: '#022c22', fontWeight: 'bold' }}
                                 >
-                                  Ver datos
+                                  Crear Ficha
                                 </button>
                               </div>
                             )}
-                          </div>
-                        )}
 
-                        {checkResult.state === 'not_exists' && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <span className="badge badge-rechazado" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content' }}>
-                              <XCircle size={12} /> No registrado
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => openCreateModal(c)}
-                              className="btn btn-primary"
-                              style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto', width: 'fit-content', backgroundColor: '#10b981', borderColor: '#10b981', color: '#022c22', fontWeight: 'bold' }}
-                            >
-                              Crear Ficha
-                            </button>
-                          </div>
-                        )}
-
-                        {checkResult.state === 'error' && (
-                          <span className="badge badge-pendiente" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)' }} title={checkResult.errorMsg}>
-                            <AlertCircle size={12} /> Error API
-                          </span>
+                            {checkResult.state === 'error' && (
+                              <span className="badge badge-pendiente" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)' }} title={checkResult.errorMsg}>
+                                <AlertCircle size={12} /> Error API
+                              </span>
+                            )}
+                          </>
                         )}
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <button
                           onClick={() => startWizard(c)}
                           className="btn btn-primary"
+                          disabled={c.status === 'sincronizado'}
                           style={{ 
                             padding: '6px 16px', 
                             fontSize: '0.82rem', 
                             height: '32px',
-                            background: 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            boxShadow: '0 4px 12px rgba(30, 58, 138, 0.25)',
-                            fontWeight: 700
+                            background: c.status === 'sincronizado' 
+                              ? 'rgba(255, 255, 255, 0.05)' 
+                              : 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)',
+                            color: c.status === 'sincronizado' ? 'rgba(255, 255, 255, 0.3)' : 'inherit',
+                            border: c.status === 'sincronizado' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(255, 255, 255, 0.08)',
+                            boxShadow: c.status === 'sincronizado' ? 'none' : '0 4px 12px rgba(30, 58, 138, 0.25)',
+                            fontWeight: 700,
+                            cursor: c.status === 'sincronizado' ? 'not-allowed' : 'pointer'
                           }}
                         >
                           Inicio
@@ -726,6 +830,45 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                 })}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginTop: '20px', 
+                paddingTop: '16px',
+                borderTop: '1px solid var(--glass-border)' 
+              }}>
+                <span style={{ fontSize: '0.88rem', opacity: 0.6 }}>
+                  Mostrando {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredCases.length)} de {filteredCases.length} registros
+                </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 16px', fontSize: '0.82rem', opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                  >
+                    Anterior
+                  </button>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, padding: '0 10px', color: 'hsl(var(--foreground-hsl))' }}>
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 16px', fontSize: '0.82rem', opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
