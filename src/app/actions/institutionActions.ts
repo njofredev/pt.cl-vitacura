@@ -12,7 +12,7 @@ export async function getInstitutionsAction() {
   }
   try {
     const res = await pool.query(
-      `SELECT id, name, quota_dental, quota_xray, used_dental, used_xray, created_at 
+      `SELECT id, name, quota_dental, quota_xray, used_dental, used_xray, active, created_at 
        FROM institutions 
        ORDER BY name ASC`
     );
@@ -20,6 +20,27 @@ export async function getInstitutionsAction() {
   } catch (error) {
     console.error('Error fetching institutions:', error);
     return { error: 'Error del servidor al obtener instituciones' };
+  }
+}
+
+export async function toggleInstitutionStatusAction(id: number, currentStatus: boolean) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'No autorizado para realizar esta acción' };
+  }
+
+  try {
+    await pool.query(
+      'UPDATE institutions SET active = $1 WHERE id = $2',
+      [!currentStatus, id]
+    );
+
+    revalidatePath('/dashboard/users');
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('Error toggling institution status:', error);
+    return { error: 'Error del servidor al cambiar el estado de la institución' };
   }
 }
 

@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { createUserAction, toggleUserStatusAction, updateUserAction } from '@/app/actions/userActions';
-import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
-import { createInstitutionAction, updateInstitutionAction, deleteInstitutionAction } from '@/app/actions/institutionActions';
-import { Users, Building } from 'lucide-react';
+import { getConveniosByMedicalCenterAction, syncDentalinkConveniosAction, getAllConveniosAction } from '@/app/actions/convenioActions';
+import { getInstitutionsAction, createInstitutionAction, updateInstitutionAction, deleteInstitutionAction } from '@/app/actions/institutionActions';
+import { Users, Building, RefreshCw } from 'lucide-react';
 
 interface User {
   id: string;
@@ -66,6 +66,34 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  async function handleSyncConvenios() {
+    setSyncing(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await syncDentalinkConveniosAction();
+      if (res.success) {
+        setSuccess(`Sincronización exitosa. Se actualizaron ${res.count} convenios.`);
+        const instRes = await getInstitutionsAction();
+        if (instRes.success && instRes.institutions) {
+          setInstitutions(instRes.institutions);
+        }
+        const convRes = await getAllConveniosAction();
+        if (convRes.success && convRes.convenios) {
+          setAllConvenios(convRes.convenios);
+        }
+      } else {
+        setError(res.error || 'Error al sincronizar con Dentalink');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Error de red al sincronizar con Dentalink');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const [newRole, setNewRole] = useState('internal');
   const [editRole, setEditRole] = useState('internal');
@@ -78,6 +106,23 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   const [editAgreements, setEditAgreements] = useState<{ value: string; label: string }[]>([]);
   const [newAgreementType, setNewAgreementType] = useState('');
   const [editAgreementType, setEditAgreementType] = useState('');
+  const [allConvenios, setAllConvenios] = useState<any[]>([]);
+  const [newAgreementSelectValue, setNewAgreementSelectValue] = useState('');
+  const [editAgreementSelectValue, setEditAgreementSelectValue] = useState('');
+
+  useEffect(() => {
+    async function loadAllConvenios() {
+      try {
+        const res = await getAllConveniosAction();
+        if (res.success && res.convenios) {
+          setAllConvenios(res.convenios);
+        }
+      } catch (err) {
+        console.error('Error loading all convenios:', err);
+      }
+    }
+    loadAllConvenios();
+  }, []);
 
   useEffect(() => {
     async function loadNewAgreements() {
@@ -89,10 +134,13 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
       try {
         const res = await getConveniosByMedicalCenterAction(newMedicalCenter);
         if (res.success && res.convenios) {
-          const options = res.convenios.map((c: any) => ({
-            value: c.empresa,
-            label: c.empresa,
-          }));
+          const options = res.convenios.map((c: any) => {
+            const agreementName = c.empresa.includes(': ') ? c.empresa.split(': ')[1] : c.empresa;
+            return {
+              value: agreementName,
+              label: agreementName,
+            };
+          });
           setNewAgreements(options);
           if (options.length > 0) {
             setNewAgreementType(options[0].value);
@@ -121,10 +169,13 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
       try {
         const res = await getConveniosByMedicalCenterAction(editMedicalCenter);
         if (res.success && res.convenios) {
-          const options = res.convenios.map((c: any) => ({
-            value: c.empresa,
-            label: c.empresa,
-          }));
+          const options = res.convenios.map((c: any) => {
+            const agreementName = c.empresa.includes(': ') ? c.empresa.split(': ')[1] : c.empresa;
+            return {
+              value: agreementName,
+              label: agreementName,
+            };
+          });
           setEditAgreements(options);
         } else {
           setEditAgreements([]);
@@ -416,6 +467,18 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
+      {error && !isModalOpen && !isEditModalOpen && !isInstModalOpen && !isEditInstModalOpen && (
+        <div className="badge-rechazado" style={{ padding: '16px 20px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem', fontWeight: 600, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          {error}
+        </div>
+      )}
+
+      {success && !isModalOpen && !isEditModalOpen && !isInstModalOpen && !isEditInstModalOpen && (
+        <div className="badge-aprobado" style={{ padding: '16px 20px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem', fontWeight: 600, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+          {success}
+        </div>
+      )}
+
       {/* Top Title Bar with Dynamic Content */}
       <div
         className="glass-panel"
@@ -469,10 +532,29 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
             Nuevo Funcionario
           </button>
         ) : (
-          <button onClick={() => setIsInstModalOpen(true)} className="login-pill-btn" style={{ gap: '8px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Nueva Institución
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              onClick={handleSyncConvenios} 
+              className="btn btn-secondary" 
+              style={{ 
+                gap: '8px', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                padding: '10px 18px', 
+                borderRadius: '24px', 
+                fontSize: '0.88rem', 
+                fontWeight: 650 
+              }}
+              disabled={syncing}
+            >
+              <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+              {syncing ? 'Sincronizando...' : 'Sincronizar con Dentalink'}
+            </button>
+            <button onClick={() => setIsInstModalOpen(true)} className="login-pill-btn" style={{ gap: '8px' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Nueva Institución
+            </button>
+          </div>
         )}
       </div>
 
@@ -563,6 +645,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                             setEditMedicalCenter(u.medical_center || '');
                             setEditAgreementType(u.agreement_type || '');
                             setEditInstitutionId(u.institution_id ? String(u.institution_id) : '');
+                            const fullKey = u.medical_center && u.agreement_type ? `${u.medical_center}: ${u.agreement_type}` : '';
+                            setEditAgreementSelectValue(fullKey);
                             setIsEditModalOpen(true);
                           }}
                           className="btn btn-primary"
@@ -719,36 +803,53 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                 </h4>
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="institution_id">Institución *</label>
+                <label className="form-label" htmlFor="agreement_select">Convenio Asignado</label>
                 <CustomSelect
-                  value={newInstitutionId}
+                  value={newAgreementSelectValue}
                   onChange={(val) => {
-                    setNewInstitutionId(val);
-                    const instObj = institutions.find(i => String(i.id) === val);
-                    setNewMedicalCenter(instObj ? instObj.name : '');
+                    setNewAgreementSelectValue(val);
+                    const covObj = allConvenios.find(c => c.empresa === val);
+                    if (covObj) {
+                      const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                      const instObj = institutions.find(i => normalize(i.name) === normalize(covObj.medical_center));
+                      if (instObj) {
+                        setNewInstitutionId(String(instObj.id));
+                        setNewMedicalCenter(instObj.name);
+                      }
+                      const agreementName = covObj.empresa.includes(': ') ? covObj.empresa.split(': ')[1] : covObj.empresa;
+                      setNewAgreementType(agreementName);
+                    } else {
+                      setNewInstitutionId('');
+                      setNewMedicalCenter('');
+                      setNewAgreementType('');
+                    }
                   }}
                   options={[
-                    { value: '', label: 'Seleccione una institución...' },
-                    ...institutions.map(i => ({ value: String(i.id), label: i.name }))
+                    { value: '', label: 'Seleccione un convenio...' },
+                    ...allConvenios.map(c => ({
+                      value: c.empresa,
+                      label: c.empresa.includes(': ') ? c.empresa.replace(': ', ' - ') : c.empresa
+                    }))
                   ]}
                   disabled={loading}
+                />
+                <input type="hidden" name="agreement_type" value={newAgreementType} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="institution_id">Institución Asignada Automatically</label>
+                <CustomSelect
+                  value={newInstitutionId}
+                  onChange={() => {}}
+                  options={[
+                    { value: '', label: 'Seleccione convenio para asignar institución...' },
+                    ...institutions.map(i => ({ value: String(i.id), label: i.name }))
+                  ]}
+                  disabled={true}
                 />
                 <input type="hidden" name="institution_id" value={newInstitutionId} />
                 <input type="hidden" name="medical_center" value={newMedicalCenter} />
               </div>
-
-              {newMedicalCenter && newAgreements.length > 0 && (
-                <div className="form-group">
-                  <label className="form-label" htmlFor="agreement_type">Convenio Asignado</label>
-                  <CustomSelect
-                    value={newAgreementType}
-                    onChange={setNewAgreementType}
-                    options={newAgreements}
-                    disabled={loading}
-                  />
-                  <input type="hidden" name="agreement_type" value={newAgreementType} />
-                </div>
-              )}
 
               <div className="form-group">
                 <label className="form-label" htmlFor="professional_title">Profesión / Título</label>
@@ -864,37 +965,54 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                     Institución y Cargo
                   </h4>
                 </div>
+                 <div className="form-group">
+                  <label className="form-label" htmlFor="edit_agreement_select">Convenio Asignado</label>
+                  <CustomSelect
+                    value={editAgreementSelectValue}
+                    onChange={(val) => {
+                      setEditAgreementSelectValue(val);
+                      const covObj = allConvenios.find(c => c.empresa === val);
+                      if (covObj) {
+                        const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                        const instObj = institutions.find(i => normalize(i.name) === normalize(covObj.medical_center));
+                        if (instObj) {
+                          setEditInstitutionId(String(instObj.id));
+                          setEditMedicalCenter(instObj.name);
+                        }
+                        const agreementName = covObj.empresa.includes(': ') ? covObj.empresa.split(': ')[1] : covObj.empresa;
+                        setEditAgreementType(agreementName);
+                      } else {
+                        setEditInstitutionId('');
+                        setEditMedicalCenter('');
+                        setEditAgreementType('');
+                      }
+                    }}
+                    options={[
+                      { value: '', label: 'Seleccione un convenio...' },
+                      ...allConvenios.map(c => ({
+                        value: c.empresa,
+                        label: c.empresa.includes(': ') ? c.empresa.replace(': ', ' - ') : c.empresa
+                      }))
+                    ]}
+                    disabled={loading}
+                  />
+                  <input type="hidden" name="agreement_type" value={editAgreementType} />
+                </div>
+
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit_institution_id">Institución Asignada</label>
                   <CustomSelect
                     value={editInstitutionId}
-                    onChange={(val) => {
-                      setEditInstitutionId(val);
-                      const instObj = institutions.find(i => String(i.id) === val);
-                      setEditMedicalCenter(instObj ? instObj.name : '');
-                    }}
+                    onChange={() => {}}
                     options={[
-                      { value: '', label: 'Ninguno' },
+                      { value: '', label: 'Seleccione convenio para asignar institución...' },
                       ...institutions.map(i => ({ value: String(i.id), label: i.name }))
                     ]}
-                    disabled={loading}
+                    disabled={true}
                   />
                   <input type="hidden" name="institution_id" value={editInstitutionId} />
                   <input type="hidden" name="medical_center" value={editMedicalCenter} />
                 </div>
-
-                {editMedicalCenter && editAgreements.length > 0 && (
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="edit_agreement_type">Convenio Asignado</label>
-                    <CustomSelect
-                      value={editAgreementType}
-                      onChange={setEditAgreementType}
-                      options={editAgreements}
-                      disabled={loading}
-                    />
-                    <input type="hidden" name="agreement_type" value={editAgreementType} />
-                  </div>
-                )}
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit_professional_title">Profesión / Título</label>

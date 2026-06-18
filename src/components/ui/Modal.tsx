@@ -46,7 +46,6 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '60
         justifyContent: 'center',
         padding: '20px'
       }}
-      onClick={onClose}
     >
       <div 
         className="glass-panel animate-fade-in"

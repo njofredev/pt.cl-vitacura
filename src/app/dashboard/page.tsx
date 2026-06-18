@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { redirect } from 'next/navigation';
 import TrendChartClient from '@/components/TrendChartClient';
+import DashboardMetricsClient from '@/components/DashboardMetricsClient';
 
 export default async function DashboardPage() {
   const user = await getSession();
@@ -217,9 +218,11 @@ export default async function DashboardPage() {
 
   // 3. Total de Instituciones Query
   let totalInstitutions = 0;
+  let institutionsDetail: any[] = [];
   try {
-    const instCountRes = await pool.query('SELECT COUNT(*) FROM institutions');
-    totalInstitutions = parseInt(instCountRes.rows[0].count) || 0;
+    const instRes = await pool.query('SELECT name, quota_dental, used_dental, quota_xray, used_xray FROM institutions ORDER BY name ASC');
+    institutionsDetail = instRes.rows;
+    totalInstitutions = instRes.rows.length;
   } catch (err) {
     console.error('Error fetching institutions count:', err);
   }
@@ -459,126 +462,16 @@ export default async function DashboardPage() {
         {/* LEFT COLUMN: Telemetry & Records */}
         <div className="dashboard-main-col">
 
-          {/* Row of SQL-Driven KPI Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '20px'
-          }}>
-            {/* KPI 1: Volumen Total */}
-            <div className="telemetry-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Volumen Total
-                </span>
-                <div style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.08)', padding: '8px', borderRadius: '50%' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '2.4rem', fontWeight: 850, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', color: 'hsl(var(--foreground-hsl))' }}>
-                  {stats.totalCases}
-                </span>
-                <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 600 }}>
-                  {isDemoData ? 'Casos de demostración clínica' : 'Derivaciones ingresadas'}
-                </span>
-              </div>
-            </div>
-
-            {/* KPI 2: Procedimientos Dentales */}
-            <div className="telemetry-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Procedimientos Dentales
-                </span>
-                <div style={{ color: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.08)', padding: '8px', borderRadius: '50%' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2.5 3.19-2.5 5.5h20c0-2.31-1-4.24-2.5-5.5M12 2C7.58 2 4 5.58 4 10c0 3.5 2.5 6 4.5 7.5l3.5 3.5 3.5-3.5c2-1.5 4.5-4 4.5-7.5 0-4.42-3.58-8-8-8z"/></svg>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                <span style={{
-                  fontSize: '2.4rem',
-                  fontWeight: 850,
-                  fontFamily: 'var(--font-display)',
-                  color: 'hsl(var(--foreground-hsl))',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  lineHeight: '2.4rem',
-                  height: '2.4rem'
-                }}>
-                  {quotaDentalUsed} / {quotaDentalTotal}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: 750 }}>
-                  {Math.max(0, quotaDentalTotal - quotaDentalUsed)} disponibles
-                </span>
-              </div>
-            </div>
-
-            {/* KPI 3: Prestaciones de Radiología */}
-            <div className="telemetry-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Prestaciones de Radiología
-                </span>
-                <div style={{ color: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.08)', padding: '8px', borderRadius: '50%' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                <span style={{
-                  fontSize: '2.4rem',
-                  fontWeight: 850,
-                  fontFamily: 'var(--font-display)',
-                  color: 'hsl(var(--foreground-hsl))',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  lineHeight: '2.4rem',
-                  height: '2.4rem'
-                }}>
-                  {quotaXrayUsed} / {quotaXrayTotal}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#a855f7', fontWeight: 750 }}>
-                  {Math.max(0, quotaXrayTotal - quotaXrayUsed)} disponibles
-                </span>
-              </div>
-            </div>
-
-            {/* KPI 4: Instituciones Inscritas (Admin) / Casos Pendientes (Internal & External) */}
-            <div className="telemetry-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {user.role === 'admin' ? 'Instituciones Inscritas' : 'Casos Pendientes'}
-                </span>
-                <div style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.08)', padding: '8px', borderRadius: '50%' }}>
-                  {user.role === 'admin' ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  )}
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                <span style={{
-                  fontSize: '2.4rem',
-                  fontWeight: 850,
-                  fontFamily: 'var(--font-display)',
-                  color: 'hsl(var(--foreground-hsl))',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  lineHeight: '2.4rem',
-                  height: '2.4rem'
-                }}>
-                  {user.role === 'admin' ? totalInstitutions : stats.pendingCases}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 700 }}>
-                  {user.role === 'admin' ? 'Establecimientos activos' : 'Esperando revisión'}
-                </span>
-              </div>
-            </div>
-          </div>
+          <DashboardMetricsClient
+            stats={stats}
+            userRole={user.role}
+            quotaDentalUsed={quotaDentalUsed}
+            quotaDentalTotal={quotaDentalTotal}
+            quotaXrayUsed={quotaXrayUsed}
+            quotaXrayTotal={quotaXrayTotal}
+            totalInstitutions={totalInstitutions}
+            institutions={institutionsDetail}
+          />
 
           {/* Recent Registrations Table */}
           <div className="glass-panel" style={{ padding: '30px' }}>
