@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction, getDentalinkPatientEvolutionsAction, getDentalinkTreatmentDetailsAction, getDentalinkTreatmentEvolutionsAction } from '@/app/actions/dentalinkActions';
+import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction, getDentalinkPatientEvolutionsAction, getDentalinkTreatmentDetailsAction, getDentalinkTreatmentEvolutionsAction, getDentalinkDentistasAction } from '@/app/actions/dentalinkActions';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 import { updateCaseStatusAction } from '@/app/actions/caseActions';
 import { formatRUT, formatDate } from '@/lib/utils';
@@ -108,6 +108,8 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const [newTreatmentDentistaId, setNewTreatmentDentistaId] = useState<string>('');
   const [newTreatmentComentario, setNewTreatmentComentario] = useState<string>('');
   const [newTreatmentFinalizado, setNewTreatmentFinalizado] = useState<number>(0); // Default to Active (0)
+  const [dentistas, setDentistas] = useState<any[]>([]);
+  const [loadingDentistas, setLoadingDentistas] = useState<boolean>(false);
 
   // Service assignment states (Step 3)
   const [selectedTreatmentForServices, setSelectedTreatmentForServices] = useState<any | null>(null);
@@ -117,13 +119,23 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
 
   // Fetch local aranceles on mount
   React.useEffect(() => {
-    async function loadAranceles() {
+    async function loadInitialData() {
       const res = await getOdontogramPrestacionesAction();
       if (res.success && res.data) {
         setLocalAranceles(res.data);
       }
+      
+      setLoadingDentistas(true);
+      const dentRes = await getDentalinkDentistasAction();
+      setLoadingDentistas(false);
+      if (dentRes.success && dentRes.dentistas) {
+        setDentistas(dentRes.dentistas);
+        if (dentRes.dentistas.length > 0) {
+          setNewTreatmentDentistaId(String(dentRes.dentistas[0].id));
+        }
+      }
     }
-    loadAranceles();
+    loadInitialData();
   }, []);
 
   const getPrestacionIdFromName = (serviceString: string) => {
@@ -1514,21 +1526,39 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                           }}
                         >
                           <option value={2} style={{ backgroundColor: 'black' }}>Vitacura (id: 2)</option>
-                          <option value={1} style={{ backgroundColor: 'black' }}>Los Tribunales (id: 1)</option>
                         </select>
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label" htmlFor="new_treatment_dentista">ID del Dentista *</label>
-                        <input 
-                          type="number" 
+                        <label className="form-label" htmlFor="new_treatment_dentista">Dentista *</label>
+                        <select 
                           id="new_treatment_dentista"
-                          className="form-input" 
+                          className="form-select" 
                           required
                           value={newTreatmentDentistaId} 
                           onChange={e => setNewTreatmentDentistaId(e.target.value)} 
-                          placeholder="Ej: 626"
-                        />
+                          style={{
+                            backgroundColor: 'rgba(0,0,0,0.2)',
+                            color: 'inherit',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '8px 12px',
+                            width: '100%',
+                            height: '42px'
+                          }}
+                        >
+                          {loadingDentistas ? (
+                            <option value="" style={{ backgroundColor: 'black' }}>Cargando dentistas...</option>
+                          ) : dentistas.length === 0 ? (
+                            <option value="" style={{ backgroundColor: 'black' }}>No hay dentistas disponibles</option>
+                          ) : (
+                            dentistas.map((d: any) => (
+                              <option key={d.id} value={d.id} style={{ backgroundColor: 'black' }}>
+                                {d.nombre} {d.apellidos}
+                              </option>
+                            ))
+                          )}
+                        </select>
                       </div>
 
                       <div className="form-group">

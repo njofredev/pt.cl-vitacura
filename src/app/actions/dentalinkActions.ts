@@ -590,5 +590,48 @@ export async function getDentalinkConveniosAction() {
   }
 }
 
+export async function getDentalinkDentistasAction() {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: 'No autorizado' };
+  }
+
+  const apiToken = process.env.DENTALINK_API_TOKEN || '';
+  if (!apiToken) {
+    return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
+  }
+
+  const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
+  
+  const qObject = { habilitado: { eq: 1 } };
+  const url = `https://api.dentalink.healthatom.com/api/v1/dentistas?q=${encodeURIComponent(JSON.stringify(qObject))}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': formattedToken,
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `Error del servidor Dentalink: ${response.statusText}`, details: errorText };
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      dentistas: result.data || []
+    };
+  } catch (error: any) {
+    console.error('Error fetching Dentalink dentistas:', error);
+    return { success: false, error: error.message || 'Error de red' };
+  }
+}
+
+
 
 
