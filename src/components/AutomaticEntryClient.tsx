@@ -110,6 +110,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const [newTreatmentFinalizado, setNewTreatmentFinalizado] = useState<number>(0); // Default to Active (0)
   const [dentistas, setDentistas] = useState<any[]>([]);
   const [loadingDentistas, setLoadingDentistas] = useState<boolean>(false);
+  const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
 
   // Service assignment states (Step 3)
   const [selectedTreatmentForServices, setSelectedTreatmentForServices] = useState<any | null>(null);
@@ -277,6 +278,22 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
           const treatmentsList = resTreatments.treatments || [];
           setWizardTreatments(treatmentsList);
           
+          // Check if treatment was deleted in Dentalink
+          if (c.status === 'sincronizado' && treatmentsList.length === 0) {
+            try {
+              await updateCaseStatusAction(
+                c.id, 
+                'en_tratamiento', 
+                'Tratamiento eliminado en Dentalink. Revertido automáticamente para re-sincronización.'
+              );
+              c.status = 'en_tratamiento';
+              setCases(prev => prev.map(item => item.id === c.id ? { ...item, status: 'en_tratamiento' } : item));
+              setWizardCase({ ...c, status: 'en_tratamiento' });
+            } catch (statusErr) {
+              console.error("Error reverting case status:", statusErr);
+            }
+          }
+          
           // Fetch treatment details and evolutions
           const detailsMap: Record<number, any[]> = {};
           const evolutionsMap: Record<number, any[]> = {};
@@ -355,11 +372,24 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
       return null;
     };
 
+    // Build a pool of existing linked prestacion IDs that we can consume to avoid duplicates
+    const existingDetails = wizardTreatmentDetails[treatment.id] || [];
+    const linkedPool = [...existingDetails.map((d: any) => d.id_prestacion)];
+
     // Attempt to link each service automatically
     for (const serviceText of parsed) {
       const prestacionId = getPrestacionId(serviceText);
       if (!prestacionId) {
         failedToLink.push({ service: serviceText, error: 'No se encontró la prestación en el arancel local' });
+        continue;
+      }
+
+      // Check if it's already in the pool of existing linked details
+      const poolIdx = linkedPool.indexOf(prestacionId);
+      if (poolIdx !== -1) {
+        // Already linked in Dentalink, consume from pool and skip adding again
+        linkedPool.splice(poolIdx, 1);
+        successfullyLinked.push(serviceText);
         continue;
       }
 
@@ -514,6 +544,23 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
       if (res.success) {
         const treatmentsList = res.treatments || [];
         setWizardTreatments(treatmentsList);
+        
+        // Check if treatment was deleted in Dentalink
+        if (wizardCase) {
+          if (wizardCase.status === 'sincronizado' && treatmentsList.length === 0) {
+            try {
+              await updateCaseStatusAction(
+                wizardCase.id, 
+                'en_tratamiento', 
+                'Tratamiento eliminado en Dentalink. Revertido automáticamente para re-sincronización.'
+              );
+              setCases(prev => prev.map(item => item.id === wizardCase.id ? { ...item, status: 'en_tratamiento' } : item));
+              setWizardCase(prev => prev ? { ...prev, status: 'en_tratamiento' } : null);
+            } catch (statusErr) {
+              console.error("Error reverting case status in goToTreatmentsStep:", statusErr);
+            }
+          }
+        }
         
         // Fetch treatment details and evolutions
         const detailsMap: Record<number, any[]> = {};
@@ -1493,44 +1540,9 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                       Ingrese los detalles del plan de tratamiento para registrarlo directamente en la ficha clínica de Dentalink.
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <label className="form-label" htmlFor="new_treatment_name">Nombre o Descripción del Tratamiento *</label>
-                        <input 
-                          type="text" 
-                          id="new_treatment_name"
-                          className="form-input" 
-                          required 
-                          value={newTreatmentName} 
-                          onChange={e => setNewTreatmentName(e.target.value)} 
-                          placeholder="Ej: PLAN DE TRATAMIENTO SOCIAL VITACURA"
-                        />
-                      </div>
-
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                       <div className="form-group">
-                        <label className="form-label" htmlFor="new_treatment_sucursal">Sucursal *</label>
-                        <select 
-                          id="new_treatment_sucursal"
-                          className="form-select" 
-                          value={newTreatmentSucursalId} 
-                          onChange={e => setNewTreatmentSucursalId(Number(e.target.value))}
-                          required
-                          style={{
-                            backgroundColor: 'rgba(0,0,0,0.2)',
-                            color: 'inherit',
-                            border: '1px solid var(--glass-border)',
-                            borderRadius: 'var(--radius-sm)',
-                            padding: '8px 12px',
-                            width: '100%',
-                            height: '42px'
-                          }}
-                        >
-                          <option value={2} style={{ backgroundColor: 'black' }}>Vitacura (id: 2)</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="new_treatment_dentista">Dentista *</label>
+                        <label className="form-label" htmlFor="new_treatment_dentista">Dentista a asignar *</label>
                         <select 
                           id="new_treatment_dentista"
                           className="form-select" 
@@ -1559,54 +1571,6 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                             ))
                           )}
                         </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="new_treatment_estado">Estado *</label>
-                        <select 
-                          id="new_treatment_estado"
-                          className="form-select" 
-                          value={newTreatmentFinalizado} 
-                          onChange={e => setNewTreatmentFinalizado(Number(e.target.value))}
-                          required
-                          style={{
-                            backgroundColor: 'rgba(0,0,0,0.2)',
-                            color: 'inherit',
-                            border: '1px solid var(--glass-border)',
-                            borderRadius: 'var(--radius-sm)',
-                            padding: '8px 12px',
-                            width: '100%',
-                            height: '42px'
-                          }}
-                        >
-                          <option value={0} style={{ backgroundColor: 'black' }}>Activo (0)</option>
-                          <option value={1} style={{ backgroundColor: 'black' }}>Finalizado (1)</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="new_treatment_convenio">ID del Convenio (Opcional)</label>
-                        <input 
-                          type="number" 
-                          id="new_treatment_convenio"
-                          className="form-input" 
-                          value={newTreatmentConvenioId} 
-                          onChange={e => setNewTreatmentConvenioId(Number(e.target.value))} 
-                          placeholder="Ej: 0"
-                        />
-                      </div>
-
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <label className="form-label" htmlFor="new_treatment_comentario">Comentario (Opcional)</label>
-                        <textarea 
-                          id="new_treatment_comentario"
-                          className="form-textarea" 
-                          rows={2}
-                          value={newTreatmentComentario} 
-                          onChange={e => setNewTreatmentComentario(e.target.value)} 
-                          placeholder="Ingrese algún comentario adicional para este tratamiento..."
-                          style={{ width: '100%', resize: 'vertical' }}
-                        />
                       </div>
                     </div>
 
@@ -1718,18 +1682,42 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                                   {(() => {
                                     const details = wizardTreatmentDetails[t.id] || [];
                                     if (details.length > 0) {
+                                      const isExpanded = !!expandedDetails[`${t.id}_prestations`];
                                       return (
                                         <div style={{ marginTop: '8px', padding: '6px 8px', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.15)', textAlign: 'left' }}>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#60a5fa', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            <CheckCircle2 size={12} /> Prestaciones Cargadas ({details.length})
-                                          </div>
-                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                                            {details.map((dt: any, idx: number) => (
-                                              <div key={idx} style={{ fontSize: '0.72rem', fontWeight: 500, opacity: 0.85, color: 'var(--foreground)' }}>
-                                                • {dt.nombre_prestacion || dt.prestacion?.nombre || `Prestación #${dt.id_prestacion}`}
-                                              </div>
-                                            ))}
-                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => setExpandedDetails(prev => ({ ...prev, [`${t.id}_prestations`]: !isExpanded }))}
+                                            style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'space-between',
+                                              width: '100%',
+                                              background: 'none',
+                                              border: 'none',
+                                              padding: 0,
+                                              color: '#60a5fa',
+                                              fontSize: '0.72rem',
+                                              fontWeight: 700,
+                                              textTransform: 'uppercase',
+                                              letterSpacing: '0.05em',
+                                              cursor: 'pointer'
+                                            }}
+                                          >
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                              <CheckCircle2 size={12} /> Prestaciones ({details.length})
+                                            </span>
+                                            <span style={{ fontSize: '0.65rem' }}>{isExpanded ? '▲ Ocultar' : '▼ Mostrar'}</span>
+                                          </button>
+                                          {isExpanded && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
+                                              {details.map((dt: any, idx: number) => (
+                                                <div key={idx} style={{ fontSize: '0.72rem', fontWeight: 500, opacity: 0.85, color: 'var(--foreground)' }}>
+                                                  • {dt.nombre_prestacion || dt.prestacion?.nombre || `Prestación #${dt.id_prestacion}`}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
                                         </div>
                                       );
                                     }
@@ -1743,18 +1731,42 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                                   {(() => {
                                     const evs = wizardTreatmentEvolutions[t.id] || [];
                                     if (evs.length > 0) {
+                                      const isExpanded = !!expandedDetails[`${t.id}_evolutions`];
                                       return (
                                         <div style={{ marginTop: '8px', padding: '6px 8px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', textAlign: 'left' }}>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            <Activity size={12} /> Evoluciones ({evs.length})
-                                          </div>
-                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                                            {evs.map((ev: any, idx: number) => (
-                                              <div key={idx} style={{ fontSize: '0.72rem', fontWeight: 500, opacity: 0.85, borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingTop: idx > 0 ? '4px' : '0', color: 'var(--foreground)' }}>
-                                                <span style={{ opacity: 0.6, marginRight: '4px' }}>{ev.fecha}:</span> {ev.datos}
-                                              </div>
-                                            ))}
-                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => setExpandedDetails(prev => ({ ...prev, [`${t.id}_evolutions`]: !isExpanded }))}
+                                            style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'space-between',
+                                              width: '100%',
+                                              background: 'none',
+                                              border: 'none',
+                                              padding: 0,
+                                              color: '#10b981',
+                                              fontSize: '0.72rem',
+                                              fontWeight: 700,
+                                              textTransform: 'uppercase',
+                                              letterSpacing: '0.05em',
+                                              cursor: 'pointer'
+                                            }}
+                                          >
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                              <Activity size={12} /> Evoluciones ({evs.length})
+                                            </span>
+                                            <span style={{ fontSize: '0.65rem' }}>{isExpanded ? '▲ Ocultar' : '▼ Mostrar'}</span>
+                                          </button>
+                                          {isExpanded && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
+                                              {evs.map((ev: any, idx: number) => (
+                                                <div key={idx} style={{ fontSize: '0.72rem', fontWeight: 500, opacity: 0.85, borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingTop: idx > 0 ? '4px' : '0', color: 'var(--foreground)' }}>
+                                                  <span style={{ opacity: 0.6, marginRight: '4px' }}>{ev.fecha}:</span> {ev.datos}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
                                         </div>
                                       );
                                     } else {

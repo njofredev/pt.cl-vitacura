@@ -53,7 +53,7 @@ export default function DashboardMetricsClient({
         <div className="telemetry-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Volumen Total
+              Cantidad Total
             </span>
             <div style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.08)', padding: '8px', borderRadius: '50%' }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
@@ -70,10 +70,10 @@ export default function DashboardMetricsClient({
         </div>
 
         {/* KPI 2: Procedimientos Dentales */}
-        <div 
+        <div
           className="telemetry-card"
           onClick={() => showBreakdown && setActiveModal('dental')}
-          style={{ 
+          style={{
             cursor: showBreakdown ? 'pointer' : 'default',
             border: showBreakdown ? '1px dashed rgba(59, 130, 246, 0.3)' : undefined
           }}
@@ -84,7 +84,7 @@ export default function DashboardMetricsClient({
               Procedimientos Dentales {showBreakdown && '🔍'}
             </span>
             <div style={{ color: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.08)', padding: '8px', borderRadius: '50%' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2.5 3.19-2.5 5.5h20c0-2.31-1-4.24-2.5-5.5M12 2C7.58 2 4 5.58 4 10c0 3.5 2.5 6 4.5 7.5l3.5 3.5 3.5-3.5c2-1.5 4.5-4 4.5-7.5 0-4.42-3.58-8-8-8z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2.5 3.19-2.5 5.5h20c0-2.31-1-4.24-2.5-5.5M12 2C7.58 2 4 5.58 4 10c0 3.5 2.5 6 4.5 7.5l3.5 3.5 3.5-3.5c2-1.5 4.5-4 4.5-7.5 0-4.42-3.58-8-8-8z" /></svg>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
@@ -108,10 +108,10 @@ export default function DashboardMetricsClient({
         </div>
 
         {/* KPI 3: Prestaciones de Radiología */}
-        <div 
+        <div
           className="telemetry-card"
           onClick={() => showBreakdown && setActiveModal('xray')}
-          style={{ 
+          style={{
             cursor: showBreakdown ? 'pointer' : 'default',
             border: showBreakdown ? '1px dashed rgba(168, 85, 247, 0.3)' : undefined
           }}
@@ -122,7 +122,7 @@ export default function DashboardMetricsClient({
               Prestaciones de Radiología {showBreakdown && '🔍'}
             </span>
             <div style={{ color: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.08)', padding: '8px', borderRadius: '50%' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><path d="M3 9h18M3 15h18M9 3v18M15 3v18" /></svg>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
@@ -153,9 +153,9 @@ export default function DashboardMetricsClient({
             </span>
             <div style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.08)', padding: '8px', borderRadius: '50%' }}>
               {userRole === 'admin' ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18M3 9h18M3 15h18" /></svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
               )}
             </div>
           </div>
@@ -181,9 +181,9 @@ export default function DashboardMetricsClient({
       </div>
 
       {/* Dental Breakdown Modal */}
-      <Modal 
-        isOpen={activeModal === 'dental'} 
-        onClose={() => setActiveModal('none')} 
+      <Modal
+        isOpen={activeModal === 'dental'}
+        onClose={() => setActiveModal('none')}
         title="Procedimientos Dentales Utilizados por Institución"
         maxWidth="800px"
       >
@@ -236,9 +236,9 @@ export default function DashboardMetricsClient({
       </Modal>
 
       {/* Xray Breakdown Modal */}
-      <Modal 
-        isOpen={activeModal === 'xray'} 
-        onClose={() => setActiveModal('none')} 
+      <Modal
+        isOpen={activeModal === 'xray'}
+        onClose={() => setActiveModal('none')}
         title="Prestaciones de Radiología Utilizadas por Institución"
         maxWidth="800px"
       >

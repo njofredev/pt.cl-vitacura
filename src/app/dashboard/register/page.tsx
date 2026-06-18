@@ -1679,7 +1679,7 @@ export default function RegisterCasePage() {
                     <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4', marginBottom: '8px' }}>
                       {odontogramData.treatmentNeeded || 'Sin prestaciones asignadas.'}
                     </p>
-                    
+
                     {(odontogramData.dentalCount > 0 || odontogramData.xrayCount > 0) && (
                       <div style={{
                         display: 'flex',
@@ -1975,7 +1975,7 @@ export default function RegisterCasePage() {
                     border: '1px solid rgba(16, 185, 129, 0.3)',
                     animation: 'pulse 2s infinite'
                   }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                   </div>
                   <div>
                     <h4 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#10b981' }}>¡Registro Exitoso!</h4>
@@ -2086,7 +2086,7 @@ export default function RegisterCasePage() {
           {/* Convenio y Origen */}
           <div>
             <h4 style={{ fontSize: '0.86rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '4px', color: 'hsla(var(--foreground-hsl) / 0.8)' }}>
-              🏥 Información del Convenio y Origen
+              🏥 Información General
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)' }}>
@@ -2094,7 +2094,7 @@ export default function RegisterCasePage() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" /><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" /><path d="M10 9h4" /><path d="M12 7v4" /></svg>
                 </div>
                 <div>
-                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Institución de Origen</span>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Institución</span>
                   <strong style={{ fontSize: '0.92rem' }}>{formDataObj.medicalCenter}</strong>
                 </div>
               </div>
@@ -2103,7 +2103,7 @@ export default function RegisterCasePage() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                 </div>
                 <div>
-                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Convenio Solicitado</span>
+                  <span style={{ opacity: 0.5, display: 'block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Convenio</span>
                   <strong style={{ fontSize: '0.92rem', color: 'hsl(var(--accent-hsl))' }}>{formDataObj.agreementType}</strong>
                 </div>
               </div>
@@ -2173,7 +2173,7 @@ export default function RegisterCasePage() {
                 <p style={{ margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', opacity: 0.9, lineHeight: '1.4', paddingLeft: '19px', marginBottom: '8px' }}>
                   {formDataObj.treatmentNeeded}
                 </p>
-                
+
                 {(formDataObj.dentalCount > 0 || formDataObj.xrayCount > 0) && (
                   <div style={{
                     display: 'flex',
