@@ -13,6 +13,7 @@ export interface UserSession {
   email: string;
   role: 'admin' | 'internal' | 'external';
   institutionName?: string;
+  institution_ids?: number[];
 }
 
 export async function encrypt(payload: UserSession) {
@@ -44,7 +45,7 @@ export async function getSession(): Promise<UserSession | null> {
 export async function loginUser(email: string, password: string): Promise<{ success: boolean; error?: string; user?: UserSession }> {
   try {
     const res = await pool.query(
-      `SELECT u.id, u.name, u.email, u.password_hash, u.role, u.active, i.name as institution_name 
+      `SELECT u.id, u.name, u.email, u.password_hash, u.role, u.active, u.institution_ids, i.name as institution_name 
        FROM users u 
        LEFT JOIN institutions i ON u.institution_id = i.id 
        WHERE u.email = $1`,
@@ -75,6 +76,7 @@ export async function loginUser(email: string, password: string): Promise<{ succ
       email: user.email,
       role: user.role as 'admin' | 'internal' | 'external',
       institutionName: user.institution_name || undefined,
+      institution_ids: user.institution_ids || [],
     };
 
     // Create session cookie

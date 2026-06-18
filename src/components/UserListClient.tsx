@@ -28,6 +28,7 @@ interface User {
   used_dental?: number;
   used_xray?: number;
   institution_id?: number | null;
+  institution_ids?: number[] | null;
   institution_name?: string | null;
   inst_quota_dental?: number;
   inst_quota_xray?: number;
@@ -109,6 +110,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   const [allConvenios, setAllConvenios] = useState<any[]>([]);
   const [newAgreementSelectValue, setNewAgreementSelectValue] = useState('');
   const [editAgreementSelectValue, setEditAgreementSelectValue] = useState('');
+  const [selectedNewInstIds, setSelectedNewInstIds] = useState<number[]>([]);
+  const [selectedEditInstIds, setSelectedEditInstIds] = useState<number[]>([]);
 
   useEffect(() => {
     async function loadAllConvenios() {
@@ -237,6 +240,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
         const institutionIdRaw = formData.get('institution_id') as string;
         const institution_id = institutionIdRaw ? parseInt(institutionIdRaw, 10) : null;
         const selectedInst = institutions.find(i => i.id === institution_id);
+        const institutionIdsRaw = formData.getAll('institution_ids') as string[];
+        const institution_ids = institutionIdsRaw.map(id => parseInt(id, 10)).filter(Boolean);
 
         const newUser: User = {
           id: Math.random().toString(), // temporary, they'll get the real UUID on refresh
@@ -252,6 +257,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           used_dental: 0,
           used_xray: 0,
           institution_id,
+          institution_ids: role === 'external' ? (institution_id ? [institution_id] : []) : institution_ids,
           institution_name: selectedInst ? selectedInst.name : null,
           inst_quota_dental: selectedInst ? selectedInst.quota_dental : undefined,
           inst_quota_xray: selectedInst ? selectedInst.quota_xray : undefined,
@@ -262,6 +268,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
         setNewMedicalCenter('');
         setNewAgreementType('');
         setNewInstitutionId('');
+        setSelectedNewInstIds([]);
 
         setTimeout(() => {
           setIsModalOpen(false);
@@ -310,6 +317,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
         const institutionIdRaw = formData.get('institution_id') as string;
         const institution_id = institutionIdRaw ? parseInt(institutionIdRaw, 10) : null;
         const selectedInst = institutions.find(i => i.id === institution_id);
+        const institutionIdsRaw = formData.getAll('institution_ids') as string[];
+        const institution_ids = institutionIdsRaw.map(id => parseInt(id, 10)).filter(Boolean);
 
         setUsers(users.map(u => u.id === editingUser.id ? {
           ...u,
@@ -327,6 +336,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           quota_dental,
           quota_xray,
           institution_id,
+          institution_ids: role === 'external' ? (institution_id ? [institution_id] : []) : institution_ids,
           institution_name: selectedInst ? selectedInst.name : null,
           inst_quota_dental: selectedInst ? selectedInst.quota_dental : undefined,
           inst_quota_xray: selectedInst ? selectedInst.quota_xray : undefined,
@@ -613,8 +623,15 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontSize: '0.85rem', opacity: (u.institution_name || u.medical_center) ? 0.9 : 0.5, fontWeight: (u.institution_name || u.medical_center) ? 500 : 400 }}>
-                        {u.institution_name || u.medical_center || 'No asignado'}
+                      <span style={{ fontSize: '0.85rem', opacity: (u.role === 'internal' && u.institution_ids && u.institution_ids.length > 0) || u.institution_name || u.medical_center ? 0.9 : 0.5, fontWeight: 500 }}>
+                        {u.role === 'internal' && u.institution_ids && u.institution_ids.length > 0 ? (
+                          u.institution_ids.map(id => {
+                            const inst = institutions.find(i => i.id === id);
+                            return inst ? inst.name : null;
+                          }).filter(Boolean).join(', ')
+                        ) : (
+                          u.institution_name || u.medical_center || 'No asignado'
+                        )}
                       </span>
                     </td>
                     <td>
@@ -647,6 +664,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                             setEditInstitutionId(u.institution_id ? String(u.institution_id) : '');
                             const fullKey = u.medical_center && u.agreement_type ? `${u.medical_center}: ${u.agreement_type}` : '';
                             setEditAgreementSelectValue(fullKey);
+                            setSelectedEditInstIds(u.institution_ids || (u.institution_id ? [u.institution_id] : []));
                             setIsEditModalOpen(true);
                           }}
                           className="btn btn-primary"
@@ -802,54 +820,94 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                   Institución y Cargo
                 </h4>
               </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="agreement_select">Convenio Asignado</label>
-                <CustomSelect
-                  value={newAgreementSelectValue}
-                  onChange={(val) => {
-                    setNewAgreementSelectValue(val);
-                    const covObj = allConvenios.find(c => c.empresa === val);
-                    if (covObj) {
-                      const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-                      const instObj = institutions.find(i => normalize(i.name) === normalize(covObj.medical_center));
-                      if (instObj) {
-                        setNewInstitutionId(String(instObj.id));
-                        setNewMedicalCenter(instObj.name);
-                      }
-                      const agreementName = covObj.empresa.includes(': ') ? covObj.empresa.split(': ')[1] : covObj.empresa;
-                      setNewAgreementType(agreementName);
-                    } else {
-                      setNewInstitutionId('');
-                      setNewMedicalCenter('');
-                      setNewAgreementType('');
-                    }
-                  }}
-                  options={[
-                    { value: '', label: 'Seleccione un convenio...' },
-                    ...allConvenios.map(c => ({
-                      value: c.empresa,
-                      label: c.empresa.includes(': ') ? c.empresa.replace(': ', ' - ') : c.empresa
-                    }))
-                  ]}
-                  disabled={loading}
-                />
-                <input type="hidden" name="agreement_type" value={newAgreementType} />
-              </div>
+              {newRole === 'external' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="agreement_select">Convenio Asignado</label>
+                    <CustomSelect
+                      value={newAgreementSelectValue}
+                      onChange={(val) => {
+                        setNewAgreementSelectValue(val);
+                        const covObj = allConvenios.find(c => c.empresa === val);
+                        if (covObj) {
+                          const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                          const instObj = institutions.find(i => normalize(i.name) === normalize(covObj.medical_center));
+                          if (instObj) {
+                            setNewInstitutionId(String(instObj.id));
+                            setNewMedicalCenter(instObj.name);
+                          }
+                          const agreementName = covObj.empresa.includes(': ') ? covObj.empresa.split(': ')[1] : covObj.empresa;
+                          setNewAgreementType(agreementName);
+                        } else {
+                          setNewInstitutionId('');
+                          setNewMedicalCenter('');
+                          setNewAgreementType('');
+                        }
+                      }}
+                      options={[
+                        { value: '', label: 'Seleccione un convenio...' },
+                        ...allConvenios.map(c => ({
+                          value: c.empresa,
+                          label: c.empresa.includes(': ') ? c.empresa.replace(': ', ' - ') : c.empresa
+                        }))
+                      ]}
+                      disabled={loading}
+                    />
+                    <input type="hidden" name="agreement_type" value={newAgreementType} />
+                  </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="institution_id">Institución Asignada Automatically</label>
-                <CustomSelect
-                  value={newInstitutionId}
-                  onChange={() => {}}
-                  options={[
-                    { value: '', label: 'Seleccione convenio para asignar institución...' },
-                    ...institutions.map(i => ({ value: String(i.id), label: i.name }))
-                  ]}
-                  disabled={true}
-                />
-                <input type="hidden" name="institution_id" value={newInstitutionId} />
-                <input type="hidden" name="medical_center" value={newMedicalCenter} />
-              </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="institution_id">Institución Asignada Automatically</label>
+                    <CustomSelect
+                      value={newInstitutionId}
+                      onChange={() => {}}
+                      options={[
+                        { value: '', label: 'Seleccione convenio para asignar institución...' },
+                        ...institutions.map(i => ({ value: String(i.id), label: i.name }))
+                      ]}
+                      disabled={true}
+                    />
+                    <input type="hidden" name="institution_id" value={newInstitutionId} />
+                    <input type="hidden" name="medical_center" value={newMedicalCenter} />
+                  </div>
+                </>
+              )}
+
+              {newRole === 'internal' && (
+                <div className="form-group">
+                  <label className="form-label">Instituciones para Revisar *</label>
+                  <div style={{
+                    maxHeight: '150px',
+                    overflowY: 'auto',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                  }}>
+                    {institutions.map((inst) => (
+                      <label key={inst.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem' }}>
+                        <input 
+                          type="checkbox" 
+                          name="institution_ids" 
+                          value={inst.id} 
+                          checked={selectedNewInstIds.includes(inst.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedNewInstIds([...selectedNewInstIds, inst.id]);
+                            } else {
+                              setSelectedNewInstIds(selectedNewInstIds.filter(id => id !== inst.id));
+                            }
+                          }}
+                        />
+                        {inst.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label" htmlFor="professional_title">Profesión / Título</label>
@@ -965,54 +1023,94 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                     Institución y Cargo
                   </h4>
                 </div>
-                 <div className="form-group">
-                  <label className="form-label" htmlFor="edit_agreement_select">Convenio Asignado</label>
-                  <CustomSelect
-                    value={editAgreementSelectValue}
-                    onChange={(val) => {
-                      setEditAgreementSelectValue(val);
-                      const covObj = allConvenios.find(c => c.empresa === val);
-                      if (covObj) {
-                        const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-                        const instObj = institutions.find(i => normalize(i.name) === normalize(covObj.medical_center));
-                        if (instObj) {
-                          setEditInstitutionId(String(instObj.id));
-                          setEditMedicalCenter(instObj.name);
-                        }
-                        const agreementName = covObj.empresa.includes(': ') ? covObj.empresa.split(': ')[1] : covObj.empresa;
-                        setEditAgreementType(agreementName);
-                      } else {
-                        setEditInstitutionId('');
-                        setEditMedicalCenter('');
-                        setEditAgreementType('');
-                      }
-                    }}
-                    options={[
-                      { value: '', label: 'Seleccione un convenio...' },
-                      ...allConvenios.map(c => ({
-                        value: c.empresa,
-                        label: c.empresa.includes(': ') ? c.empresa.replace(': ', ' - ') : c.empresa
-                      }))
-                    ]}
-                    disabled={loading}
-                  />
-                  <input type="hidden" name="agreement_type" value={editAgreementType} />
-                </div>
+                {editRole === 'external' && (
+                  <>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="edit_agreement_select">Convenio Asignado</label>
+                      <CustomSelect
+                        value={editAgreementSelectValue}
+                        onChange={(val) => {
+                          setEditAgreementSelectValue(val);
+                          const covObj = allConvenios.find(c => c.empresa === val);
+                          if (covObj) {
+                            const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                            const instObj = institutions.find(i => normalize(i.name) === normalize(covObj.medical_center));
+                            if (instObj) {
+                              setEditInstitutionId(String(instObj.id));
+                              setEditMedicalCenter(instObj.name);
+                            }
+                            const agreementName = covObj.empresa.includes(': ') ? covObj.empresa.split(': ')[1] : covObj.empresa;
+                            setEditAgreementType(agreementName);
+                          } else {
+                            setEditInstitutionId('');
+                            setEditMedicalCenter('');
+                            setEditAgreementType('');
+                          }
+                        }}
+                        options={[
+                          { value: '', label: 'Seleccione un convenio...' },
+                          ...allConvenios.map(c => ({
+                            value: c.empresa,
+                            label: c.empresa.includes(': ') ? c.empresa.replace(': ', ' - ') : c.empresa
+                          }))
+                        ]}
+                        disabled={loading}
+                      />
+                      <input type="hidden" name="agreement_type" value={editAgreementType} />
+                    </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="edit_institution_id">Institución Asignada</label>
-                  <CustomSelect
-                    value={editInstitutionId}
-                    onChange={() => {}}
-                    options={[
-                      { value: '', label: 'Seleccione convenio para asignar institución...' },
-                      ...institutions.map(i => ({ value: String(i.id), label: i.name }))
-                    ]}
-                    disabled={true}
-                  />
-                  <input type="hidden" name="institution_id" value={editInstitutionId} />
-                  <input type="hidden" name="medical_center" value={editMedicalCenter} />
-                </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="edit_institution_id">Institución Asignada</label>
+                      <CustomSelect
+                        value={editInstitutionId}
+                        onChange={() => {}}
+                        options={[
+                          { value: '', label: 'Seleccione convenio para asignar institución...' },
+                          ...institutions.map(i => ({ value: String(i.id), label: i.name }))
+                        ]}
+                        disabled={true}
+                      />
+                      <input type="hidden" name="institution_id" value={editInstitutionId} />
+                      <input type="hidden" name="medical_center" value={editMedicalCenter} />
+                    </div>
+                  </>
+                )}
+
+                {editRole === 'internal' && (
+                  <div className="form-group">
+                    <label className="form-label">Instituciones para Revisar *</label>
+                    <div style={{
+                      maxHeight: '150px',
+                      overflowY: 'auto',
+                      border: '1px solid var(--glass-border)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '10px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                    }}>
+                      {institutions.map((inst) => (
+                        <label key={inst.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem' }}>
+                          <input 
+                            type="checkbox" 
+                            name="institution_ids" 
+                            value={inst.id} 
+                            checked={selectedEditInstIds.includes(inst.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedEditInstIds([...selectedEditInstIds, inst.id]);
+                              } else {
+                                setSelectedEditInstIds(selectedEditInstIds.filter(id => id !== inst.id));
+                              }
+                            }}
+                          />
+                          {inst.name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit_professional_title">Profesión / Título</label>

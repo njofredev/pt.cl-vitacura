@@ -57,10 +57,24 @@ export default async function DashboardPage() {
       recentCases = recentRes.rows;
 
     } else if (user.role === 'internal') {
-      const casesCountRes = await pool.query('SELECT COUNT(*) FROM cases');
+      const userRes = await pool.query('SELECT institution_ids FROM users WHERE id = $1', [user.id]);
+      const assignedInstIds = userRes.rows[0]?.institution_ids || [];
+
+      const casesCountRes = await pool.query(`
+        SELECT COUNT(*) 
+        FROM cases c 
+        JOIN users u ON c.registered_by = u.id
+        WHERE u.institution_id = ANY($1::INTEGER[])
+      `, [assignedInstIds]);
       stats.totalCases = parseInt(casesCountRes.rows[0].count);
 
-      const statusRes = await pool.query('SELECT status, COUNT(*) FROM cases GROUP BY status');
+      const statusRes = await pool.query(`
+        SELECT c.status, COUNT(*) 
+        FROM cases c 
+        JOIN users u ON c.registered_by = u.id
+        WHERE u.institution_id = ANY($1::INTEGER[])
+        GROUP BY c.status
+      `, [assignedInstIds]);
       statusRes.rows.forEach((row: any) => {
         if (row.status === 'ingresado') stats.pendingCases = parseInt(row.count);
         if (row.status === 'agendado') stats.inRevisionCases = parseInt(row.count);
@@ -71,16 +85,17 @@ export default async function DashboardPage() {
       const recentRes = await pool.query(`
         WITH global_cases AS (
           SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name,
+                 u.institution_id as registered_by_institution_id,
                  ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
           FROM cases c 
           JOIN persons p ON c.person_id = p.id 
           LEFT JOIN users u ON c.registered_by = u.id
         )
         SELECT * FROM global_cases
-        WHERE status = 'ingresado'
+        WHERE status = 'ingresado' AND registered_by_institution_id = ANY($1::INTEGER[])
         ORDER BY created_at DESC 
         LIMIT 5
-      `);
+      `, [assignedInstIds]);
       recentCases = recentRes.rows;
 
     } else if (user.role === 'external') {
@@ -152,8 +167,22 @@ export default async function DashboardPage() {
         quotaXrayTotal = parseInt(quotaRes.rows[0].quota_xray) || 0;
         quotaXrayUsed = parseInt(quotaRes.rows[0].used_xray) || 0;
       }
+    } else if (user.role === 'internal') {
+      const quotaRes = await pool.query(
+        `SELECT SUM(quota_dental) as quota_dental, SUM(used_dental) as used_dental, 
+                SUM(quota_xray) as quota_xray, SUM(used_xray) as used_xray 
+         FROM institutions 
+         WHERE id = ANY((SELECT institution_ids FROM users WHERE id = $1))`,
+        [user.id]
+      );
+      if (quotaRes.rows.length > 0) {
+        quotaDentalTotal = parseInt(quotaRes.rows[0].quota_dental) || 0;
+        quotaDentalUsed = parseInt(quotaRes.rows[0].used_dental) || 0;
+        quotaXrayTotal = parseInt(quotaRes.rows[0].quota_xray) || 0;
+        quotaXrayUsed = parseInt(quotaRes.rows[0].used_xray) || 0;
+      }
     } else {
-      // admin or internal: sum of all institutions
+      // admin: sum of all institutions
       const quotaRes = await pool.query(
         "SELECT SUM(quota_dental) as quota_dental, SUM(used_dental) as used_dental, SUM(quota_xray) as quota_xray, SUM(used_xray) as used_xray FROM institutions"
       );
@@ -230,16 +259,28 @@ export default async function DashboardPage() {
   // 4. Fetch all case dates for interactive client-side Trend Chart
   let caseDates: string[] = [];
   try {
-    const datesRes = await pool.query(`
+    let queryStr = `
       SELECT c.created_at
       FROM cases c
-      ${user.role === 'external' ? `
-        JOIN users u ON c.registered_by = u.id
+      JOIN users u ON c.registered_by = u.id
+    `;
+    let queryParams: any[] = [];
+
+    if (user.role === 'external') {
+      queryStr += `
         WHERE u.institution_id = (SELECT institution_id FROM users WHERE id = $1)
            OR (c.registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
-      ` : ''}
-      ORDER BY c.created_at ASC
-    `, user.role === 'external' ? [user.id] : []);
+      `;
+      queryParams = [user.id];
+    } else if (user.role === 'internal') {
+      queryStr += `
+        WHERE u.institution_id = ANY((SELECT institution_ids FROM users WHERE id = $1))
+      `;
+      queryParams = [user.id];
+    }
+
+    queryStr += ` ORDER BY c.created_at ASC `;
+    const datesRes = await pool.query(queryStr, queryParams);
     caseDates = datesRes.rows.map((row: any) => new Date(row.created_at).toISOString());
   } catch (err) {
     console.error('Error fetching case dates for trend:', err);
@@ -261,19 +302,40 @@ export default async function DashboardPage() {
   // 6. Commune distribution calculation
   let communeData: { label: string; count: number; color: string }[] = [];
   try {
-    const communeRes = await pool.query(`
+    let queryStr = `
       SELECT p.commune as label, COUNT(c.id) as count
       FROM cases c
       JOIN persons p ON c.person_id = p.id
-      ${user.role === 'external' ? `
-        JOIN users u ON c.registered_by = u.id
+      JOIN users u ON c.registered_by = u.id
+    `;
+    let queryParams: any[] = [];
+
+    if (user.role === 'external') {
+      queryStr += `
         WHERE u.institution_id = (SELECT institution_id FROM users WHERE id = $1)
            OR (c.registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
-      ` : ''}
+      `;
+      queryParams = [user.id];
+    } else if (user.role === 'internal') {
+      queryStr += `
+        WHERE u.institution_id = ANY((SELECT institution_ids FROM users WHERE id = $1))
+      `;
+      queryParams = [user.id];
+    } else {
+      queryStr = `
+        SELECT p.commune as label, COUNT(c.id) as count
+        FROM cases c
+        JOIN persons p ON c.person_id = p.id
+      `;
+    }
+
+    queryStr += `
       GROUP BY p.commune
       ORDER BY count DESC
       LIMIT 4
-    `, user.role === 'external' ? [user.id] : []);
+    `;
+
+    const communeRes = await pool.query(queryStr, queryParams);
 
     communeData = communeRes.rows.map((row: any) => ({
       label: row.label,

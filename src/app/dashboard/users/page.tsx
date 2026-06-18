@@ -25,7 +25,7 @@ export default async function UsersPage() {
              u.professional_title, u.professional_position, u.professional_email,
              u.professional_address, u.professional_website, u.professional_phone,
              u.medical_center, u.agreement_type, u.quota_dental, u.quota_xray, u.used_dental, u.used_xray,
-             u.institution_id, i.name as institution_name,
+             u.institution_id, u.institution_ids, i.name as institution_name,
              i.quota_dental as inst_quota_dental, i.quota_xray as inst_quota_xray,
              i.used_dental as inst_used_dental, i.used_xray as inst_used_xray
       FROM users u

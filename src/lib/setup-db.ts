@@ -64,6 +64,7 @@ async function setup() {
         used_dental INT DEFAULT 0,
         used_xray INT DEFAULT 0,
         institution_id INT REFERENCES institutions(id) ON DELETE SET NULL,
+        institution_ids INTEGER[] DEFAULT '{}',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
