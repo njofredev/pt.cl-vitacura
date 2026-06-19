@@ -160,6 +160,14 @@ export default function Sidebar({ user }: SidebarProps) {
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       )
+    },
+    {
+      name: 'Ayuda y Guía',
+      path: '/dashboard/help',
+      roles: ['admin', 'internal', 'external'],
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      )
     }
   ];
 
@@ -173,9 +181,9 @@ export default function Sidebar({ user }: SidebarProps) {
   });
 
   const roleLabels = {
-    admin: 'Administrador General',
-    internal: 'Administrativo Interno',
-    external: 'Profesional',
+    admin: 'Admin',
+    internal: 'Interno',
+    external: 'Externo',
   };
 
   return (

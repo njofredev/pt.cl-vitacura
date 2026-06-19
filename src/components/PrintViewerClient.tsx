@@ -26,6 +26,8 @@ interface CaseData {
   registered_by_name?: string;
   dental_count?: number;
   xray_count?: number;
+  yearly_correlative?: number | string;
+  created_at?: string | Date;
 }
 
 export default function PrintViewerClient({ caseData }: { caseData: CaseData }) {
@@ -48,7 +50,10 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
     }, 4000);
   };
 
-  const caseNumber = caseData.id.split('-')[0].toUpperCase();
+  const caseYear = caseData.created_at ? new Date(caseData.created_at).getFullYear() : new Date().getFullYear();
+  const caseNumber = caseData.yearly_correlative 
+    ? `${String(caseData.yearly_correlative).padStart(4, '0')}-${caseYear}`
+    : caseData.id.split('-')[0].toUpperCase();
   const currentDate = new Date().toLocaleDateString('es-CL', {
     year: 'numeric',
     month: 'long',

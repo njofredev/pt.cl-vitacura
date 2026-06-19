@@ -6,7 +6,8 @@ import CustomSelect from '@/components/ui/CustomSelect';
 import { createUserAction, toggleUserStatusAction, updateUserAction } from '@/app/actions/userActions';
 import { getConveniosByMedicalCenterAction, syncDentalinkConveniosAction, getAllConveniosAction } from '@/app/actions/convenioActions';
 import { getInstitutionsAction, createInstitutionAction, updateInstitutionAction, deleteInstitutionAction } from '@/app/actions/institutionActions';
-import { Users, Building, RefreshCw } from 'lucide-react';
+import { getDentalinkConvenioDetailsAction } from '@/app/actions/dentalinkActions';
+import { Users, Building, RefreshCw, Info } from 'lucide-react';
 
 interface User {
   id: string;
@@ -64,6 +65,63 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   const [isEditInstModalOpen, setIsEditInstModalOpen] = useState(false);
   const [editingInst, setEditingInst] = useState<Institution | null>(null);
 
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedInstForDetails, setSelectedInstForDetails] = useState<Institution | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [convenioDetailsList, setConvenioDetailsList] = useState<any[]>([]);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  async function handleShowDetails(inst: Institution) {
+    setSelectedInstForDetails(inst);
+    setIsDetailsModalOpen(true);
+    setLoadingDetails(true);
+    setDetailsError(null);
+    setConvenioDetailsList([]);
+
+    try {
+      const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      const matches = allConvenios.filter(c => normalize(c.medical_center) === normalize(inst.name));
+
+      if (matches.length === 0) {
+        setDetailsError('No se encontraron convenios asociados en la base de datos local para esta institución. Intente sincronizar.');
+        setLoadingDetails(false);
+        return;
+      }
+
+      const detailsPromises = matches.map(async (match) => {
+        if (!match.id_dentalink) {
+          return {
+            success: false,
+            error: `El convenio "${match.empresa}" no tiene un ID de Dentalink registrado. Intente sincronizar con Dentalink.`,
+            localData: match
+          };
+        }
+        const res = await getDentalinkConvenioDetailsAction(match.id_dentalink);
+        if (res.success && res.convenio) {
+          return {
+            success: true,
+            convenio: res.convenio,
+            localData: match
+          };
+        } else {
+          return {
+            success: false,
+            error: res.error || `Error al obtener detalles del convenio desde Dentalink.`,
+            localData: match
+          };
+        }
+      });
+
+      const results = await Promise.all(detailsPromises);
+      setConvenioDetailsList(results);
+    } catch (err: any) {
+      console.error(err);
+      setDetailsError('Error de red al obtener los detalles del convenio.');
+    } finally {
+      setLoadingDetails(false);
+    }
+  }
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -112,6 +170,16 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   const [editAgreementSelectValue, setEditAgreementSelectValue] = useState('');
   const [selectedNewInstIds, setSelectedNewInstIds] = useState<number[]>([]);
   const [selectedEditInstIds, setSelectedEditInstIds] = useState<number[]>([]);
+
+  const [newProfEmail, setNewProfEmail] = useState('');
+  const [newProfPhone, setNewProfPhone] = useState('');
+  const [newProfAddress, setNewProfAddress] = useState('');
+  const [newProfWebsite, setNewProfWebsite] = useState('');
+
+  const [editProfEmail, setEditProfEmail] = useState('');
+  const [editProfPhone, setEditProfPhone] = useState('');
+  const [editProfAddress, setEditProfAddress] = useState('');
+  const [editProfWebsite, setEditProfWebsite] = useState('');
 
   useEffect(() => {
     async function loadAllConvenios() {
@@ -192,9 +260,9 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   }, [editMedicalCenter]);
 
   const roleLabels = {
-    admin: 'Administrador General',
-    internal: 'Administrativo Interno',
-    external: 'Profesional',
+    admin: 'Admin',
+    internal: 'Interno',
+    external: 'Externo',
   };
 
   async function handleToggleStatus(userId: string, currentStatus: boolean) {
@@ -269,6 +337,10 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
         setNewAgreementType('');
         setNewInstitutionId('');
         setSelectedNewInstIds([]);
+        setNewProfEmail('');
+        setNewProfPhone('');
+        setNewProfAddress('');
+        setNewProfWebsite('');
 
         setTimeout(() => {
           setIsModalOpen(false);
@@ -350,6 +422,9 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           setEditMedicalCenter('');
           setEditAgreementType('');
           setEditInstitutionId('');
+          setEditProfEmail('');
+          setEditProfPhone('');
+          setEditProfAddress('');
           setSuccess(null);
         }, 1500);
       } else {
@@ -560,10 +635,6 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
               <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
               {syncing ? 'Sincronizando...' : 'Sincronizar con Dentalink'}
             </button>
-            <button onClick={() => setIsInstModalOpen(true)} className="login-pill-btn" style={{ gap: '8px' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              Nueva Institución
-            </button>
           </div>
         )}
       </div>
@@ -665,6 +736,9 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                             const fullKey = u.medical_center && u.agreement_type ? `${u.medical_center}: ${u.agreement_type}` : '';
                             setEditAgreementSelectValue(fullKey);
                             setSelectedEditInstIds(u.institution_ids || (u.institution_id ? [u.institution_id] : []));
+                            setEditProfEmail(u.professional_email || '');
+                            setEditProfPhone(u.professional_phone || '');
+                            setEditProfAddress(u.professional_address || '');
                             setIsEditModalOpen(true);
                           }}
                           className="btn btn-primary"
@@ -732,6 +806,14 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
                         <button
+                          onClick={() => handleShowDetails(i)}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Info size={14} />
+                          Detalles
+                        </button>
+                        <button
                           onClick={() => {
                             setEditingInst(i);
                             setIsEditInstModalOpen(true);
@@ -740,13 +822,6 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                           style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981' }}
                         >
                           Editar
-                        </button>
-                        <button
-                          onClick={() => handleDeleteInstitution(i.id)}
-                          className="btn-accent"
-                          style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                        >
-                          Eliminar
                         </button>
                       </div>
                     </td>
@@ -803,9 +878,9 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                   value={newRole}
                   onChange={setNewRole}
                   options={[
-                    { value: 'internal', label: 'Administrativo Interno (Revisión y Convenios)' },
-                    { value: 'external', label: 'Profesional (Inscripción de Casos)' },
-                    { value: 'admin', label: 'Administrador General (Control Total)' }
+                    { value: 'internal', label: 'Interno (Revisión y Convenios)' },
+                    { value: 'external', label: 'Externo (Inscripción de Casos)' },
+                    { value: 'admin', label: 'Admin (Control Total)' }
                   ]}
                   disabled={loading}
                 />
@@ -826,7 +901,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                     <label className="form-label" htmlFor="agreement_select">Convenio Asignado</label>
                     <CustomSelect
                       value={newAgreementSelectValue}
-                      onChange={(val) => {
+                      onChange={async (val) => {
                         setNewAgreementSelectValue(val);
                         const covObj = allConvenios.find(c => c.empresa === val);
                         if (covObj) {
@@ -838,10 +913,24 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                           }
                           const agreementName = covObj.empresa.includes(': ') ? covObj.empresa.split(': ')[1] : covObj.empresa;
                           setNewAgreementType(agreementName);
+
+                          // Pre-fill details from Dentalink
+                          if (covObj.id_dentalink) {
+                            const res = await getDentalinkConvenioDetailsAction(covObj.id_dentalink);
+                            if (res.success && res.convenio) {
+                              const cov = res.convenio;
+                              setNewProfEmail(cov.mail_empresa || '');
+                              setNewProfPhone(cov.telefono_empresa_1 || cov.telefono_empresa_2 || '');
+                              setNewProfAddress([cov.direccion_empresa, cov.comuna_empresa, cov.ciudad_empresa].filter(Boolean).join(', '));
+                            }
+                          }
                         } else {
                           setNewInstitutionId('');
                           setNewMedicalCenter('');
                           setNewAgreementType('');
+                          setNewProfEmail('');
+                          setNewProfPhone('');
+                          setNewProfAddress('');
                         }
                       }}
                       options={[
@@ -929,28 +1018,34 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="professional_email">Correo de Contacto</label>
-                <input className="form-input" type="email" id="professional_email" name="professional_email" placeholder="Ej: jcasals@vitacura.cl" disabled={loading} />
+                <input className="form-input" type="email" id="professional_email" name="professional_email" placeholder="Ej: jcasals@vitacura.cl" value={newProfEmail} onChange={(e) => setNewProfEmail(e.target.value)} disabled={loading} />
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="professional_phone">Teléfono de Contacto</label>
-                <input className="form-input" type="text" id="professional_phone" name="professional_phone" placeholder="Ej: +56957558966" disabled={loading} />
+                <input className="form-input" type="text" id="professional_phone" name="professional_phone" placeholder="Ej: +56957558966" value={newProfPhone} onChange={(e) => setNewProfPhone(e.target.value)} disabled={loading} />
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="professional_address">Dirección de la Institución</label>
-                <input className="form-input" type="text" id="professional_address" name="professional_address" placeholder="Ej: Indiana Nº 1195, Vitacura" disabled={loading} />
+                <input className="form-input" type="text" id="professional_address" name="professional_address" placeholder="Ej: Indiana Nº 1195, Vitacura" value={newProfAddress} onChange={(e) => setNewProfAddress(e.target.value)} disabled={loading} />
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="professional_website">Sitio Web Profesional</label>
-                <input className="form-input" type="text" id="professional_website" name="professional_website" placeholder="Ej: www.vitacura.cl" disabled={loading} />
+                <input className="form-input" type="text" id="professional_website" name="professional_website" placeholder="Ej: www.vitacura.cl" value={newProfWebsite} onChange={(e) => setNewProfWebsite(e.target.value)} disabled={loading} />
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>
-            <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary" disabled={loading}>
+            <button type="button" onClick={() => {
+              setIsModalOpen(false);
+              setNewProfEmail('');
+              setNewProfPhone('');
+              setNewProfAddress('');
+              setNewProfWebsite('');
+            }} className="btn-secondary" disabled={loading}>
               Cancelar
             </button>
             <button type="submit" className="btn-primary" disabled={loading}>
@@ -1006,9 +1101,9 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                     value={editRole}
                     onChange={setEditRole}
                     options={[
-                      { value: 'internal', label: 'Administrativo Interno (Revisión y Convenios)' },
-                      { value: 'external', label: 'Profesional (Inscripción de Casos)' },
-                      { value: 'admin', label: 'Administrador General (Control Total)' }
+                      { value: 'internal', label: 'Interno (Revisión y Convenios)' },
+                      { value: 'external', label: 'Externo (Inscripción de Casos)' },
+                      { value: 'admin', label: 'Admin (Control Total)' }
                     ]}
                     disabled={loading}
                   />
@@ -1029,7 +1124,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                       <label className="form-label" htmlFor="edit_agreement_select">Convenio Asignado</label>
                       <CustomSelect
                         value={editAgreementSelectValue}
-                        onChange={(val) => {
+                        onChange={async (val) => {
                           setEditAgreementSelectValue(val);
                           const covObj = allConvenios.find(c => c.empresa === val);
                           if (covObj) {
@@ -1041,10 +1136,24 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                             }
                             const agreementName = covObj.empresa.includes(': ') ? covObj.empresa.split(': ')[1] : covObj.empresa;
                             setEditAgreementType(agreementName);
+
+                            // Pre-fill details from Dentalink
+                            if (covObj.id_dentalink) {
+                              const res = await getDentalinkConvenioDetailsAction(covObj.id_dentalink);
+                              if (res.success && res.convenio) {
+                                const cov = res.convenio;
+                                setEditProfEmail(cov.mail_empresa || '');
+                                setEditProfPhone(cov.telefono_empresa_1 || cov.telefono_empresa_2 || '');
+                                setEditProfAddress([cov.direccion_empresa, cov.comuna_empresa, cov.ciudad_empresa].filter(Boolean).join(', '));
+                              }
+                            }
                           } else {
                             setEditInstitutionId('');
                             setEditMedicalCenter('');
                             setEditAgreementType('');
+                            setEditProfEmail('');
+                            setEditProfPhone('');
+                            setEditProfAddress('');
                           }
                         }}
                         options={[
@@ -1132,28 +1241,35 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit_professional_email">Correo de Contacto</label>
-                  <input className="form-input" type="email" id="edit_professional_email" name="professional_email" placeholder="Ej: jcasals@vitacura.cl" defaultValue={editingUser.professional_email} disabled={loading} />
+                  <input className="form-input" type="email" id="edit_professional_email" name="professional_email" placeholder="Ej: jcasals@vitacura.cl" value={editProfEmail} onChange={(e) => setEditProfEmail(e.target.value)} disabled={loading} />
                 </div>
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit_professional_phone">Teléfono de Contacto</label>
-                  <input className="form-input" type="text" id="edit_professional_phone" name="professional_phone" placeholder="Ej: +56957558966" defaultValue={editingUser.professional_phone} disabled={loading} />
+                  <input className="form-input" type="text" id="edit_professional_phone" name="professional_phone" placeholder="Ej: +56957558966" value={editProfPhone} onChange={(e) => setEditProfPhone(e.target.value)} disabled={loading} />
                 </div>
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit_professional_address">Dirección de la Institución</label>
-                  <input className="form-input" type="text" id="edit_professional_address" name="professional_address" placeholder="Ej: Indiana Nº 1195, Vitacura" defaultValue={editingUser.professional_address} disabled={loading} />
+                  <input className="form-input" type="text" id="edit_professional_address" name="professional_address" placeholder="Ej: Indiana Nº 1195, Vitacura" value={editProfAddress} onChange={(e) => setEditProfAddress(e.target.value)} disabled={loading} />
                 </div>
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit_professional_website">Sitio Web Profesional</label>
-                  <input className="form-input" type="text" id="edit_professional_website" name="professional_website" placeholder="Ej: www.vitacura.cl" defaultValue={editingUser.professional_website} disabled={loading} />
+                  <input className="form-input" type="text" id="edit_professional_website" name="professional_website" placeholder="Ej: www.vitacura.cl" value={editProfWebsite} onChange={(e) => setEditProfWebsite(e.target.value)} disabled={loading} />
                 </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>
-              <button type="button" onClick={() => { setIsEditModalOpen(false); setEditingUser(null); }} className="btn-secondary" disabled={loading}>
+              <button type="button" onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingUser(null);
+                setEditProfEmail('');
+                setEditProfPhone('');
+                setEditProfAddress('');
+                setEditProfWebsite('');
+              }} className="btn-secondary" disabled={loading}>
                 Cancelar
               </button>
               <button type="submit" className="btn-primary" disabled={loading}>
@@ -1220,6 +1336,137 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
             </div>
           </form>
         )}
+      </Modal>
+
+      {/* Details Modal */}
+      <Modal isOpen={isDetailsModalOpen} onClose={() => { setIsDetailsModalOpen(false); setSelectedInstForDetails(null); }} title={`Detalle de Convenios Dentalink - ${selectedInstForDetails?.name}`} maxWidth="800px">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '75vh', overflowY: 'auto', paddingRight: '6px' }}>
+          {loadingDetails && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '16px' }}>
+              <RefreshCw className="animate-spin" size={32} style={{ color: '#10b981' }} />
+              <p style={{ fontWeight: 600, opacity: 0.8, fontSize: '0.95rem' }}>Cargando información del convenio en Dentalink...</p>
+            </div>
+          )}
+
+          {detailsError && (
+            <div className="badge-rechazado" style={{ padding: '16px', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', fontWeight: 600 }}>
+              {detailsError}
+            </div>
+          )}
+
+          {!loadingDetails && !detailsError && convenioDetailsList.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {convenioDetailsList.map((res, index) => {
+                if (!res.success) {
+                  return (
+                    <div key={index} className="badge-rechazado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
+                      {res.error}
+                    </div>
+                  );
+                }
+
+                const cov = res.convenio;
+
+                return (
+                  <div key={index} className="glass-panel" style={{
+                    padding: '24px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--glass-border)',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.00) 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                          {cov.nombre}
+                        </h4>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>ID Dentalink: {cov.id}</span>
+                      </div>
+                      <span className={`badge ${cov.habilitado === 1 ? 'badge-aprobado' : 'badge-rechazado'}`} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: '0.75rem' }}>
+                        {cov.habilitado === 1 ? 'Habilitado' : 'Deshabilitado'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px 24px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Nombre Empresa</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.nombre_empresa || 'No especificado'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>RUT Empresa</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.rut_empresa || 'No especificado'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Contacto Empresa</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.contacto_empresa || 'No especificado'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Correo Electrónico</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.mail_empresa || 'No especificado'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Teléfono 1</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.telefono_empresa_1 || 'No especificado'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Teléfono 2</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.telefono_empresa_2 || 'No especificado'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Dirección</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                          {[cov.direccion_empresa, cov.comuna_empresa, cov.ciudad_empresa].filter(Boolean).join(', ') || 'No especificada'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Fecha de Afiliación</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.fecha_afiliacion || 'No especificada'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Arancel Asociado</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#10b981' }}>{cov.nombre_arancel || 'No especificado'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Descuento</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.descuento ? `${cov.descuento}%` : '0%'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Ajuste</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{cov.ajuste ? `${cov.ajuste}%` : '0%'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Beneficios Extra</span>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: cov.descuentos_por_planilla === 1 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)', color: cov.descuentos_por_planilla === 1 ? '#10b981' : 'inherit', border: '1px solid var(--glass-border)', fontSize: '0.8rem' }}>
+                            Desc. Planilla: {cov.descuentos_por_planilla === 1 ? 'Sí' : 'No'}
+                          </span>
+                          <span style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: cov.descuentos_laboratorios === 1 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)', color: cov.descuentos_laboratorios === 1 ? '#10b981' : 'inherit', border: '1px solid var(--glass-border)', fontSize: '0.8rem' }}>
+                            Desc. Laboratorios: {cov.descuentos_laboratorios === 1 ? 'Sí' : 'No'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {cov.observacion && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px' }}>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', fontWeight: 650 }}>Observación</span>
+                        <p style={{ fontSize: '0.88rem', margin: 0, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.4 }}>{cov.observacion}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', borderTop: '1px solid var(--glass-border)', paddingTop: '16px' }}>
+            <button type="button" onClick={() => { setIsDetailsModalOpen(false); setSelectedInstForDetails(null); }} className="btn-secondary">
+              Cerrar
+            </button>
+          </div>
+        </div>
       </Modal>
 
     </div>

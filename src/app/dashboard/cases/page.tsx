@@ -49,7 +49,7 @@ export default async function CasesPage() {
           LEFT JOIN users u_eval ON c.updated_by = u_eval.id
         )
         SELECT * FROM global_cases
-        WHERE registered_by_institution_id = ANY((SELECT institution_ids FROM users WHERE id = $1))
+        WHERE registered_by_institution_id = ANY(SELECT unnest(institution_ids) FROM users WHERE id = $1)
         ORDER BY created_at DESC
       `, [session.id]);
       cases = res.rows;

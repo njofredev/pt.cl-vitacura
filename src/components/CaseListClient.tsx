@@ -10,6 +10,7 @@ import Link from 'next/link';
 import CustomSelect from '@/components/ui/CustomSelect';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import Odontogram from '@/components/Odontogram';
+import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 
 interface CaseRecord {
   id: string;
@@ -47,6 +48,14 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
 
+  // Advanced filters state
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [institutionFilter, setInstitutionFilter] = useState('todos');
+  const [agreementFilter, setAgreementFilter] = useState('todos');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [prestacionFilter, setPrestacionFilter] = useState('todos');
+
   // Load search from URL parameters if present
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -57,7 +66,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
       }
     }
   }, []);
-  
+
   // Modal & Edit state
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,6 +75,27 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [prestacionesList, setPrestacionesList] = useState<{ id_prestacion: number; name: string }[]>([]);
+
+  useEffect(() => {
+    async function loadPrestaciones() {
+      try {
+        const res = await getOdontogramPrestacionesAction();
+        if (res.success && res.data) {
+          setPrestacionesList(res.data
+            .filter(item => typeof item.id_prestacion === 'number')
+            .map(item => ({
+              id_prestacion: item.id_prestacion as number,
+              name: item.name
+            }))
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load prestaciones in CaseList:', err);
+      }
+    }
+    loadPrestaciones();
+  }, []);
 
   // Edit case details states (for admin only)
   const [isEditing, setIsEditing] = useState(false);
@@ -94,26 +124,63 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   const filteredCases = cases.filter((c) => {
     const fullName = `${c.first_names} ${c.last_names}`.toLowerCase();
     const cleanRutStr = c.rut.toLowerCase();
-    const descStr = c.description.toLowerCase();
+    const descStr = (c.description || '').toLowerCase();
+    const diagStr = (c.dental_diagnosis || '').toLowerCase();
     const query = searchTerm.toLowerCase();
 
-    const matchesSearch = 
-      fullName.includes(query) || 
-      cleanRutStr.includes(query) || 
-      descStr.includes(query);
+    const matchesSearch =
+      fullName.includes(query) ||
+      cleanRutStr.includes(query) ||
+      descStr.includes(query) ||
+      diagStr.includes(query);
 
-    const matchesStatus = 
-      statusFilter === 'todos' || 
+    const matchesStatus =
+      statusFilter === 'todos' ||
       c.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesInstitution =
+      institutionFilter === 'todos' ||
+      c.medical_center === institutionFilter;
+
+    const matchesAgreement =
+      agreementFilter === 'todos' ||
+      c.agreement_type === agreementFilter;
+
+    let matchesDate = true;
+    if (startDate || endDate) {
+      const caseDate = new Date(c.created_at);
+      caseDate.setHours(0, 0, 0, 0);
+
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (caseDate < start) matchesDate = false;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(0, 0, 0, 0);
+        if (caseDate > end) matchesDate = false;
+      }
+    }
+
+    let matchesPrestacion = true;
+    if (prestacionFilter === 'dental') {
+      matchesPrestacion = (c.dental_count || 0) > 0;
+    } else if (prestacionFilter === 'xray') {
+      matchesPrestacion = (c.xray_count || 0) > 0;
+    }
+
+    return matchesSearch && matchesStatus && matchesInstitution && matchesAgreement && matchesDate && matchesPrestacion;
   });
+
+  const uniqueInstitutions = Array.from(new Set(cases.map(c => c.medical_center).filter(Boolean))) as string[];
+  const uniqueAgreements = Array.from(new Set(cases.map(c => c.agreement_type).filter(Boolean))) as string[];
 
   function openDetails(c: CaseRecord) {
     setSelectedCase(c);
     setEvalStatus(c.status);
     setEvalObs(c.observations || '');
-    
+
     // Initialize edit details states
     setEditRut(c.rut);
     setEditFirstNames(c.first_names);
@@ -139,7 +206,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
       setEditMedicalCenterSelect(c.medical_center ? 'Otro' : '');
       setCustomEditMedicalCenter(c.medical_center || '');
     }
-    
+
     setIsEditing(false);
     setError(null);
     setSuccess(null);
@@ -250,7 +317,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
       if (result.success) {
         setSuccess('¡Datos del caso actualizados con éxito!');
-        
+
         // Update local records state so UI updates instantly
         const updatedRecord: CaseRecord = {
           ...selectedCase,
@@ -272,7 +339,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
         setCases(cases.map(c => c.id === selectedCase.id ? updatedRecord : c));
         setSelectedCase(updatedRecord);
-        
+
         setTimeout(() => {
           setIsEditing(false);
           setSuccess(null);
@@ -297,14 +364,14 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
     try {
       const result = await updateCaseStatusAction(selectedCase.id, evalStatus, evalObs);
-      
+
       if (result.success) {
         setSuccess('¡Evaluación y convenio guardados exitosamente!');
-        
+
         // Update local state immediately for fast feedback
-        setCases(cases.map(c => 
-          c.id === selectedCase.id 
-            ? { ...c, status: evalStatus, observations: evalObs, evaluator_name: user.name } 
+        setCases(cases.map(c =>
+          c.id === selectedCase.id
+            ? { ...c, status: evalStatus, observations: evalObs, evaluator_name: user.name }
             : c
         ));
 
@@ -332,7 +399,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
+
       {/* Page Title with Action Button on the same row inside the container */}
       <div
         className="glass-panel"
@@ -363,20 +430,20 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
             border: '1px solid rgba(16, 185, 129, 0.2)',
             flexShrink: 0
           }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 9h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M9 9h6" /><path d="M9 13h6" /><path d="M9 17h6" /></svg>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
               Bandeja de Casos Sociales
             </h2>
             <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
-              {user.role === 'external' 
-                ? 'Monitoree el estado de revisión de los casos que ha inscrito.' 
+              {user.role === 'external'
+                ? 'Monitoree el estado de revisión de los casos que ha inscrito.'
                 : 'Filtre, evalúe y asigne estados de convenios a los casos postulantes.'}
             </p>
           </div>
         </div>
-        
+
         {user.role !== 'internal' && (
           <Link href="/dashboard/register" className="login-pill-btn" style={{ gap: '8px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -386,47 +453,146 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
       </div>
 
       {/* Filter panel */}
-      <div 
-        className="glass-panel" 
-        style={{ 
-          padding: '20px 24px', 
-          display: 'flex', 
-          gap: '20px', 
-          alignItems: 'center', 
-          flexWrap: 'wrap' 
+      <div
+        className="glass-panel"
+        style={{
+          padding: '20px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
         }}
       >
-        <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
-          <input 
-            className="form-input"
-            type="text"
-            placeholder="Buscar por Nombre, RUT o Descripción..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%', paddingLeft: '40px' }}
-          />
-          <div style={{ position: 'absolute', left: '14px', top: '15px', opacity: 0.5 }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div style={{
+          display: 'flex',
+          gap: '20px',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          width: '100%'
+        }}>
+          <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Buscar por Nombre, RUT o Descripción..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: '100%', paddingLeft: '40px' }}
+            />
+            <div style={{ position: 'absolute', left: '14px', top: '15px', opacity: 0.5 }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            </div>
           </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.7, textTransform: 'uppercase' }}>Estado:</span>
+            <div style={{ minWidth: '180px' }}>
+              <CustomSelect
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { value: 'todos', label: 'Todos los Estados' },
+                  { value: 'ingresado', label: 'Ingresados' },
+                  { value: 'sincronizado', label: 'Sincronizados' },
+                  { value: 'agendado', label: 'Agendados' },
+                  { value: 'en_tratamiento', label: 'En Tratamiento' },
+                  { value: 'finalizado', label: 'Finalizados' }
+                ]}
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className="btn btn-secondary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 16px',
+              fontWeight: 600,
+              backgroundColor: showAdvancedFilters ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+              borderColor: showAdvancedFilters ? '#10b981' : 'var(--glass-border)',
+              color: showAdvancedFilters ? '#10b981' : 'inherit',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>
+            Filtros Avanzados
+            <span style={{
+              transform: showAdvancedFilters ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s ease',
+              display: 'inline-block',
+              fontSize: '0.75rem'
+            }}>▼</span>
+          </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.7, textTransform: 'uppercase' }}>Estado:</span>
-          <div style={{ minWidth: '180px' }}>
-            <CustomSelect
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={[
-                { value: 'todos', label: 'Todos los Estados' },
-                { value: 'ingresado', label: 'Ingresados' },
-                { value: 'sincronizado', label: 'Sincronizados' },
-                { value: 'agendado', label: 'Agendados' },
-                { value: 'en_tratamiento', label: 'En Tratamiento' },
-                { value: 'finalizado', label: 'Finalizados' }
-              ]}
-            />
+        {/* Collapsible advanced filters area */}
+        {showAdvancedFilters && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              paddingTop: '16px',
+              borderTop: '1px solid var(--glass-border)',
+              animation: 'slideDown 0.2s ease-out'
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Centro Médico</label>
+              <CustomSelect
+                value={institutionFilter}
+                onChange={setInstitutionFilter}
+                options={[
+                  { value: 'todos', label: 'Todos los Centros' },
+                  ...uniqueInstitutions.map(inst => ({ value: inst, label: inst }))
+                ]}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Convenio</label>
+              <CustomSelect
+                value={agreementFilter}
+                onChange={setAgreementFilter}
+                options={[
+                  { value: 'todos', label: 'Todos los Convenios' },
+                  ...uniqueAgreements.map(agr => ({ value: agr, label: agr }))
+                ]}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Prestaciones</label>
+              <CustomSelect
+                value={prestacionFilter}
+                onChange={setPrestacionFilter}
+                options={[
+                  { value: 'todos', label: 'Todas las Prestaciones' },
+                  { value: 'dental', label: 'Sólo Dentales (🦷 > 0)' },
+                  { value: 'xray', label: 'Sólo Rayos X (⚡ > 0)' }
+                ]}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Fecha Desde</label>
+              <CustomDatePicker
+                value={startDate}
+                onChange={setStartDate}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, opacity: 0.7 }}>Fecha Hasta</label>
+              <CustomDatePicker
+                value={endDate}
+                onChange={setEndDate}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Main Glass Table Container */}
@@ -440,13 +606,14 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
             <table className="custom-table">
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>Beneficiario</th>
                   <th>RUT</th>
                   <th>Comuna</th>
-                  <th>Descripción</th>
+                  <th>Detalle de Derivación</th>
                   <th>Prestaciones</th>
                   <th>Fecha Ingreso</th>
-                  {user.role !== 'external' && <th>Inscrito Por</th>}
+                  <th>Profesional Derivador</th>
                   <th>Estado</th>
                   <th style={{ textAlign: 'right' }}>Acciones</th>
                 </tr>
@@ -454,24 +621,38 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
               <tbody>
                 {filteredCases.map((c) => (
                   <tr key={c.id}>
+                    <td style={{ fontFamily: 'monospace', fontWeight: 600, opacity: 0.8 }}>
+                      {c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}
+                    </td>
                     <td style={{ fontWeight: 600 }}>
-                      {c.yearly_correlative && (
-                        <span style={{ opacity: 0.5, marginRight: '8px', fontWeight: 500, fontFamily: 'monospace' }}>
-                          {String(c.yearly_correlative).padStart(4, '0')}
-                        </span>
-                      )}
                       {c.first_names} {c.last_names}
                     </td>
                     <td style={{ whiteSpace: 'nowrap', opacity: 0.9 }}>{formatRUT(c.rut)}</td>
                     <td>{c.commune}</td>
-                    <td style={{
-                      maxWidth: '200px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      opacity: 0.8
-                    }}>
-                      {c.dental_diagnosis ? `Derivación: ${c.agreement_type}` : c.description}
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontWeight: 700, color: 'hsl(var(--accent-hsl))', fontSize: '0.88rem' }}>
+                          {c.agreement_type || 'Sin Convenio'}
+                        </span>
+                        {c.medical_center && (
+                          <span style={{ fontSize: '0.72rem', opacity: 0.7, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            📍 {c.medical_center}
+                          </span>
+                        )}
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            opacity: 0.6,
+                            maxWidth: '220px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title={c.dental_diagnosis ? `Diag: ${c.dental_diagnosis}` : c.description || ''}
+                        >
+                          💬 {c.dental_diagnosis ? `Diag: ${c.dental_diagnosis}` : c.description || 'Sin descripción'}
+                        </span>
+                      </div>
                     </td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
@@ -484,9 +665,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       </div>
                     </td>
                     <td style={{ fontSize: '0.85rem', opacity: 0.7 }}>{formatDate(c.created_at)}</td>
-                    {user.role !== 'external' && (
-                      <td style={{ fontSize: '0.85rem', opacity: 0.8 }}>{c.registered_by_name || 'Admin Semilla'}</td>
-                    )}
+                    <td style={{ fontSize: '0.85rem', opacity: 0.8 }}>{c.registered_by_name || 'Admin Semilla'}</td>
                     <td>
                       <span className={`badge badge-${c.status}`}>
                         {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
@@ -494,20 +673,20 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        <button 
+                        <button
                           onClick={() => openDetails(c)}
                           className="btn btn-secondary"
                           style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                         >
                           Ver Ficha
                         </button>
-                        <a 
+                        <a
                           href={`/dashboard/cases/${c.id}/print`}
                           target="_blank"
                           className="btn btn-primary"
                           style={{ padding: '6px 12px', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
                           Imprimir
                         </a>
                         {user.role === 'admin' && (
@@ -518,7 +697,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                             title="Eliminar Caso"
                             disabled={loading}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
                           </button>
                         )}
                       </div>
@@ -533,14 +712,14 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
       {/* Ficha / Case Detail Modal */}
       {selectedCase && (
-        <Modal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
           title={`Ficha de Caso Social - ${selectedCase.first_names} ${selectedCase.last_names}`}
           maxWidth="1200px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            
+
 
             {isEditing ? (
               /* Editable details form for administrator role */
@@ -558,10 +737,10 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
                 <div>
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                     Editar Datos del Postulante
                   </h4>
-                  
+
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <label style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Nombres</label>
@@ -604,18 +783,18 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
                 <div>
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                     Editar Detalles de la Solicitud
                   </h4>
-                  
+
                   <div className="glass-panel" style={{ padding: '24px', backgroundColor: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      
+
                       {/* Interactive Odontogram Editor */}
                       <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
                         <label style={{ fontSize: '0.88rem', fontWeight: 800, opacity: 0.9, color: 'hsl(var(--accent-hsl))' }}>Odontograma Clínico Interactivo</label>
                         <div style={{ width: '100%', overflowX: 'auto', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', background: 'rgba(0, 0, 0, 0.2)' }}>
-                          <Odontogram 
+                          <Odontogram
                             initialType="adult"
                             initialDentalDiagnosis={selectedCase.dental_diagnosis}
                             initialTreatmentNeeded={selectedCase.treatment_needed}
@@ -654,10 +833,10 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                 {/* Beneficiary particulars grid */}
                 <div>
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                     Datos del Postulante
                   </h4>
-                  
+
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>RUT</span>
@@ -689,50 +868,156 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                 {/* Case Details */}
                 <div>
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                     Detalles de la Solicitud Social
                   </h4>
-                  <div 
-                    className="glass-panel" 
-                    style={{ 
-                      padding: '20px', 
-                      backgroundColor: 'rgba(255, 255, 255, 0.01)', 
+                  <div
+                    className="glass-panel"
+                    style={{
+                      padding: '20px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.01)',
                       border: '1px solid var(--glass-border)',
                       fontSize: '0.95rem',
                       lineHeight: '1.6',
                       borderRadius: 'var(--radius-md)'
                     }}
                   >
-                    {selectedCase.dental_diagnosis ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Institución:</span>
-                          <span style={{ fontWeight: 600 }}>{selectedCase.medical_center}</span>
-                        </div>
-                        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Convenio Solicitado:</span>
-                          <span style={{ fontWeight: 700, color: 'hsl(var(--accent-hsl))' }}>{selectedCase.agreement_type}</span>
-                        </div>
-                        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Diagnóstico:</span>
-                          <span style={{ fontStyle: 'italic', opacity: 0.95, whiteSpace: 'pre-wrap' }}>"{selectedCase.dental_diagnosis}"</span>
-                        </div>
-                        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Prestación Requerida:</span>
-                          <span style={{ whiteSpace: 'pre-wrap', fontSize: '0.92rem' }}>{selectedCase.treatment_needed}</span>
-                        </div>
-                        {selectedCase.description && (
-                          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '10px' }}>
-                            <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Observaciones:</span>
-                            <span style={{ opacity: 0.85 }}>{selectedCase.description}</span>
+                    {selectedCase.dental_diagnosis ? (() => {
+                      // Helper to parse serialized odontogram text into structured data
+                      const parseOdontogram = (diagText: string | null, treatText: string | null) => {
+                        const piecesMap: Record<string, { id: string; diagnosis: string; treatments: string }> = {};
+
+                        if (diagText) {
+                          diagText.split('\n').forEach(line => {
+                            if (line.startsWith('[Odontograma') || !line.trim()) return;
+                            const match = line.match(/^(Pieza\s+\d+|Arcada\s+\w+|Boca\s+\w+)/i);
+                            if (match) {
+                              const pId = match[1];
+                              const details = line.substring(pId.length).replace(/^:\s*/, '').trim();
+                              piecesMap[pId] = { id: pId, diagnosis: details, treatments: '' };
+                            }
+                          });
+                        }
+
+                        if (treatText) {
+                          treatText.split('\n').forEach(line => {
+                            if (!line.trim()) return;
+                            const match = line.match(/^(Pieza\s+\d+|Arcada\s+\w+|Boca\s+\w+)/i);
+                            if (match) {
+                              const pId = match[1];
+                              const start = line.indexOf('[');
+                              const end = line.lastIndexOf(']');
+                              let treatVal = '';
+                              if (start !== -1 && end !== -1 && end > start) {
+                                treatVal = line.substring(start + 1, end);
+                              } else {
+                                treatVal = line.substring(pId.length).replace(/^:\s*Realizar\s*/, '').trim();
+                              }
+
+                              if (piecesMap[pId]) {
+                                piecesMap[pId].treatments = treatVal;
+                              } else {
+                                piecesMap[pId] = { id: pId, diagnosis: 'No especificado', treatments: treatVal };
+                              }
+                            }
+                          });
+                        }
+                        return Object.values(piecesMap);
+                      };
+
+                      const parsedPieces = parseOdontogram(selectedCase.dental_diagnosis, selectedCase.treatment_needed);
+
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                            <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                              <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Institución</span>
+                              <strong style={{ fontSize: '0.95rem' }}>{selectedCase.medical_center || 'No asignado'}</strong>
+                            </div>
+                            <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                              <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Convenio Asignado</span>
+                              <strong style={{ fontSize: '0.95rem', color: 'hsl(var(--accent-hsl))' }}>{selectedCase.agreement_type || 'Sin Convenio'}</strong>
+                            </div>
+                            <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                              <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Profesional Derivador</span>
+                              <strong style={{ fontSize: '0.95rem', color: 'hsl(var(--primary-hsl))' }}>{selectedCase.professional_name || 'No especificado'}</strong>
+                            </div>
                           </div>
-                        )}
-                        <div style={{ display: 'flex' }}>
-                          <span style={{ width: '150px', opacity: 0.5, fontSize: '0.85rem', fontWeight: 600, flexShrink: 0 }}>Profesional Derivador:</span>
-                          <span style={{ fontWeight: 600, color: 'hsl(var(--primary-hsl))' }}>{selectedCase.professional_name}</span>
+
+                          <div style={{ marginTop: '10px' }}>
+                            <span style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
+                              🦷 Detalle Clínico por Piezas Dentales
+                            </span>
+                            <div className="table-container" style={{ border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                              <table className="custom-table" style={{ margin: 0 }}>
+                                <thead>
+                                  <tr>
+                                    <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Pieza</th>
+                                    <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Prestación Solicitada</th>
+                                    <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Cara / Sección / Estado</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {parsedPieces.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={3} style={{ textAlign: 'center', opacity: 0.6, padding: '20px' }}>
+                                        No hay detalles clínicos registrados.
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    parsedPieces.map((piece, idx) => {
+                                      // Lookup prestación ID from name
+                                      let prestacionId = '';
+                                      if (piece.treatments) {
+                                        const cleanName = piece.treatments.replace(/\s*\[(Dental|Rayos X)\]\s*$/i, '').trim().toLowerCase();
+                                        const matched = prestacionesList.find(p => p.name.toLowerCase() === cleanName);
+                                        if (matched) {
+                                          prestacionId = `(ID: ${matched.id_prestacion})`;
+                                        }
+                                      }
+
+                                      return (
+                                        <tr key={idx}>
+                                          <td style={{ fontWeight: 700, fontSize: '0.88rem', padding: '12px 16px' }}>{piece.id}</td>
+                                          <td style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--accent-hsl))', padding: '12px 16px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                              <span>{piece.treatments || 'No asignada'}</span>
+                                              {prestacionId && (
+                                                <span style={{ fontSize: '0.72rem', opacity: 0.6, fontWeight: 500, color: 'hsl(var(--foreground-hsl))' }}>
+                                                  {prestacionId}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td style={{ fontSize: '0.85rem', opacity: 0.9, padding: '12px 16px' }}>
+                                            <span style={{
+                                              padding: '3px 8px',
+                                              borderRadius: '4px',
+                                              backgroundColor: piece.diagnosis.includes('Ausente') ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                                              border: '1px solid var(--glass-border)',
+                                              color: piece.diagnosis.includes('Ausente') ? '#ef4444' : 'inherit'
+                                            }}>
+                                              {piece.diagnosis || 'Sin patologías'}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+
+                          {selectedCase.description && (
+                            <div style={{ marginTop: '10px', padding: '16px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                              <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Observaciones Generales</span>
+                              <p style={{ margin: 0, opacity: 0.85, fontSize: '0.9rem' }}>{selectedCase.description}</p>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ) : (
+                      );
+                    })() : (
                       <div style={{ whiteSpace: 'pre-wrap', opacity: 0.9 }}>
                         {selectedCase.description}
                       </div>
@@ -745,154 +1030,154 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                 </div>
               </div>
             )}
-             {/* Review and observations block */}
-             <div>
-               <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                 Evaluación Administrativa / Convenio
-               </h4>
- 
-               {/* Show-only panel for External Admins (who cannot edit statuses) */}
-               {user.role === 'external' ? (
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
-                     <span style={{ fontSize: '0.9rem', opacity: 0.7, fontWeight: 600 }}>Estado actual:</span>
-                     <span className={`badge badge-${selectedCase.status}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
-                       {selectedCase.status === 'en_tratamiento' ? 'En tratamiento' : selectedCase.status === 'sincronizado' ? 'Sincronizado' : selectedCase.status.charAt(0).toUpperCase() + selectedCase.status.slice(1)}
-                     </span>
-                   </div>
-                   {selectedCase.observations ? (
-                     <div className="glass-panel" style={{ padding: '18px', backgroundColor: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)', fontSize: '0.95rem', lineHeight: '1.6', borderRadius: 'var(--radius-md)' }}>
-                       <strong style={{ display: 'block', fontSize: '0.85rem', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Observaciones del Evaluador</strong>
-                       <p style={{ margin: 0, whiteSpace: 'pre-wrap', opacity: 0.95 }}>{selectedCase.observations}</p>
-                     </div>
-                   ) : (
-                     <span style={{ fontStyle: 'italic', fontSize: '0.85rem', opacity: 0.5, paddingLeft: '4px' }}>No hay observaciones registradas aún.</span>
-                   )}
-                 </div>
-               ) : (
-                 /* Editable form for Admins and Internals */
-                 <form onSubmit={handleSaveEvaluation} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                   
-                   {error && (
-                     <div className="badge-rechazado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                       {error}
-                     </div>
-                   )}
- 
-                   {success && (
-                     <div className="badge-aprobado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                       {success}
-                     </div>
-                   )}
- 
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="eval_status" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Asignar Estado del Caso</label>
-                      <CustomSelect
-                        value={evalStatus}
-                        onChange={(val) => setEvalStatus(val as any)}
-                        options={[
-                          { value: 'ingresado', label: 'Ingresado' },
-                          { value: 'sincronizado', label: 'Sincronizado' },
-                          { value: 'agendado', label: 'Agendado' },
-                          { value: 'en_tratamiento', label: 'En Tratamiento' },
-                          { value: 'finalizado', label: 'Finalizado' }
-                        ]}
-                        disabled={loading}
-                      />
+            {/* Review and observations block */}
+            <div>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                Evaluación Administrativa / Convenio
+              </h4>
+
+              {/* Show-only panel for External Admins (who cannot edit statuses) */}
+              {user.role === 'external' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
+                    <span style={{ fontSize: '0.9rem', opacity: 0.7, fontWeight: 600 }}>Estado actual:</span>
+                    <span className={`badge badge-${selectedCase.status}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+                      {selectedCase.status === 'en_tratamiento' ? 'En tratamiento' : selectedCase.status === 'sincronizado' ? 'Sincronizado' : selectedCase.status.charAt(0).toUpperCase() + selectedCase.status.slice(1)}
+                    </span>
+                  </div>
+                  {selectedCase.observations ? (
+                    <div className="glass-panel" style={{ padding: '18px', backgroundColor: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--glass-border)', fontSize: '0.95rem', lineHeight: '1.6', borderRadius: 'var(--radius-md)' }}>
+                      <strong style={{ display: 'block', fontSize: '0.85rem', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Observaciones del Evaluador</strong>
+                      <p style={{ margin: 0, whiteSpace: 'pre-wrap', opacity: 0.95 }}>{selectedCase.observations}</p>
                     </div>
- 
-                   <div className="form-group">
-                     <label className="form-label" htmlFor="eval_obs" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Observaciones y Diagnóstico Social *</label>
-                     <textarea 
-                       className="form-textarea"
-                       id="eval_obs"
-                       value={evalObs}
-                       onChange={(e) => setEvalObs(e.target.value)}
-                       required
-                       rows={4}
-                       placeholder="Ingrese los motivos clínicos/sociales de la aprobación, rechazo o detalles técnicos del convenio aplicado..."
-                       disabled={loading}
-                       style={{ border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', resize: 'vertical' }}
-                     />
-                   </div>
- 
-                   {selectedCase.evaluator_name && (
-                     <div style={{ fontSize: '0.75rem', opacity: 0.5, fontStyle: 'italic', paddingLeft: '4px' }}>
-                       Última evaluación realizada por: {selectedCase.evaluator_name}
-                     </div>
-                   )}
- 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginTop: '10px', width: '100%' }}>
-                      <div>
-                        {user.role === 'admin' && (
-                          <button 
-                            type="button" 
-                            onClick={() => {
-                              if (selectedCase) {
-                                handleDeleteCase(selectedCase.id, `${selectedCase.first_names} ${selectedCase.last_names}`);
-                              }
-                            }} 
-                            className="btn-danger" 
-                            disabled={loading} 
-                            style={{ padding: '10px 20px' }}
+                  ) : (
+                    <span style={{ fontStyle: 'italic', fontSize: '0.85rem', opacity: 0.5, paddingLeft: '4px' }}>No hay observaciones registradas aún.</span>
+                  )}
+                </div>
+              ) : (
+                /* Editable form for Admins and Internals */
+                <form onSubmit={handleSaveEvaluation} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+
+                  {error && (
+                    <div className="badge-rechazado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                      {error}
+                    </div>
+                  )}
+
+                  {success && (
+                    <div className="badge-aprobado" style={{ padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                      {success}
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="eval_status" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Asignar Estado del Caso</label>
+                    <CustomSelect
+                      value={evalStatus}
+                      onChange={(val) => setEvalStatus(val as any)}
+                      options={[
+                        { value: 'ingresado', label: 'Ingresado' },
+                        { value: 'sincronizado', label: 'Sincronizado' },
+                        { value: 'agendado', label: 'Agendado' },
+                        { value: 'en_tratamiento', label: 'En Tratamiento' },
+                        { value: 'finalizado', label: 'Finalizado' }
+                      ]}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="eval_obs" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.7 }}>Observaciones y Diagnóstico Social *</label>
+                    <textarea
+                      className="form-textarea"
+                      id="eval_obs"
+                      value={evalObs}
+                      onChange={(e) => setEvalObs(e.target.value)}
+                      required
+                      rows={4}
+                      placeholder="Ingrese los motivos clínicos/sociales de la aprobación, rechazo o detalles técnicos del convenio aplicado..."
+                      disabled={loading}
+                      style={{ border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', resize: 'vertical' }}
+                    />
+                  </div>
+
+                  {selectedCase.evaluator_name && (
+                    <div style={{ fontSize: '0.75rem', opacity: 0.5, fontStyle: 'italic', paddingLeft: '4px' }}>
+                      Última evaluación realizada por: {selectedCase.evaluator_name}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginTop: '10px', width: '100%' }}>
+                    <div>
+                      {user.role === 'admin' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedCase) {
+                              handleDeleteCase(selectedCase.id, `${selectedCase.first_names} ${selectedCase.last_names}`);
+                            }
+                          }}
+                          className="btn-danger"
+                          disabled={loading}
+                          style={{ padding: '10px 20px' }}
+                        >
+                          Eliminar Caso
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary" disabled={loading} style={{ padding: '10px 20px' }}>
+                        Cerrar
+                      </button>
+                      {user.role === 'admin' && (
+                        selectedCase.status === 'ingresado' ? (
+                          <button
+                            type="button"
+                            onClick={() => setIsEditing(true)}
+                            className="btn-accent"
+                            style={{
+                              padding: '10px 20px',
+                              fontWeight: 700,
+                              backgroundColor: '#4f46e5',
+                              borderColor: '#4f46e5',
+                              color: '#ffffff',
+                              boxShadow: '0 4px 15px rgba(79, 70, 229, 0.25)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
                           >
-                            Eliminar Caso
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                            Editar Datos de Ficha
                           </button>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary" disabled={loading} style={{ padding: '10px 20px' }}>
-                          Cerrar
-                        </button>
-                        {user.role === 'admin' && (
-                          selectedCase.status === 'ingresado' ? (
-                            <button 
-                              type="button" 
-                              onClick={() => setIsEditing(true)} 
-                              className="btn-accent" 
-                              style={{ 
-                                padding: '10px 20px', 
-                                fontWeight: 700, 
-                                backgroundColor: '#4f46e5', 
-                                borderColor: '#4f46e5', 
-                                color: '#ffffff', 
-                                boxShadow: '0 4px 15px rgba(79, 70, 229, 0.25)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                              }}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                              Editar Datos de Ficha
-                            </button>
-                          ) : (
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '6px', 
-                              fontSize: '0.82rem', 
-                              color: '#fb923c', 
-                              fontWeight: 700, 
-                              padding: '8px 14px', 
-                              background: 'rgba(251, 146, 60, 0.08)', 
-                              border: '1px solid rgba(251, 146, 60, 0.2)',
-                              borderRadius: '8px' 
-                            }}>
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                              Sincronizado con Dentalink (Edición bloqueada)
-                            </div>
-                          )
-                        )}
-                        <button type="submit" className="btn-accent" disabled={loading} style={{ padding: '10px 20px', fontWeight: 700, boxShadow: '0 4px 15px rgba(20, 184, 166, 0.25)' }}>
-                          {loading ? 'Guardando...' : 'Guardar Evaluación'}
-                        </button>
-                      </div>
+                        ) : (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '0.82rem',
+                            color: '#fb923c',
+                            fontWeight: 700,
+                            padding: '8px 14px',
+                            background: 'rgba(251, 146, 60, 0.08)',
+                            border: '1px solid rgba(251, 146, 60, 0.2)',
+                            borderRadius: '8px'
+                          }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                            Sincronizado con Dentalink (Edición bloqueada)
+                          </div>
+                        )
+                      )}
+                      <button type="submit" className="btn-accent" disabled={loading} style={{ padding: '10px 20px', fontWeight: 700, boxShadow: '0 4px 15px rgba(20, 184, 166, 0.25)' }}>
+                        {loading ? 'Guardando...' : 'Guardar Evaluación'}
+                      </button>
                     </div>
- 
-                 </form>
-               )}
-             </div>
+                  </div>
+
+                </form>
+              )}
+            </div>
 
           </div>
         </Modal>

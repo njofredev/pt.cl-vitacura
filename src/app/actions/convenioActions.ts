@@ -12,7 +12,7 @@ export async function getConveniosByMedicalCenterAction(medicalCenter: string) {
 
   try {
     const res = await pool.query(
-      `SELECT id, empresa, fecha_afiliacion, descuento, medical_center 
+      `SELECT id, id_dentalink, empresa, fecha_afiliacion, descuento, medical_center 
        FROM convenios 
        WHERE LOWER(medical_center) = LOWER($1)
        ORDER BY empresa ASC`,
@@ -100,6 +100,9 @@ export async function syncDentalinkConveniosAction() {
         }
       }
 
+      // Ensure id_dentalink column exists
+      await client.query('ALTER TABLE convenios ADD COLUMN IF NOT EXISTS id_dentalink INT');
+
       // 3. Truncate convenios and insert the fresh synced list
       await client.query('TRUNCATE TABLE convenios RESTART IDENTITY');
 
@@ -114,9 +117,9 @@ export async function syncDentalinkConveniosAction() {
         const descuento = '0%'; // default
 
         await client.query(
-          `INSERT INTO convenios (empresa, fecha_afiliacion, descuento, medical_center) 
-           VALUES ($1, $2, $3, $4)`,
-          [combinedEmpresa, fecha, descuento, nombreEmpresa || 'Sin Institución']
+          `INSERT INTO convenios (empresa, fecha_afiliacion, descuento, medical_center, id_dentalink) 
+           VALUES ($1, $2, $3, $4, $5)`,
+          [combinedEmpresa, fecha, descuento, nombreEmpresa || 'Sin Institución', cov.id]
         );
       }
 
@@ -140,7 +143,7 @@ export async function syncDentalinkConveniosAction() {
 export async function getAllConveniosAction() {
   try {
     const res = await pool.query(
-      `SELECT id, empresa, fecha_afiliacion, descuento, medical_center 
+      `SELECT id, id_dentalink, empresa, fecha_afiliacion, descuento, medical_center 
        FROM convenios 
        ORDER BY empresa ASC`
     );

@@ -172,7 +172,7 @@ export default async function DashboardPage() {
         `SELECT SUM(quota_dental) as quota_dental, SUM(used_dental) as used_dental, 
                 SUM(quota_xray) as quota_xray, SUM(used_xray) as used_xray 
          FROM institutions 
-         WHERE id = ANY((SELECT institution_ids FROM users WHERE id = $1))`,
+         WHERE id = ANY(SELECT unnest(institution_ids) FROM users WHERE id = $1)`,
         [user.id]
       );
       if (quotaRes.rows.length > 0) {
@@ -274,7 +274,7 @@ export default async function DashboardPage() {
       queryParams = [user.id];
     } else if (user.role === 'internal') {
       queryStr += `
-        WHERE u.institution_id = ANY((SELECT institution_ids FROM users WHERE id = $1))
+        WHERE u.institution_id = ANY(SELECT unnest(institution_ids) FROM users WHERE id = $1)
       `;
       queryParams = [user.id];
     }
@@ -318,7 +318,7 @@ export default async function DashboardPage() {
       queryParams = [user.id];
     } else if (user.role === 'internal') {
       queryStr += `
-        WHERE u.institution_id = ANY((SELECT institution_ids FROM users WHERE id = $1))
+        WHERE u.institution_id = ANY(SELECT unnest(institution_ids) FROM users WHERE id = $1)
       `;
       queryParams = [user.id];
     } else {
@@ -556,23 +556,28 @@ export default async function DashboardPage() {
                 <table className="custom-table clinical-table">
                   <thead>
                     <tr>
-                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>PERSONA</th>
-                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>CONVENIO</th>
+                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>ID</th>
+                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>NOMBRE</th>
                       <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>FECHA REGISTRO</th>
-                      {user.role !== 'external' && <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>REGISTRADO POR</th>}
+                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>PROFESIONAL DERIVADOR</th>
+                      <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>OBSERVACIÓN</th>
                       <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>ESTADO</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentCases.map((c) => (
                       <tr key={c.id}>
+                        <td style={{ fontWeight: 500, fontFamily: 'monospace', opacity: 0.7 }}>
+                          {c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}
+                        </td>
                         <td style={{ fontWeight: 700, color: 'hsl(var(--foreground-hsl))' }}>
-                          {c.yearly_correlative && (
-                            <span style={{ opacity: 0.5, marginRight: '8px', fontWeight: 500, fontFamily: 'monospace' }}>
-                              {String(c.yearly_correlative).padStart(4, '0')}
-                            </span>
-                          )}
                           {c.first_names} {c.last_names}
+                        </td>
+                        <td style={{ fontSize: '0.85rem', opacity: 0.7, fontWeight: 500 }}>
+                          {formatDate(c.created_at)}
+                        </td>
+                        <td style={{ fontSize: '0.85rem', opacity: 0.8, fontWeight: 500 }}>
+                          {c.registered_by_name || 'Admin Semilla'}
                         </td>
                         <td style={{
                           maxWidth: '220px',
@@ -584,17 +589,9 @@ export default async function DashboardPage() {
                         }}>
                           {c.description}
                         </td>
-                        <td style={{ fontSize: '0.85rem', opacity: 0.7, fontWeight: 500 }}>
-                          {formatDate(c.created_at)}
-                        </td>
-                        {user.role !== 'external' && (
-                          <td style={{ fontSize: '0.85rem', opacity: 0.8, fontWeight: 500 }}>
-                            {c.registered_by_name || 'Admin Semilla'}
-                          </td>
-                        )}
                         <td>
                           <span className={`badge badge-${c.status}`} style={{ fontWeight: 800, fontSize: '0.68rem', letterSpacing: '0.04em' }}>
-                            {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                            {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                           </span>
                         </td>
                       </tr>
