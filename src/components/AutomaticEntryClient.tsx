@@ -795,7 +795,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
         </div>
 
         <Link href="/dashboard" className="btn btn-secondary">
-          <ArrowLeft size={16} /> Volver al Dashboard
+          <ArrowLeft size={16} /> Volver al Panel de Control
         </Link>
       </div>
 
@@ -2022,7 +2022,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                     Ver Ficha del Caso
                   </button>
                   <Link href="/dashboard" className="btn btn-secondary">
-                    Ir al Dashboard
+                    Ir al Panel de Control
                   </Link>
                   <button 
                     type="button" 

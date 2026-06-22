@@ -502,7 +502,7 @@ export default async function DashboardPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-              Dashboard Derivación Digital
+              Panel de Control - Derivación Digital
             </h2>
             <p style={{ opacity: 0.6, margin: 0, fontWeight: 500, fontSize: '0.95rem', maxWidth: '700px' }}>
               Visualización integrada de la red asistencial entre Policlínico Tabancura y Municipalidad de Vitacura. Convenios de derivación preferencial a costo cero.
@@ -723,6 +723,75 @@ export default async function DashboardPage() {
                   </div>
                 </Link>
               )}
+            </div>
+          </div>
+
+          {/* Guía Rápida de Estados de Derivación */}
+          <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Estados de Derivación
+              </h3>
+              <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
+                Referencia rápida del flujo de estados del caso
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {[
+                {
+                  label: 'Ingresado',
+                  desc: 'El paciente es derivado digitalmente por el profesional externo.',
+                  color: '#10b981',
+                  bg: 'rgba(16, 185, 129, 0.1)',
+                },
+                {
+                  label: 'Sincronizado',
+                  desc: 'Usuario interno revisa la solicitud de derivación, asocia prestaciones y carga el plan en Dentalink.',
+                  color: '#f59e0b',
+                  bg: 'rgba(245, 158, 11, 0.1)',
+                },
+                {
+                  label: 'Agendado',
+                  desc: 'Recepción contacta al paciente y se agenda la cita en el sistema.',
+                  color: '#3b82f6',
+                  bg: 'rgba(59, 130, 246, 0.1)',
+                },
+                {
+                  label: 'En tratamiento',
+                  desc: 'El paciente recibe la atención odontológica programada.',
+                  color: '#a855f7',
+                  bg: 'rgba(168, 85, 247, 0.1)',
+                },
+                {
+                  label: 'Finalizado',
+                  desc: 'Se evolucionan y finalizan todas las prestaciones del caso social.',
+                  color: '#10b981',
+                  bg: 'rgba(16, 185, 129, 0.1)',
+                },
+              ].map((state, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{
+                    backgroundColor: state.bg,
+                    color: state.color,
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    minWidth: '110px',
+                    textAlign: 'center',
+                    flexShrink: 0
+                  }}>
+                    {state.label}
+                  </div>
+                  <p style={{ fontSize: '0.8rem', opacity: 0.8, margin: 0, fontWeight: 500, lineHeight: '1.3' }}>
+                    {state.desc}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 

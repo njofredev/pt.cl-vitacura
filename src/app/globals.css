@@ -746,6 +746,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* Specific Condition States */
+.odont-option-btn.btn-sano.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0.05) 100%) !important;
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-sano:hover:not(.active) {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.04) !important;
+}
+
 .odont-option-btn.btn-ausente.active {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, rgba(239, 68, 68, 0.05) 100%) !important;
   color: #ef4444 !important;
@@ -754,6 +767,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   font-weight: 700 !important;
 }
 .odont-option-btn.btn-ausente:hover:not(.active) {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.04) !important;
+}
+
+.odont-option-btn.btn-perdida.active {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, rgba(239, 68, 68, 0.05) 100%) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-perdida:hover:not(.active) {
   border-color: rgba(239, 68, 68, 0.4) !important;
   color: #ef4444 !important;
   background: rgba(239, 68, 68, 0.04) !important;
@@ -783,6 +809,58 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   border-color: rgba(168, 85, 247, 0.4) !important;
   color: #a855f7 !important;
   background: rgba(168, 85, 247, 0.04) !important;
+}
+
+.odont-option-btn.btn-cariada.active {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.14) 0%, rgba(244, 63, 94, 0.05) 100%) !important;
+  color: #f43f5e !important;
+  border-color: rgba(244, 63, 94, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(244, 63, 94, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-cariada:hover:not(.active) {
+  border-color: rgba(244, 63, 94, 0.4) !important;
+  color: #f43f5e !important;
+  background: rgba(244, 63, 94, 0.04) !important;
+}
+
+.odont-option-btn.btn-obturada.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.14) 0%, rgba(59, 130, 246, 0.05) 100%) !important;
+  color: #3b82f6 !important;
+  border-color: rgba(59, 130, 246, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-obturada:hover:not(.active) {
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.04) !important;
+}
+
+.odont-option-btn.btn-fracturada.active {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.14) 0%, rgba(249, 115, 22, 0.05) 100%) !important;
+  color: #f97316 !important;
+  border-color: rgba(249, 115, 22, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-fracturada:hover:not(.active) {
+  border-color: rgba(249, 115, 22, 0.4) !important;
+  color: #f97316 !important;
+  background: rgba(249, 115, 22, 0.04) !important;
+}
+
+.odont-option-btn.btn-provisional.active {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.14) 0%, rgba(6, 182, 212, 0.05) 100%) !important;
+  color: #06b6d4 !important;
+  border-color: rgba(6, 182, 212, 0.45) !important;
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.12) !important;
+  font-weight: 700 !important;
+}
+.odont-option-btn.btn-provisional:hover:not(.active) {
+  border-color: rgba(6, 182, 212, 0.4) !important;
+  color: #06b6d4 !important;
+  background: rgba(6, 182, 212, 0.04) !important;
 }
 
 .odont-option-btn.btn-limpiar {

@@ -106,7 +106,7 @@ export default function Sidebar({ user }: SidebarProps) {
 
   const menuItems = [
     {
-      name: 'Dashboard',
+      name: 'Panel de Control',
       path: '/dashboard',
       roles: ['admin', 'internal', 'external'],
       icon: (

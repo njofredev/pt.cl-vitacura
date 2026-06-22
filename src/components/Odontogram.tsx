@@ -145,7 +145,7 @@ interface SelectedToothState {
     L: boolean; // Lingual / Palatina
   };
   treatments: string[]; // Treatment IDs
-  condition?: 'ausente' | 'sano' | 'implante' | 'corona_existente';
+  condition?: 'ausente' | 'sano' | 'perdida' | 'implante' | 'corona_existente' | 'cariada' | 'obturada' | 'fracturada' | 'provisional';
 }
 
 interface OdontogramProps {
@@ -199,6 +199,7 @@ export default function Odontogram({
   // Dynamic database aranceles states
   const [treatmentOptions, setTreatmentOptions] = useState<TreatmentOption[]>(TREATMENT_OPTIONS);
   const [categories, setCategories] = useState<string[]>(['prev', 'rest', 'endo', 'surg', 'prot']);
+  const [visibleLimits, setVisibleLimits] = useState<Record<string, number>>({});
 
   // Load initial data if provided
   useEffect(() => {
@@ -241,12 +242,24 @@ export default function Odontogram({
             const toothId = parseInt(match[1], 10);
             const state = getOrCreateState(toothId);
 
-            if (line.includes('Ausente') || line.includes('Pérdida')) {
+            if (line.includes('Ausente')) {
               state.condition = 'ausente';
+            } else if (line.includes('Pérdida')) {
+              state.condition = 'perdida';
             } else if (line.includes('Implante')) {
               state.condition = 'implante';
             } else if (line.includes('Corona Previa') || line.includes('Corona Existente')) {
               state.condition = 'corona_existente';
+            } else if (line.includes('Cariada')) {
+              state.condition = 'cariada';
+            } else if (line.includes('Obturada')) {
+              state.condition = 'obturada';
+            } else if (line.includes('Fracturada')) {
+              state.condition = 'fracturada';
+            } else if (line.includes('Provisional')) {
+              state.condition = 'provisional';
+            } else if (line.includes('Sana')) {
+              state.condition = 'sano';
             }
 
             if (line.includes('Caras:')) {
@@ -728,9 +741,15 @@ export default function Odontogram({
           });
 
         let toothCond = '';
-        if (state.condition === 'ausente') toothCond = ' (Ausente/Pérdida)';
-        if (state.condition === 'implante') toothCond = ' (Con Implante)';
+        if (state.condition === 'ausente') toothCond = ' (Ausente)';
+        if (state.condition === 'perdida') toothCond = ' (Pérdida)';
+        if (state.condition === 'implante') toothCond = ' (Implante)';
         if (state.condition === 'corona_existente') toothCond = ' (Corona Previa)';
+        if (state.condition === 'cariada') toothCond = ' (Cariada)';
+        if (state.condition === 'obturada') toothCond = ' (Obturada)';
+        if (state.condition === 'fracturada') toothCond = ' (Fracturada)';
+        if (state.condition === 'provisional') toothCond = ' (Provisional)';
+        if (state.condition === 'sano') toothCond = ' (Sana)';
 
         // 1. Diagnosis
         if (activeFaces.length > 0 || state.condition) {
@@ -955,7 +974,7 @@ export default function Odontogram({
           cy="20"
           r="7"
           className={interactive ? "odont-face-sector" : ""}
-          fill={isFocused && hoveredFace === 'O' ? 'rgba(20, 184, 166, 0.65)' : (state.condition === 'ausente' ? 'rgba(239, 68, 68, 0.18)' : (state.faces.O ? 'rgba(20, 184, 166, 0.38)' : 'hsla(var(--foreground-hsl) / 0.03)'))}
+          fill={isFocused && hoveredFace === 'O' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.18)' : (state.faces.O ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.03)'))}
           stroke={isFocused && hoveredFace === 'O' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
           strokeWidth={isFocused && hoveredFace === 'O' ? "1.5" : "0.8"}
           onClick={(e) => {
@@ -974,7 +993,7 @@ export default function Odontogram({
         <path
           d="M 15 15 L 5 5 A 21 21 0 0 1 35 5 L 25 15 A 7 7 0 0 0 15 15 Z"
           className={interactive ? "odont-face-sector" : ""}
-          fill={isFocused && hoveredFace === 'V' ? 'rgba(20, 184, 166, 0.65)' : (state.condition === 'ausente' ? 'rgba(239, 68, 68, 0.12)' : (state.faces.V ? 'rgba(20, 184, 166, 0.38)' : 'hsla(var(--foreground-hsl) / 0.015)'))}
+          fill={isFocused && hoveredFace === 'V' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces.V ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
           stroke={isFocused && hoveredFace === 'V' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
           strokeWidth={isFocused && hoveredFace === 'V' ? "1.5" : "0.8"}
           onClick={(e) => {
@@ -993,7 +1012,7 @@ export default function Odontogram({
         <path
           d="M 15 25 L 5 35 A 21 21 0 0 0 35 35 L 25 25 A 7 7 0 0 1 15 25 Z"
           className={interactive ? "odont-face-sector" : ""}
-          fill={isFocused && hoveredFace === 'L' ? 'rgba(20, 184, 166, 0.65)' : (state.condition === 'ausente' ? 'rgba(239, 68, 68, 0.12)' : (state.faces.L ? 'rgba(20, 184, 166, 0.38)' : 'hsla(var(--foreground-hsl) / 0.015)'))}
+          fill={isFocused && hoveredFace === 'L' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces.L ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
           stroke={isFocused && hoveredFace === 'L' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
           strokeWidth={isFocused && hoveredFace === 'L' ? "1.5" : "0.8"}
           onClick={(e) => {
@@ -1012,7 +1031,7 @@ export default function Odontogram({
         <path
           d="M 15 15 L 5 5 A 21 21 0 0 0 5 35 L 15 25 A 7 7 0 0 1 15 15 Z"
           className={interactive ? "odont-face-sector" : ""}
-          fill={isFocused && hoveredFace === 'M' ? 'rgba(20, 184, 166, 0.65)' : (state.condition === 'ausente' ? 'rgba(239, 68, 68, 0.12)' : (state.faces.M ? 'rgba(20, 184, 166, 0.38)' : 'hsla(var(--foreground-hsl) / 0.015)'))}
+          fill={isFocused && hoveredFace === 'M' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces.M ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
           stroke={isFocused && hoveredFace === 'M' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
           strokeWidth={isFocused && hoveredFace === 'M' ? "1.5" : "0.8"}
           onClick={(e) => {
@@ -1031,7 +1050,7 @@ export default function Odontogram({
         <path
           d="M 25 15 L 35 5 A 21 21 0 0 1 35 35 L 25 25 A 7 7 0 0 0 25 15 Z"
           className={interactive ? "odont-face-sector" : ""}
-          fill={isFocused && hoveredFace === 'D' ? 'rgba(20, 184, 166, 0.65)' : (state.condition === 'ausente' ? 'rgba(239, 68, 68, 0.12)' : (state.faces.D ? 'rgba(20, 184, 166, 0.38)' : 'hsla(var(--foreground-hsl) / 0.015)'))}
+          fill={isFocused && hoveredFace === 'D' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces.D ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
           stroke={isFocused && hoveredFace === 'D' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
           strokeWidth={isFocused && hoveredFace === 'D' ? "1.5" : "0.8"}
           onClick={(e) => {
@@ -1053,11 +1072,26 @@ export default function Odontogram({
         {state.condition === 'ausente' && (
           <path d="M 4 4 L 36 36 M 36 4 L 4 36" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" pointerEvents="none" />
         )}
+        {state.condition === 'perdida' && (
+          <path d="M 4 4 L 36 36 M 36 4 L 4 36" stroke="#ef4444" strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" pointerEvents="none" />
+        )}
         {state.condition === 'implante' && (
           <circle cx="20" cy="20" r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" pointerEvents="none" />
         )}
         {state.condition === 'corona_existente' && (
           <rect x="10" y="10" width="20" height="20" rx="3" fill="none" stroke="#a855f7" strokeWidth="1.8" pointerEvents="none" />
+        )}
+        {state.condition === 'cariada' && (
+          <circle cx="20" cy="20" r="4.5" fill="#f43f5e" stroke="#ffffff" strokeWidth="1" pointerEvents="none" />
+        )}
+        {state.condition === 'obturada' && (
+          <circle cx="20" cy="20" r="4.5" fill="#3b82f6" stroke="#ffffff" strokeWidth="1" pointerEvents="none" />
+        )}
+        {state.condition === 'fracturada' && (
+          <path d="M 12 20 L 18 16 L 22 24 L 28 20" fill="none" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
+        )}
+        {state.condition === 'provisional' && (
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#06b6d4" strokeWidth="1.5" strokeDasharray="3 3" pointerEvents="none" />
         )}
       </svg>
     );
@@ -2030,11 +2064,27 @@ export default function Odontogram({
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
+                        onClick={() => setToothCondition(selectedTooth, 'sano')}
+                        className={`odont-option-btn btn-sano ${(!activeToothState.condition || activeToothState.condition === 'sano') ? 'active' : ''}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
+                      >
+                        <Shield size={14} style={{ opacity: 0.9 }} /> Sana (Por defecto)
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setToothCondition(selectedTooth, 'ausente')}
                         className={`odont-option-btn btn-ausente ${activeToothState.condition === 'ausente' ? 'active' : ''}`}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
                       >
-                        <XCircle size={15} style={{ opacity: 0.9 }} /> Pérdida / Ausente
+                        <XCircle size={15} style={{ opacity: 0.9 }} /> Ausente
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setToothCondition(selectedTooth, 'perdida')}
+                        className={`odont-option-btn btn-perdida ${activeToothState.condition === 'perdida' ? 'active' : ''}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
+                      >
+                        <XCircle size={15} style={{ opacity: 0.9 }} /> Perdida
                       </button>
                       <button
                         type="button"
@@ -2050,7 +2100,39 @@ export default function Odontogram({
                         className={`odont-option-btn btn-corona ${activeToothState.condition === 'corona_existente' ? 'active' : ''}`}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
                       >
-                        <Crown size={14} style={{ opacity: 0.9 }} /> Corona Previa
+                        <Crown size={14} style={{ opacity: 0.9 }} /> Corona previa
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setToothCondition(selectedTooth, 'cariada')}
+                        className={`odont-option-btn btn-cariada ${activeToothState.condition === 'cariada' ? 'active' : ''}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
+                      >
+                        <Activity size={14} style={{ opacity: 0.9 }} /> Cariada
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setToothCondition(selectedTooth, 'obturada')}
+                        className={`odont-option-btn btn-obturada ${activeToothState.condition === 'obturada' ? 'active' : ''}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
+                      >
+                        <CheckSquare size={14} style={{ opacity: 0.9 }} /> Obturada
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setToothCondition(selectedTooth, 'fracturada')}
+                        className={`odont-option-btn btn-fracturada ${activeToothState.condition === 'fracturada' ? 'active' : ''}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
+                      >
+                        <Zap size={14} style={{ opacity: 0.9 }} /> Fracturada
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setToothCondition(selectedTooth, 'provisional')}
+                        className={`odont-option-btn btn-provisional ${activeToothState.condition === 'provisional' ? 'active' : ''}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
+                      >
+                        <Info size={14} style={{ opacity: 0.9 }} /> Provisional
                       </button>
                     </div>
                   </div>
@@ -2208,7 +2290,7 @@ export default function Odontogram({
                               </div>
                               {filtered.length > 0 ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                  {filtered.map((opt) => {
+                                  {filtered.slice(0, 50).map((opt) => {
                                     const isAssigned = activeToothState.treatments.includes(opt.id);
                                     return (
                                       <div
@@ -2263,6 +2345,20 @@ export default function Odontogram({
                                       </div>
                                     );
                                   })}
+                                  {filtered.length > 50 && (
+                                    <div style={{ 
+                                      textAlign: 'center', 
+                                      padding: '12px', 
+                                      fontSize: '0.8rem', 
+                                      color: 'hsla(var(--foreground-hsl) / 0.5)',
+                                      border: '1.5px dashed var(--glass-border)',
+                                      borderRadius: '10px',
+                                      marginTop: '4px',
+                                      fontWeight: 500
+                                    }}>
+                                      Mostrando los primeros 50 resultados de {filtered.length}. Refina tu búsqueda para encontrar más prestaciones.
+                                    </div>
+                                  )}
                                 </div>
                               ) : (
                                 <div style={{ padding: '24px 16px', textAlign: 'center', color: 'hsla(var(--foreground-hsl) / 0.5)', fontSize: '0.84rem', fontWeight: 500 }}>
@@ -2377,55 +2473,84 @@ export default function Odontogram({
                             </div>
 
                             {/* Accordion Body (Collapsible Section) */}
-                            {isOpen && (
-                              <div
-                                className="animate-fade-in"
-                                style={{
-                                  padding: '18px 20px',
-                                  backgroundColor: 'hsla(var(--foreground-hsl) / 0.01)',
-                                  borderTop: '1px solid var(--glass-border)',
-                                  display: 'grid',
-                                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                                  gap: '12px'
-                                }}
-                              >
-                                {catOpts.map((opt) => {
-                                  const isAssigned = activeToothState.treatments.includes(opt.id);
-                                  return (
-                                    <div
-                                      key={opt.id}
-                                      onClick={() => selectedTooth && toggleTreatment(selectedTooth, opt.id)}
-                                      className={`odont-treatment-card ${isAssigned ? 'active' : ''}`}
-                                      style={{
-                                        borderColor: isAssigned ? opt.color : 'var(--glass-border)',
-                                        boxShadow: isAssigned ? `0 4px 14px ${opt.color}1e` : 'none'
-                                      }}
-                                    >
+                            {isOpen && (() => {
+                              const limit = visibleLimits[cat] || 40;
+                              const visibleOpts = catOpts.slice(0, limit);
+                              return (
+                                <div
+                                  className="animate-fade-in"
+                                  style={{
+                                    padding: '18px 20px',
+                                    backgroundColor: 'hsla(var(--foreground-hsl) / 0.01)',
+                                    borderTop: '1px solid var(--glass-border)',
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                                    gap: '12px'
+                                  }}
+                                >
+                                  {visibleOpts.map((opt) => {
+                                    const isAssigned = activeToothState.treatments.includes(opt.id);
+                                    return (
                                       <div
-                                        className="odont-treatment-checkbox"
+                                        key={opt.id}
+                                        onClick={() => selectedTooth && toggleTreatment(selectedTooth, opt.id)}
+                                        className={`odont-treatment-card ${isAssigned ? 'active' : ''}`}
                                         style={{
-                                          backgroundColor: isAssigned ? opt.color : 'transparent',
-                                          borderColor: isAssigned ? opt.color : 'rgba(120, 120, 120, 0.3)',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center'
+                                          borderColor: isAssigned ? opt.color : 'var(--glass-border)',
+                                          boxShadow: isAssigned ? `0 4px 14px ${opt.color}1e` : 'none'
                                         }}
                                       >
-                                        {isAssigned && (
-                                          <Check size={11} style={{ color: '#ffffff', strokeWidth: 4 }} />
-                                        )}
+                                        <div
+                                          className="odont-treatment-checkbox"
+                                          style={{
+                                            backgroundColor: isAssigned ? opt.color : 'transparent',
+                                            borderColor: isAssigned ? opt.color : 'rgba(120, 120, 120, 0.3)',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                          }}
+                                        >
+                                          {isAssigned && (
+                                            <Check size={11} style={{ color: '#ffffff', strokeWidth: 4 }} />
+                                          )}
+                                        </div>
+                                        <span style={{
+                                          color: isAssigned ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)',
+                                          fontWeight: isAssigned ? 600 : 500
+                                        }}>
+                                          {opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name}` : opt.name}
+                                        </span>
                                       </div>
-                                      <span style={{
-                                        color: isAssigned ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)',
-                                        fontWeight: isAssigned ? 600 : 500
-                                      }}>
-                                        {opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name}` : opt.name}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
+                                    );
+                                  })}
+                                  {catOpts.length > limit && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setVisibleLimits(prev => ({ ...prev, [cat]: (prev[cat] || 40) + 100 }));
+                                      }}
+                                      className="btn btn-secondary"
+                                      style={{
+                                        gridColumn: '1 / -1',
+                                        padding: '10px',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 700,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        marginTop: '8px',
+                                        width: '100%',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Mostrar más (+{catOpts.length - limit} restantes)
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })
@@ -2577,20 +2702,57 @@ export default function Odontogram({
                     activeFaces = Object.entries(state.faces)
                       .filter(([_, isActive]) => isActive)
                       .map(([faceName]) => faceName)
-                      .join(', ') || (state.condition === 'ausente' ? 'Completo' : 'General');
+                      .join(', ') || ((state.condition === 'ausente' || state.condition === 'perdida') ? 'Completo' : 'General');
                   }
 
                   let toothConditionLabel = '';
                   if (!isPseudo) {
                     if (state.condition === 'ausente') toothConditionLabel = 'Ausente';
+                    if (state.condition === 'perdida') toothConditionLabel = 'Perdida';
                     if (state.condition === 'implante') toothConditionLabel = 'Implante';
                     if (state.condition === 'corona_existente') toothConditionLabel = 'Corona Previa';
+                    if (state.condition === 'cariada') toothConditionLabel = 'Cariada';
+                    if (state.condition === 'obturada') toothConditionLabel = 'Obturada';
+                    if (state.condition === 'fracturada') toothConditionLabel = 'Fracturada';
+                    if (state.condition === 'provisional') toothConditionLabel = 'Provisional';
+                    if (state.condition === 'sano') toothConditionLabel = 'Sana';
                   }
 
                   return (
                     <tr key={id}>
                       <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--foreground-hsl)' }}>
-                        {nameLabel} {toothConditionLabel && <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', marginLeft: '6px' }}>{toothConditionLabel}</span>}
+                        {nameLabel} {toothConditionLabel && (
+                          <span style={{ 
+                            fontSize: '0.72rem', 
+                            padding: '2px 6px', 
+                            borderRadius: '4px', 
+                            backgroundColor: state.condition === 'ausente' || state.condition === 'perdida' || state.condition === 'cariada' || state.condition === 'fracturada'
+                              ? 'rgba(239, 68, 68, 0.15)' 
+                              : state.condition === 'implante'
+                              ? 'rgba(245, 158, 11, 0.15)'
+                              : state.condition === 'corona_existente'
+                              ? 'rgba(168, 85, 247, 0.15)'
+                              : state.condition === 'obturada'
+                              ? 'rgba(59, 130, 246, 0.15)'
+                              : state.condition === 'provisional'
+                              ? 'rgba(6, 182, 212, 0.15)'
+                              : 'rgba(16, 185, 129, 0.15)', 
+                            color: state.condition === 'ausente' || state.condition === 'perdida' || state.condition === 'cariada' || state.condition === 'fracturada'
+                              ? '#ef4444' 
+                              : state.condition === 'implante'
+                              ? '#f59e0b'
+                              : state.condition === 'corona_existente'
+                              ? '#a855f7'
+                              : state.condition === 'obturada'
+                              ? '#3b82f6'
+                              : state.condition === 'provisional'
+                              ? '#06b6d4'
+                              : '#10b981',
+                            marginLeft: '6px' 
+                          }}>
+                            {toothConditionLabel}
+                          </span>
+                        )}
                       </td>
                       <td style={{ padding: '8px 12px', opacity: 0.7, fontSize: '0.84rem', color: 'var(--foreground-hsl)' }}>
                         {typeLabel}
