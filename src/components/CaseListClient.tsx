@@ -47,6 +47,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   const [cases, setCases] = useState<CaseRecord[]>(initialCases);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
+  const [hoveredCase, setHoveredCase] = useState<{ case: CaseRecord; rect: { top: number; bottom: number; left: number; width: number } } | null>(null);
 
   // Advanced filters state
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -629,7 +630,22 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     </td>
                     <td style={{ whiteSpace: 'nowrap', opacity: 0.9 }}>{formatRUT(c.rut)}</td>
                     <td>{c.commune}</td>
-                    <td>
+                    <td
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setHoveredCase({
+                          case: c,
+                          rect: {
+                            top: rect.top,
+                            bottom: rect.bottom,
+                            left: rect.left,
+                            width: rect.width
+                          }
+                        });
+                      }}
+                      onMouseLeave={() => setHoveredCase(null)}
+                      style={{ cursor: 'help' }}
+                    >
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <span style={{ fontWeight: 700, color: 'hsl(var(--accent-hsl))', fontSize: '0.88rem' }}>
                           {c.agreement_type || 'Sin Convenio'}
@@ -1183,6 +1199,50 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
         </Modal>
       )}
 
+      {hoveredCase && (
+        <div
+          className="tooltip-card"
+          style={{
+            top: `${hoveredCase.rect.bottom + 8}px`,
+            left: `${hoveredCase.rect.left}px`,
+          }}
+        >
+          <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(var(--accent-hsl))', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px' }}>
+            Detalles del Ingreso
+          </h4>
+          
+          <div className="tooltip-section-title">Convenio</div>
+          <div className="tooltip-section-value">{hoveredCase.case.agreement_type || 'Sin convenio'}</div>
+          
+          {(hoveredCase.case.dental_diagnosis || hoveredCase.case.description) && (
+            <>
+              <div className="tooltip-section-title">Diagnóstico / Descripción</div>
+              <div className="tooltip-section-value">{hoveredCase.case.dental_diagnosis || hoveredCase.case.description}</div>
+            </>
+          )}
+          
+          {hoveredCase.case.treatment_needed && (
+            <>
+              <div className="tooltip-section-title">Prestaciones / Tratamiento</div>
+              <div className="tooltip-section-value" style={{ whiteSpace: 'pre-line', fontSize: '0.8rem' }}>{hoveredCase.case.treatment_needed}</div>
+            </>
+          )}
+          
+          {hoveredCase.case.medical_center && (
+            <>
+              <div className="tooltip-section-title">Centro Derivador</div>
+              <div className="tooltip-section-value">{hoveredCase.case.medical_center}</div>
+            </>
+          )}
+          
+          {hoveredCase.case.professional_name && (
+            <>
+              <div className="tooltip-section-title">Profesional Derivador</div>
+              <div className="tooltip-section-value">{hoveredCase.case.professional_name}</div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

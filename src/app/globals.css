@@ -337,7 +337,7 @@ button:active, .btn:active {
 }
 
 .badge-pendiente,
-.badge-ingresado {
+.badge-sincronizado {
   background-color: rgba(245, 158, 11, 0.15);
   color: hsl(var(--warning-hsl));
 }
@@ -349,18 +349,18 @@ button:active, .btn:active {
 }
 
 .badge-aprobado,
-.badge-en_tratamiento {
+.badge-finalizado,
+.badge-ingresado {
   background-color: rgba(16, 185, 129, 0.15);
   color: hsl(var(--success-hsl));
 }
 
-.badge-sincronizado {
-  background-color: rgba(20, 184, 166, 0.15);
-  color: #14b8a6;
+.badge-en_tratamiento {
+  background-color: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
 }
 
-.badge-rechazado,
-.badge-finalizado {
+.badge-rechazado {
   background-color: rgba(239, 68, 68, 0.15);
   color: hsl(var(--danger-hsl));
 }
@@ -1061,7 +1061,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 @media (min-width: 1024px) {
   .user-form-container {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     gap: 24px !important;
     align-items: start;
   }
@@ -1096,4 +1096,61 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   align-items: center;
   gap: 8px;
   font-weight: 600;
+}
+
+.tooltip-card {
+  width: 320px;
+  background: hsl(var(--card-hsl));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg), 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none; /* Avoid blocking clicks/hover */
+}
+
+/* Tooltip arrow pointing up */
+.tooltip-card::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 30px;
+  border-width: 8px;
+  border-style: solid;
+  border-color: transparent transparent var(--glass-border) transparent;
+}
+
+.tooltip-card::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 30px;
+  border-width: 7px;
+  border-style: solid;
+  border-color: transparent transparent hsl(var(--card-hsl)) transparent;
+  z-index: 1;
+}
+
+/* Tooltip contents style */
+.tooltip-section-title {
+  font-size: 0.70rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.55;
+  margin-bottom: 3px;
+  color: hsl(var(--foreground-hsl));
+}
+
+.tooltip-section-value {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  color: hsl(var(--foreground-hsl));
+}
+
+.tooltip-section-value:last-child {
+  margin-bottom: 0;
 }

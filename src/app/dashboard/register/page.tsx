@@ -1931,7 +1931,12 @@ export default function RegisterCasePage() {
       <Modal
         isOpen={showSummary}
         onClose={() => setShowSummary(false)}
-        title="🔍 Revisión y Confirmación de Inscripción"
+        title={
+          <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            Revisión y Confirmación de Inscripción
+          </span>
+        }
         maxWidth="750px"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative' }}>
@@ -1963,28 +1968,44 @@ export default function RegisterCasePage() {
               ) : (
                 <>
                   <div style={{
-                    width: '64px',
-                    height: '64px',
+                    width: '72px',
+                    height: '72px',
                     borderRadius: '50%',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#10b981',
-                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    animation: 'pulse 2s infinite'
+                    boxShadow: '0 0 25px rgba(16, 185, 129, 0.3)',
+                    border: '2px solid rgba(16, 185, 129, 0.4)',
+                    animation: 'pulse 2s infinite',
+                    marginBottom: '8px'
                   }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                   </div>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#10b981' }}>¡Registro Exitoso!</h4>
-                    <p style={{ margin: '8px 0 0 0', opacity: 0.9, fontSize: '0.92rem', fontWeight: 600, color: '#ffffff' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+                    <h4 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-display)' }}>
+                      ¡Registro Exitoso!
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: '#ffffff', opacity: 0.95 }}>
                       La derivación ha sido ingresada de forma definitiva.
                     </p>
-                    <p style={{ margin: '6px 0 0 0', opacity: 0.6, fontSize: '0.82rem', fontWeight: 500 }}>
-                      Será redirigido automáticamente a la bandeja de casos sociales...
-                    </p>
+                    <div style={{ 
+                      marginTop: '8px',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      color: '#94a3b8'
+                    }}>
+                      <div className="animate-spin" style={{ width: '12px', height: '12px', border: '2px solid rgba(148, 163, 184, 0.2)', borderTopColor: '#94a3b8', borderRadius: '50%' }}></div>
+                      <span style={{ fontSize: '0.84rem', fontWeight: 600, letterSpacing: '0.01em' }}>
+                        Será redirigido automáticamente a la bandeja de casos sociales...
+                      </span>
+                    </div>
                   </div>
                 </>
               )}

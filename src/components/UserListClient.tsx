@@ -22,6 +22,8 @@ interface User {
   professional_address?: string;
   professional_website?: string;
   professional_phone?: string;
+  operator_email?: string;
+  operator_phone?: string;
   medical_center?: string;
   agreement_type?: string;
   quota_dental?: number;
@@ -176,10 +178,16 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   const [newProfAddress, setNewProfAddress] = useState('');
   const [newProfWebsite, setNewProfWebsite] = useState('');
 
+  const [newOperatorEmail, setNewOperatorEmail] = useState('');
+  const [newOperatorPhone, setNewOperatorPhone] = useState('');
+
   const [editProfEmail, setEditProfEmail] = useState('');
   const [editProfPhone, setEditProfPhone] = useState('');
   const [editProfAddress, setEditProfAddress] = useState('');
   const [editProfWebsite, setEditProfWebsite] = useState('');
+
+  const [editOperatorEmail, setEditOperatorEmail] = useState('');
+  const [editOperatorPhone, setEditOperatorPhone] = useState('');
 
   useEffect(() => {
     async function loadAllConvenios() {
@@ -341,6 +349,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
         setNewProfPhone('');
         setNewProfAddress('');
         setNewProfWebsite('');
+        setNewOperatorEmail('');
+        setNewOperatorPhone('');
 
         setTimeout(() => {
           setIsModalOpen(false);
@@ -382,6 +392,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
         const professional_address = formData.get('professional_address') as string;
         const professional_website = formData.get('professional_website') as string;
         const professional_phone = formData.get('professional_phone') as string;
+        const operator_email = formData.get('operator_email') as string;
+        const operator_phone = formData.get('operator_phone') as string;
         const medical_center = formData.get('medical_center') as string;
         const agreement_type = formData.get('agreement_type') as string;
         const quota_dental = parseInt(formData.get('quota_dental') as string || '0', 10);
@@ -403,6 +415,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           professional_address,
           professional_website,
           professional_phone,
+          operator_email: formData.get('operator_email') as string,
+          operator_phone: formData.get('operator_phone') as string,
           medical_center,
           agreement_type,
           quota_dental,
@@ -425,6 +439,9 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           setEditProfEmail('');
           setEditProfPhone('');
           setEditProfAddress('');
+          setEditProfWebsite('');
+          setEditOperatorEmail('');
+          setEditOperatorPhone('');
           setSuccess(null);
         }, 1500);
       } else {
@@ -739,6 +756,9 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                             setEditProfEmail(u.professional_email || '');
                             setEditProfPhone(u.professional_phone || '');
                             setEditProfAddress(u.professional_address || '');
+                            setEditProfWebsite(u.professional_website || '');
+                            setEditOperatorEmail(u.operator_email || '');
+                            setEditOperatorPhone(u.operator_phone || '');
                             setIsEditModalOpen(true);
                           }}
                           className="btn btn-primary"
@@ -834,7 +854,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
       )}
 
       {/* Add User Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Registrar Nuevo Funcionario" maxWidth="1000px">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Registrar Nuevo Funcionario" maxWidth="1200px">
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '75vh', overflowY: 'auto', paddingRight: '6px' }}>
 
           {error && (
@@ -850,6 +870,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           )}
 
           <div className="user-form-container">
+            {/* Column 1: Acceso y Seguridad */}
             <div className="user-form-column">
               <div className="user-column-header">
                 <h4 className="user-column-title">
@@ -888,6 +909,26 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
               </div>
             </div>
 
+            {/* Column 2: Contacto Profesional */}
+            <div className="user-form-column">
+              <div className="user-column-header">
+                <h4 className="user-column-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                  Contacto Profesional
+                </h4>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="operator_email">Correo del Profesional</label>
+                <input className="form-input" type="email" id="operator_email" name="operator_email" placeholder="Ej: profesional@vitacura.cl" value={newOperatorEmail} onChange={(e) => setNewOperatorEmail(e.target.value)} disabled={loading} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="operator_phone">Teléfono del Profesional</label>
+                <input className="form-input" type="text" id="operator_phone" name="operator_phone" placeholder="Ej: +56999999999" value={newOperatorPhone} onChange={(e) => setNewOperatorPhone(e.target.value)} disabled={loading} />
+              </div>
+            </div>
+
+            {/* Column 3: Institución y Cargo */}
             <div className="user-form-column">
               <div className="user-column-header">
                 <h4 className="user-column-title">
@@ -1009,11 +1050,12 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
               </div>
             </div>
 
+            {/* Column 4: Contacto Sucursal */}
             <div className="user-form-column">
               <div className="user-column-header">
                 <h4 className="user-column-title">
                   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                  Contacto Profesional
+                  Contacto Sucursal
                 </h4>
               </div>
               <div className="form-group">
@@ -1045,6 +1087,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
               setNewProfPhone('');
               setNewProfAddress('');
               setNewProfWebsite('');
+              setNewOperatorEmail('');
+              setNewOperatorPhone('');
             }} className="btn-secondary" disabled={loading}>
               Cancelar
             </button>
@@ -1056,7 +1100,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
       </Modal>
 
       {/* Edit User Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditingUser(null); }} title="Editar Funcionario" maxWidth="1000px">
+      <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditingUser(null); }} title="Editar Funcionario" maxWidth="1200px">
         {editingUser && (
           <form onSubmit={onEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '75vh', overflowY: 'auto', paddingRight: '6px' }}>
 
@@ -1073,6 +1117,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
             )}
 
             <div className="user-form-container">
+              {/* Column 1: Acceso y Seguridad */}
               <div className="user-form-column">
                 <div className="user-column-header">
                   <h4 className="user-column-title">
@@ -1111,6 +1156,26 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                 </div>
               </div>
 
+              {/* Column 2: Contacto Profesional */}
+              <div className="user-form-column">
+                <div className="user-column-header">
+                  <h4 className="user-column-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    Contacto Profesional
+                  </h4>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="edit_operator_email">Correo del Profesional</label>
+                  <input className="form-input" type="email" id="edit_operator_email" name="operator_email" placeholder="Ej: profesional@vitacura.cl" value={editOperatorEmail} onChange={(e) => setEditOperatorEmail(e.target.value)} disabled={loading} />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="edit_operator_phone">Teléfono del Profesional</label>
+                  <input className="form-input" type="text" id="edit_operator_phone" name="operator_phone" placeholder="Ej: +56999999999" value={editOperatorPhone} onChange={(e) => setEditOperatorPhone(e.target.value)} disabled={loading} />
+                </div>
+              </div>
+
+              {/* Column 3: Institución y Cargo */}
               <div className="user-form-column">
                 <div className="user-column-header">
                   <h4 className="user-column-title">
@@ -1232,11 +1297,12 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                 </div>
               </div>
 
+              {/* Column 4: Contacto Sucursal */}
               <div className="user-form-column">
                 <div className="user-column-header">
                   <h4 className="user-column-title">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                    Contacto Profesional
+                    Contacto Sucursal
                   </h4>
                 </div>
                 <div className="form-group">
@@ -1269,6 +1335,8 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                 setEditProfPhone('');
                 setEditProfAddress('');
                 setEditProfWebsite('');
+                setEditOperatorEmail('');
+                setEditOperatorPhone('');
               }} className="btn-secondary" disabled={loading}>
                 Cancelar
               </button>

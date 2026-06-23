@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Modal from '@/components/ui/Modal';
+import Link from 'next/link';
 
 interface InstitutionMetric {
   name: string;
@@ -146,38 +147,71 @@ export default function DashboardMetricsClient({
         </div>
 
         {/* KPI 4: Instituciones Inscritas */}
-        <div className="telemetry-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {userRole === 'admin' ? 'Instituciones Inscritas' : 'Casos Pendientes'}
-            </span>
-            <div style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.08)', padding: '8px', borderRadius: '50%' }}>
-              {userRole === 'admin' ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18M3 9h18M3 15h18" /></svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-              )}
+        {userRole === 'internal' ? (
+          <Link href="/dashboard/ingreso-automatico" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+            <div className="telemetry-card" style={{ cursor: 'pointer', border: '1px dashed rgba(245, 158, 11, 0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Casos Pendientes
+                </span>
+                <div style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.08)', padding: '8px', borderRadius: '50%' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                <span style={{
+                  fontSize: '2.4rem',
+                  fontWeight: 850,
+                  fontFamily: 'var(--font-display)',
+                  color: 'hsl(var(--foreground-hsl))',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  lineHeight: '2.4rem',
+                  height: '2.4rem'
+                }}>
+                  {stats.pendingCases}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 700 }}>
+                  Esperando revisión
+                </span>
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className="telemetry-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {userRole === 'admin' ? 'Instituciones Inscritas' : 'Casos Pendientes'}
+              </span>
+              <div style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.08)', padding: '8px', borderRadius: '50%' }}>
+                {userRole === 'admin' ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18M3 9h18M3 15h18" /></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+              <span style={{
+                fontSize: '2.4rem',
+                fontWeight: 850,
+                fontFamily: 'var(--font-display)',
+                color: 'hsl(var(--foreground-hsl))',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: '2.4rem',
+                height: '2.4rem'
+              }}>
+                {userRole === 'admin' ? totalInstitutions : stats.pendingCases}
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 700 }}>
+                {userRole === 'admin' ? 'Establecimientos activos' : 'Esperando revisión'}
+              </span>
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-            <span style={{
-              fontSize: '2.4rem',
-              fontWeight: 850,
-              fontFamily: 'var(--font-display)',
-              color: 'hsl(var(--foreground-hsl))',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              lineHeight: '2.4rem',
-              height: '2.4rem'
-            }}>
-              {userRole === 'admin' ? totalInstitutions : stats.pendingCases}
-            </span>
-            <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 700 }}>
-              {userRole === 'admin' ? 'Establecimientos activos' : 'Esperando revisión'}
-            </span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Dental Breakdown Modal */}

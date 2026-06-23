@@ -59,6 +59,8 @@ async function setup() {
         professional_address VARCHAR(255),
         professional_website VARCHAR(255),
         professional_phone VARCHAR(255),
+        operator_email VARCHAR(255),
+        operator_phone VARCHAR(255),
         quota_dental INT DEFAULT 0,
         quota_xray INT DEFAULT 0,
         used_dental INT DEFAULT 0,
@@ -84,6 +86,7 @@ async function setup() {
         email VARCHAR(100),
         mobile VARCHAR(20) NOT NULL,
         registered_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        dentalink_patient_id INT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );

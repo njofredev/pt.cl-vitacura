@@ -44,7 +44,7 @@ export default async function DashboardPage() {
 
       const recentRes = await pool.query(`
         WITH global_cases AS (
-          SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name,
+          SELECT c.id, p.rut, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name,
                  ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
           FROM cases c 
           JOIN persons p ON c.person_id = p.id 
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
 
       const recentRes = await pool.query(`
         WITH global_cases AS (
-          SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name,
+          SELECT c.id, p.rut, p.first_names, p.last_names, c.description, c.status, c.created_at, u.name as registered_by_name,
                  u.institution_id as registered_by_institution_id,
                  ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
           FROM cases c 
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
 
       const recentRes = await pool.query(`
         WITH global_cases AS (
-          SELECT c.id, p.first_names, p.last_names, c.description, c.status, c.created_at, c.registered_by,
+          SELECT c.id, p.rut, p.first_names, p.last_names, c.description, c.status, c.created_at, c.registered_by,
                  u_reg.name as registered_by_name,
                  u_reg.institution_id as registered_by_institution_id,
                  ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
@@ -562,16 +562,29 @@ export default async function DashboardPage() {
                       <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>PROFESIONAL DERIVADOR</th>
                       <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>OBSERVACIÓN</th>
                       <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800 }}>ESTADO</th>
+                      {user.role === 'internal' && <th style={{ color: 'hsl(var(--foreground-hsl))', opacity: 0.5, fontWeight: 800, textAlign: 'right' }}>ACCIÓN</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {recentCases.map((c) => (
                       <tr key={c.id}>
                         <td style={{ fontWeight: 500, fontFamily: 'monospace', opacity: 0.7 }}>
-                          {c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}
+                          {user.role === 'internal' ? (
+                            <Link href={`/dashboard/ingreso-automatico?search=${c.rut}`} style={{ color: 'inherit', textDecoration: 'none', fontWeight: 'bold' }}>
+                              {c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}
+                            </Link>
+                          ) : (
+                            c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'
+                          )}
                         </td>
                         <td style={{ fontWeight: 700, color: 'hsl(var(--foreground-hsl))' }}>
-                          {c.first_names} {c.last_names}
+                          {user.role === 'internal' ? (
+                            <Link href={`/dashboard/ingreso-automatico?search=${c.rut}`} style={{ color: '#10b981', textDecoration: 'none' }}>
+                              {c.first_names} {c.last_names}
+                            </Link>
+                          ) : (
+                            `${c.first_names} ${c.last_names}`
+                          )}
                         </td>
                         <td style={{ fontSize: '0.85rem', opacity: 0.7, fontWeight: 500 }}>
                           {formatDate(c.created_at)}
@@ -594,6 +607,25 @@ export default async function DashboardPage() {
                             {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                           </span>
                         </td>
+                        {user.role === 'internal' && (
+                          <td style={{ textAlign: 'right' }}>
+                            <Link 
+                              href={`/dashboard/ingreso-automatico?search=${c.rut}`} 
+                              className="btn btn-secondary" 
+                              style={{ 
+                                padding: '4px 12px', 
+                                fontSize: '0.75rem', 
+                                height: 'auto',
+                                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6) 100%)',
+                                color: '#fbbf24',
+                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              Validar
+                            </Link>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

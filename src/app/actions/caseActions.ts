@@ -8,6 +8,14 @@ import { revalidatePath } from 'next/cache';
 import { sendAutomaticReferralEmail } from '@/lib/mail';
 import { headers } from 'next/headers';
 import { logAuditAction } from '@/app/actions/auditActions';
+import {
+  checkDentalinkPatientAction,
+  getDentalinkPatientTreatmentsAction,
+  getDentalinkTreatmentEvolutionsAction,
+  getDentalinkTreatmentAppointmentsAction,
+  getDentalinkPatientAppointmentsAction,
+  getDentalinkPatientEvolutionsAction
+} from '@/app/actions/dentalinkActions';
 
 // Memory-based rate limiting map to prevent brute-forcing
 const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
@@ -511,5 +519,150 @@ export async function getPersonByRutAction(rutRaw: string) {
     return { error: 'Error del servidor al consultar el RUT' };
   }
 }
+
+export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: number | string) {
+  try {
+    // 1. Get the case details (rut, status, created_at, dentalink_patient_id)
+    const caseRes = await pool.query(`
+      SELECT c.id, c.status, c.observations, p.rut, c.created_at, p.dentalink_patient_id
+      FROM cases c
+      JOIN persons p ON c.person_id = p.id
+      WHERE c.id = $1
+    `, [caseId]);
+    
+    if (caseRes.rows.length === 0) {
+      return { error: 'Caso no encontrado' };
+    }
+    
+    const c = caseRes.rows[0];
+    
+    let correlative: number;
+    if (yearlyCorrelative !== undefined && yearlyCorrelative !== null) {
+      correlative = Number(yearlyCorrelative);
+    } else {
+      // Query the exact correlative matching the ROW_NUMBER() in the dashboard query
+      const corrRes = await pool.query(`
+        WITH numbered_cases AS (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY created_at ASC) as correlative
+          FROM cases
+        )
+        SELECT correlative FROM numbered_cases WHERE id = $1
+      `, [caseId]);
+      correlative = corrRes.rows[0]?.correlative ? parseInt(corrRes.rows[0].correlative) : 1;
+    }
+    const caseIdStr = String(correlative).padStart(4, '0');
+    
+    let patientId = c.dentalink_patient_id;
+    if (!patientId) {
+      // 2. Query Dentalink patient if not already cached
+      const resExist = await checkDentalinkPatientAction(c.rut);
+      if (!resExist.success || !resExist.exists) {
+        return { success: false, error: 'Paciente no encontrado en Dentalink o error en la llamada' };
+      }
+      patientId = resExist.patient.id;
+    }
+    
+    // 3. Query treatments, appointments and patient-wide evolutions in parallel
+    const [resTreatments, patApptsRes, patEvsRes] = await Promise.all([
+      getDentalinkPatientTreatmentsAction(patientId),
+      getDentalinkPatientAppointmentsAction(patientId),
+      getDentalinkPatientEvolutionsAction(patientId)
+    ]);
+
+    if (!resTreatments.success) {
+      return { success: false, error: 'Error al obtener tratamientos de Dentalink' };
+    }
+    
+    const treatmentsList = resTreatments.treatments || [];
+    
+    // If status is 'sincronizado' but treatmentsList is empty, it means the treatment was deleted in Dentalink. Revert status.
+    if (c.status === 'sincronizado' && treatmentsList.length === 0) {
+      await pool.query(`
+        UPDATE cases 
+        SET status = $1, observations = $2, updated_by = NULL, updated_at = NOW()
+        WHERE id = $3
+      `, ['en_tratamiento', 'Tratamiento eliminado en Dentalink. Revertido automáticamente para re-sincronización.', c.id]);
+      
+      await logAuditAction('CASE_STATUS_UPDATED', { caseId: c.id, status: 'en_tratamiento', observations: 'Tratamiento eliminado en Dentalink. Revertido automáticamente.' });
+      
+      revalidatePath('/dashboard');
+      revalidatePath('/dashboard/cases');
+      return { success: true, statusChanged: true, newStatus: 'en_tratamiento' };
+    }
+    
+    // Find matching treatment by caseIdStr
+    const matchingTreatment = treatmentsList.find((t: any) => t.nombre.toUpperCase().includes(caseIdStr));
+    if (!matchingTreatment) {
+      return { success: true, statusChanged: false, message: 'No se encontró tratamiento correspondiente en Dentalink' };
+    }
+    
+    const patAppts = patApptsRes.success && patApptsRes.appointments ? patApptsRes.appointments : [];
+    const patEvs = patEvsRes.success && patEvsRes.evolutions ? patEvsRes.evolutions : [];
+    
+    // Filter patient appointments and evolutions matching this treatment that are not cancelled
+    const appts = patAppts.filter((appt: any) => appt.id_tratamiento === matchingTreatment.id && appt.estado_anulacion === 0);
+    const evs = patEvs.filter((ev: any) => ev.id_tratamiento === matchingTreatment.id);
+    
+    let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' = 'sincronizado';
+    let obs = 'Sincronizado automáticamente con Dentalink';
+    
+    if (evs.length > 0) {
+      newStatus = 'en_tratamiento';
+      obs = 'Tratamiento iniciado (evoluciones registradas en Dentalink).';
+    } else if (appts.length > 0) {
+      newStatus = 'agendado';
+      obs = 'Cita agendada registrada en Dentalink.';
+    }
+    
+    if (c.status !== newStatus) {
+      await pool.query(`
+        UPDATE cases 
+        SET status = $1, observations = $2, updated_by = NULL, updated_at = NOW()
+        WHERE id = $3
+      `, [newStatus, obs, c.id]);
+
+      await logAuditAction('CASE_STATUS_UPDATED', { caseId: c.id, status: newStatus, observations: obs });
+      
+      revalidatePath('/dashboard');
+      revalidatePath('/dashboard/cases');
+      
+      return { success: true, statusChanged: true, newStatus };
+    }
+    
+    return { success: true, statusChanged: false, currentStatus: c.status };
+  } catch (error: any) {
+    console.error(`Error in syncCaseStatusAction for case ${caseId}:`, error);
+    return { success: false, error: error.message || 'Error del servidor al sincronizar' };
+  }
+}
+
+export async function syncAllActiveCasesAction() {
+  try {
+    // Select cases that are in active workflow statuses but not 'finalizado' or 'ingresado' (unless we want to verify them too)
+    // Wait, let's select: agendado, sincronizado, en_tratamiento.
+    const res = await pool.query(`
+      SELECT id FROM cases 
+      WHERE status IN ('sincronizado', 'agendado', 'en_tratamiento')
+    `);
+    
+    const casesToSync = res.rows;
+    let updatedCount = 0;
+    
+    for (const item of casesToSync) {
+      const syncResult = await syncCaseStatusAction(item.id);
+      if (syncResult.success && syncResult.statusChanged) {
+        updatedCount++;
+      }
+      // Brief pause to avoid hitting API rate limits too quickly
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return { success: true, totalChecked: casesToSync.length, totalUpdated: updatedCount };
+  } catch (error: any) {
+    console.error('Error in syncAllActiveCasesAction:', error);
+    return { success: false, error: error.message || 'Error del servidor en sincronización masiva' };
+  }
+}
+
 
 

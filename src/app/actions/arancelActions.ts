@@ -57,6 +57,8 @@ export async function getArancelesAction(
 
     // Exclude hidden categories from the administrator table
     queryConditions.push(`category NOT IN (SELECT category FROM hidden_categories)`);
+    queryConditions.push(`name NOT ILIKE '%mivita%'`);
+    queryConditions.push(`name NOT ILIKE '%mi vita%'`);
 
     const whereClause = queryConditions.length > 0 ? `WHERE ${queryConditions.join(' AND ')}` : '';
 
@@ -192,6 +194,8 @@ export async function getOdontogramPrestacionesAction(): Promise<{ success: bool
         FROM arancel
         WHERE show_in_odontogram = TRUE
           AND category NOT IN (SELECT category FROM hidden_categories)
+          AND name NOT ILIKE '%mivita%'
+          AND name NOT ILIKE '%mi vita%'
         ORDER BY name ASC, price_base DESC NULLS LAST
       ) as sub
       ORDER BY category ASC, name ASC

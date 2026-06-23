@@ -3,6 +3,7 @@
 
 import { getSession } from '@/lib/auth';
 import { cleanRUT, formatRUT } from '@/lib/utils';
+import pool from '@/lib/db';
 
 export interface DentalinkRequestParams {
   token: string;
@@ -124,6 +125,41 @@ export async function checkDentalinkPatientAction(rut: string) {
     return { success: false, error: 'RUT inválido' };
   }
 
+  // 1. Check if we already have the dentalink_patient_id in our local database
+  try {
+    const dbRes = await pool.query(
+      'SELECT dentalink_patient_id FROM persons WHERE rut = $1',
+      [clean]
+    );
+    if (dbRes.rows.length > 0 && dbRes.rows[0].dentalink_patient_id) {
+      const cachedId = dbRes.rows[0].dentalink_patient_id;
+      // Direct lookup is significantly faster
+      const directUrl = `https://api.dentalink.healthatom.com/api/v1/pacientes/${cachedId}`;
+      const directResponse = await fetch(directUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': formattedToken,
+          'Accept': 'application/json',
+        },
+        cache: 'no-store',
+      });
+
+      if (directResponse.ok) {
+        const result = await directResponse.json();
+        if (result && result.data) {
+          return {
+            success: true,
+            exists: true,
+            patient: result.data
+          };
+        }
+      }
+    }
+  } catch (dbErr) {
+    console.error('Error fetching/verifying cached dentalink_patient_id:', dbErr);
+  }
+
+  // 2. If not cached, or direct ID lookup failed, perform the parallel RUT searches
   const dv = clean.slice(-1);
   const numbers = clean.slice(0, -1);
   const formatWithDash = `${numbers}-${dv}`;
@@ -132,11 +168,11 @@ export async function checkDentalinkPatientAction(rut: string) {
   // We will check in parallel the three formats to ensure a match
   const formatsToCheck = Array.from(new Set([clean, formatWithDash, formatWithDotsAndDash]));
   
-  for (const fmt of formatsToCheck) {
-    const qObject = { rut: { eq: fmt } };
-    const url = `https://api.dentalink.healthatom.com/api/v1/pacientes?q=${encodeURIComponent(JSON.stringify(qObject))}`;
-    
-    try {
+  try {
+    const promises = formatsToCheck.map(async (fmt) => {
+      const qObject = { rut: { eq: fmt } };
+      const url = `https://api.dentalink.healthatom.com/api/v1/pacientes?q=${encodeURIComponent(JSON.stringify(qObject))}`;
+      
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -149,16 +185,33 @@ export async function checkDentalinkPatientAction(rut: string) {
       if (response.ok) {
         const result = await response.json();
         if (result && Array.isArray(result.data) && result.data.length > 0) {
-          return {
-            success: true,
-            exists: true,
-            patient: result.data[0]
-          };
+          return result.data[0];
         }
       }
-    } catch (err: any) {
-      console.error(`Error querying Dentalink for RUT variant ${fmt}:`, err);
+      return null;
+    });
+
+    const results = await Promise.all(promises);
+    const foundPatient = results.find(p => p !== null);
+    if (foundPatient) {
+      // Save/Cache the patient ID locally to speed up all future checks
+      try {
+        await pool.query(
+          'UPDATE persons SET dentalink_patient_id = $1 WHERE rut = $2',
+          [foundPatient.id, clean]
+        );
+      } catch (saveErr) {
+        console.error('Error caching dentalink_patient_id:', saveErr);
+      }
+
+      return {
+        success: true,
+        exists: true,
+        patient: foundPatient
+      };
     }
+  } catch (err: any) {
+    console.error(`Error querying Dentalink for RUT variants:`, err);
   }
 
   return {
@@ -236,9 +289,21 @@ export async function createDentalinkPatientAction(patientData: {
       };
     }
 
+    const patient = result.data || result;
+    if (patient && patient.id) {
+      try {
+        await pool.query(
+          'UPDATE persons SET dentalink_patient_id = $1 WHERE rut = $2',
+          [patient.id, cleanRUT(patientData.rut)]
+        );
+      } catch (dbErr) {
+        console.error('Error caching dentalink_patient_id on creation:', dbErr);
+      }
+    }
+
     return {
       success: true,
-      patient: result.data || result
+      patient: patient
     };
   } catch (error: any) {
     console.error('Error creating Dentalink patient:', error);
@@ -671,6 +736,96 @@ export async function getDentalinkConvenioDetailsAction(idConvenio: number) {
     return { success: false, error: error.message || 'Error de red' };
   }
 }
+
+export async function getDentalinkTreatmentAppointmentsAction(idTratamiento: number | string) {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: 'No autorizado' };
+  }
+
+  if (session.role !== 'admin' && session.role !== 'internal') {
+    return { success: false, error: 'No autorizado para esta función' };
+  }
+
+  const apiToken = process.env.DENTALINK_API_TOKEN || '';
+  if (!apiToken) {
+    return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
+  }
+
+  const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
+  const url = `https://api.dentalink.healthatom.com/api/v1/tratamientos/${idTratamiento}/citas`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': formattedToken,
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `Error del servidor Dentalink: ${response.statusText}`, details: errorText };
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      appointments: result.data || []
+    };
+  } catch (error: any) {
+    console.error('Error fetching Dentalink treatment appointments:', error);
+    return { success: false, error: error.message || 'Error de red' };
+  }
+}
+
+export async function getDentalinkPatientAppointmentsAction(idPaciente: number | string) {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: 'No autorizado' };
+  }
+
+  if (session.role !== 'admin' && session.role !== 'internal') {
+    return { success: false, error: 'No autorizado para esta función' };
+  }
+
+  const apiToken = process.env.DENTALINK_API_TOKEN || '';
+  if (!apiToken) {
+    return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
+  }
+
+  const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
+  const url = `https://api.dentalink.healthatom.com/api/v1/pacientes/${idPaciente}/citas`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': formattedToken,
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `Error del servidor Dentalink: ${response.statusText}`, details: errorText };
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      appointments: result.data || []
+    };
+  } catch (error: any) {
+    console.error('Error fetching Dentalink patient appointments:', error);
+    return { success: false, error: error.message || 'Error de red' };
+  }
+}
+
+
 
 
 

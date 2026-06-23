@@ -24,6 +24,8 @@ export async function createUserAction(formData: FormData) {
   const professionalAddress = formData.get('professional_address') as string;
   const professionalWebsite = formData.get('professional_website') as string;
   const professionalPhone = formData.get('professional_phone') as string;
+  const operatorEmail = formData.get('operator_email') as string;
+  const operatorPhone = formData.get('operator_phone') as string;
   const medicalCenter = formData.get('medical_center') as string;
   const agreementType = formData.get('agreement_type') as string;
 
@@ -66,10 +68,11 @@ export async function createUserAction(formData: FormData) {
         name, email, password_hash, role, active, password_plain,
         professional_title, professional_position, professional_email,
         professional_address, professional_website, professional_phone,
+        operator_email, operator_phone,
         medical_center, agreement_type, quota_dental, quota_xray, used_dental, used_xray,
         institution_id, institution_ids
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 0, 0, $17, $18)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, 0, 0, $19, $20)
     `, [
       name.trim(), 
       email.toLowerCase().trim(), 
@@ -83,6 +86,8 @@ export async function createUserAction(formData: FormData) {
       professionalAddress ? professionalAddress.trim() : null,
       professionalWebsite ? professionalWebsite.trim() : null,
       professionalPhone ? professionalPhone.trim() : null,
+      operatorEmail ? operatorEmail.toLowerCase().trim() : null,
+      operatorPhone ? operatorPhone.trim() : null,
       medicalCenter ? medicalCenter.trim() : null,
       agreementType ? agreementType.trim() : null,
       quotaDental,
@@ -132,6 +137,7 @@ export async function getCurrentUserAction() {
       `SELECT u.id, u.name, u.email, u.role, u.active,
               u.professional_title, u.professional_position, u.professional_email,
               u.professional_address, u.professional_website, u.professional_phone,
+              u.operator_email, u.operator_phone,
               u.medical_center, u.agreement_type, u.quota_dental, u.quota_xray, u.used_dental, u.used_xray,
               u.institution_id, u.institution_ids,
               i.name AS institution_name,
@@ -172,6 +178,8 @@ export async function updateUserAction(userId: string, formData: FormData) {
   const professionalAddress = formData.get('professional_address') as string;
   const professionalWebsite = formData.get('professional_website') as string;
   const professionalPhone = formData.get('professional_phone') as string;
+  const operatorEmail = formData.get('operator_email') as string;
+  const operatorPhone = formData.get('operator_phone') as string;
   const medicalCenter = formData.get('medical_center') as string;
   const agreementType = formData.get('agreement_type') as string;
 
@@ -225,14 +233,16 @@ export async function updateUserAction(userId: string, formData: FormData) {
           professional_address = $9,
           professional_website = $10,
           professional_phone = $11,
-          medical_center = $12,
-          agreement_type = $13,
-          quota_dental = $14,
-          quota_xray = $15,
-          institution_id = $16,
-          institution_ids = $17,
+          operator_email = $12,
+          operator_phone = $13,
+          medical_center = $14,
+          agreement_type = $15,
+          quota_dental = $16,
+          quota_xray = $17,
+          institution_id = $18,
+          institution_ids = $19,
           updated_at = NOW()
-        WHERE id = $18
+        WHERE id = $20
       `, [
         name.trim(), 
         email.toLowerCase().trim(), 
@@ -245,6 +255,8 @@ export async function updateUserAction(userId: string, formData: FormData) {
         professionalAddress ? professionalAddress.trim() : null,
         professionalWebsite ? professionalWebsite.trim() : null,
         professionalPhone ? professionalPhone.trim() : null,
+        operatorEmail ? operatorEmail.toLowerCase().trim() : null,
+        operatorPhone ? operatorPhone.trim() : null,
         medicalCenter ? medicalCenter.trim() : null,
         agreementType ? agreementType.trim() : null,
         quotaDental,
@@ -266,14 +278,16 @@ export async function updateUserAction(userId: string, formData: FormData) {
           professional_address = $7,
           professional_website = $8,
           professional_phone = $9,
-          medical_center = $10,
-          agreement_type = $11,
-          quota_dental = $12,
-          quota_xray = $13,
-          institution_id = $14,
-          institution_ids = $15,
+          operator_email = $10,
+          operator_phone = $11,
+          medical_center = $12,
+          agreement_type = $13,
+          quota_dental = $14,
+          quota_xray = $15,
+          institution_id = $16,
+          institution_ids = $17,
           updated_at = NOW()
-        WHERE id = $16
+        WHERE id = $18
       `, [
         name.trim(), 
         email.toLowerCase().trim(), 
@@ -284,6 +298,8 @@ export async function updateUserAction(userId: string, formData: FormData) {
         professionalAddress ? professionalAddress.trim() : null,
         professionalWebsite ? professionalWebsite.trim() : null,
         professionalPhone ? professionalPhone.trim() : null,
+        operatorEmail ? operatorEmail.toLowerCase().trim() : null,
+        operatorPhone ? operatorPhone.trim() : null,
         medicalCenter ? medicalCenter.trim() : null,
         agreementType ? agreementType.trim() : null,
         quotaDental,
