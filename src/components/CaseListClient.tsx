@@ -773,8 +773,8 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                                 {/* Triangle Arrow */}
                                 <div style={arrowStyle} />
                                 
-                                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'hsl(var(--foreground-hsl))', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px', marginBottom: '4px', textAlign: 'left' }}>
-                                  Historial de Estados
+                                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', opacity: 0.8, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px', marginBottom: '4px', textAlign: 'left' }}>
+                                  Hist. estado:
                                 </div>
                                 
                                 {/* Timeline Items */}
