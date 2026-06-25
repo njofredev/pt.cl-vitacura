@@ -766,7 +766,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.72rem', textAlign: 'left' }}>
                                   {[
                                     { key: 'ingresado', label: 'Ingresado', color: '#10b981' },
-                                    { key: 'sincronizado', label: 'Sincronizado', color: '#10b981' },
+                                    { key: 'sincronizado', label: 'Sincronizado', color: '#f59e0b' },
                                     { key: 'agendado', label: 'Agendado', color: '#3b82f6' },
                                     { key: 'en_tratamiento', label: 'En Tto', color: '#a855f7' },
                                     { key: 'finalizado', label: 'Finalizado', color: '#10b981' }
