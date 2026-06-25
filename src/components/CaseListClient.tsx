@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { formatRUT, formatDate, formatDateTime } from '@/lib/utils';
-import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction } from '@/app/actions/caseActions';
+import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction, getCaseDentalinkDetailsAction } from '@/app/actions/caseActions';
 import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
 import { UserSession } from '@/lib/auth';
 import Link from 'next/link';
@@ -94,6 +94,34 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
   // Modal & Edit state
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
+  const [dentalinkDetails, setDentalinkDetails] = useState<any[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  useEffect(() => {
+    if (!selectedCase) {
+      setDentalinkDetails([]);
+      return;
+    }
+
+    setLoadingDetails(true);
+    const yearlyCorr = selectedCase.yearly_correlative;
+    getCaseDentalinkDetailsAction(selectedCase.id, yearlyCorr)
+      .then(res => {
+        if (res.success && res.details) {
+          setDentalinkDetails(res.details);
+        } else {
+          setDentalinkDetails([]);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching dentalink details in client:', err);
+        setDentalinkDetails([]);
+      })
+      .finally(() => {
+        setLoadingDetails(false);
+      });
+  }, [selectedCase?.id]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [evalStatus, setEvalStatus] = useState<'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado'>('ingresado');
   const [evalObs, setEvalObs] = useState('');
@@ -1124,14 +1152,16 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                                 <thead>
                                   <tr>
                                     <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Pieza</th>
-                                    <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Prestación Solicitada</th>
                                     <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Cara / Sección / Estado</th>
+                                    <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Prestación</th>
+                                    <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Estado</th>
+                                    <th style={{ fontSize: '0.78rem', padding: '10px 16px' }}>Fecha Realización</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {parsedPieces.length === 0 ? (
                                     <tr>
-                                      <td colSpan={3} style={{ textAlign: 'center', opacity: 0.6, padding: '20px' }}>
+                                      <td colSpan={5} style={{ textAlign: 'center', opacity: 0.6, padding: '20px' }}>
                                         No hay detalles clínicos registrados.
                                       </td>
                                     </tr>
@@ -1139,27 +1169,26 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                                     parsedPieces.map((piece, idx) => {
                                       // Lookup prestación ID from name
                                       let prestacionId = '';
+                                      let matchedPrestacion: any = null;
                                       if (piece.treatments) {
                                         const cleanName = piece.treatments.replace(/\s*\[(Dental|Rayos X)\]\s*$/i, '').trim().toLowerCase();
-                                        const matched = prestacionesList.find(p => p.name.toLowerCase() === cleanName);
-                                        if (matched) {
-                                          prestacionId = `(ID: ${matched.id_prestacion})`;
+                                        matchedPrestacion = prestacionesList.find(p => p.name.toLowerCase() === cleanName);
+                                        if (matchedPrestacion) {
+                                          prestacionId = `(ID: ${matchedPrestacion.id_prestacion})`;
                                         }
+                                      }
+
+                                      // Look up in Dentalink details
+                                      let matchingDetail: any = null;
+                                      if (matchedPrestacion && dentalinkDetails.length > 0) {
+                                        matchingDetail = dentalinkDetails.find(
+                                          (d: any) => Number(d.id_prestacion) === Number(matchedPrestacion.id_prestacion)
+                                        );
                                       }
 
                                       return (
                                         <tr key={idx}>
                                           <td style={{ fontWeight: 700, fontSize: '0.88rem', padding: '12px 16px' }}>{piece.id}</td>
-                                          <td style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--accent-hsl))', padding: '12px 16px' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                              <span>{piece.treatments || 'No asignada'}</span>
-                                              {prestacionId && (
-                                                <span style={{ fontSize: '0.72rem', opacity: 0.6, fontWeight: 500, color: 'hsl(var(--foreground-hsl))' }}>
-                                                  {prestacionId}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </td>
                                           <td style={{ fontSize: '0.85rem', opacity: 0.9, padding: '12px 16px' }}>
                                             <span style={{
                                               padding: '3px 8px',
@@ -1170,6 +1199,82 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                                             }}>
                                               {piece.diagnosis || 'Sin patologías'}
                                             </span>
+                                          </td>
+                                          <td style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--accent-hsl))', padding: '12px 16px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                              <span>{piece.treatments || 'No asignada'}</span>
+                                              {prestacionId && (
+                                                <span style={{ fontSize: '0.72rem', opacity: 0.6, fontWeight: 500, color: 'hsl(var(--foreground-hsl))' }}>
+                                                  {prestacionId}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td style={{ fontSize: '0.82rem', padding: '12px 16px' }}>
+                                            {loadingDetails ? (
+                                              <span style={{ opacity: 0.5, fontStyle: 'italic' }}>Cargando...</span>
+                                            ) : matchingDetail ? (
+                                              Number(matchingDetail.realizado) === 1 ? (
+                                                <span style={{
+                                                  padding: '2px 8px',
+                                                  borderRadius: '9999px',
+                                                  fontSize: '0.72rem',
+                                                  fontWeight: 700,
+                                                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                                  color: '#10b981',
+                                                  textTransform: 'uppercase',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '4px'
+                                                }}>
+                                                  ● Realizado
+                                                </span>
+                                              ) : (
+                                                <span style={{
+                                                  padding: '2px 8px',
+                                                  borderRadius: '9999px',
+                                                  fontSize: '0.72rem',
+                                                  fontWeight: 700,
+                                                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                                  color: '#f59e0b',
+                                                  textTransform: 'uppercase',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '4px'
+                                                }}>
+                                                  ● Pendiente
+                                                </span>
+                                              )
+                                            ) : (
+                                              <span style={{
+                                                padding: '2px 8px',
+                                                borderRadius: '9999px',
+                                                fontSize: '0.72rem',
+                                                fontWeight: 700,
+                                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                                color: 'rgba(255, 255, 255, 0.4)',
+                                                textTransform: 'uppercase',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                              }}>
+                                                ● Sin Sinc.
+                                              </span>
+                                            )}
+                                          </td>
+                                          <td style={{ fontSize: '0.82rem', opacity: 0.8, padding: '12px 16px', fontFamily: 'monospace' }}>
+                                            {loadingDetails ? (
+                                              '...'
+                                            ) : matchingDetail && Number(matchingDetail.realizado) === 1 && matchingDetail.fecha_realizacion ? (
+                                              (() => {
+                                                const d = new Date(matchingDetail.fecha_realizacion);
+                                                if (isNaN(d.getTime())) return matchingDetail.fecha_realizacion;
+                                                const pad = (n: number) => String(n).padStart(2, '0');
+                                                return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+                                              })()
+                                            ) : (
+                                              '--/--/----'
+                                            )}
                                           </td>
                                         </tr>
                                       );

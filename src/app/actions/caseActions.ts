@@ -695,5 +695,80 @@ export async function syncAllActiveCasesAction() {
   }
 }
 
+export async function getCaseDentalinkDetailsAction(caseId: string, yearlyCorrelative?: number | string) {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: 'No autorizado' };
+  }
+
+  try {
+    const caseRes = await pool.query(`
+      SELECT c.id, p.rut, p.dentalink_patient_id
+      FROM cases c
+      JOIN persons p ON c.person_id = p.id
+      WHERE c.id = $1
+    `, [caseId]);
+
+    if (caseRes.rows.length === 0) {
+      return { success: false, error: 'Caso no encontrado' };
+    }
+
+    const c = caseRes.rows[0];
+
+    let correlative: number;
+    if (yearlyCorrelative !== undefined && yearlyCorrelative !== null) {
+      correlative = Number(yearlyCorrelative);
+    } else {
+      const corrRes = await pool.query(`
+        WITH numbered_cases AS (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY created_at ASC) as correlative
+          FROM cases
+        )
+        SELECT correlative FROM numbered_cases WHERE id = $1
+      `, [caseId]);
+      correlative = corrRes.rows[0]?.correlative ? parseInt(corrRes.rows[0].correlative) : 1;
+    }
+    const caseIdStr = String(correlative).padStart(4, '0');
+
+    let patientId = c.dentalink_patient_id;
+    if (!patientId) {
+      const resExist = await checkDentalinkPatientAction(c.rut);
+      if (resExist.success && resExist.exists) {
+        patientId = resExist.patient.id;
+      }
+    }
+
+    if (!patientId) {
+      return { success: false, error: 'Paciente no encontrado en Dentalink' };
+    }
+
+    const resTreatments = await getDentalinkPatientTreatmentsAction(patientId);
+    if (!resTreatments.success) {
+      return { success: false, error: 'Error al obtener tratamientos de Dentalink' };
+    }
+
+    const treatmentsList = resTreatments.treatments || [];
+    const matchingTreatment = treatmentsList.find((t: any) => t.nombre.toUpperCase().includes(caseIdStr));
+    
+    if (!matchingTreatment) {
+      return { success: false, error: 'No se encontró tratamiento correspondiente en Dentalink' };
+    }
+
+    const detailsRes = await getDentalinkTreatmentDetailsAction(matchingTreatment.id);
+    if (!detailsRes.success) {
+      return { success: false, error: 'Error al obtener detalles del tratamiento' };
+    }
+
+    return {
+      success: true,
+      treatment: matchingTreatment,
+      details: detailsRes.details || []
+    };
+  } catch (err: any) {
+    console.error('Error fetching case dentalink details:', err);
+    return { success: false, error: err.message || 'Error del servidor' };
+  }
+}
+
 
 
