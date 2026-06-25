@@ -271,9 +271,9 @@ export async function updateCaseStatusAction(caseId: string, status: 'ingresado'
           observations = $2, 
           updated_by = $3, 
           updated_at = NOW(),
-          status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($1::text, NOW())
+          status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($5::text, NOW())
       WHERE id = $4
-    `, [status, observations.trim(), session.id, caseId]);
+    `, [status, observations.trim(), session.id, caseId, status]);
 
     await logAuditAction('CASE_STATUS_UPDATED', { caseId, status, observations: observations.trim() });
 
@@ -588,9 +588,9 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
             observations = $2, 
             updated_by = NULL, 
             updated_at = NOW(),
-            status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($1::text, NOW())
+            status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($4::text, NOW())
         WHERE id = $3
-      `, ['en_tratamiento', 'Tratamiento eliminado en Dentalink. Revertido automáticamente para re-sincronización.', c.id]);
+      `, ['en_tratamiento', 'Tratamiento eliminado en Dentalink. Revertido automáticamente para re-sincronización.', c.id, 'en_tratamiento']);
       
       await logAuditAction('CASE_STATUS_UPDATED', { caseId: c.id, status: 'en_tratamiento', observations: 'Tratamiento eliminado en Dentalink. Revertido automáticamente.' });
       
@@ -639,9 +639,9 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
             observations = $2, 
             updated_by = NULL, 
             updated_at = NOW(),
-            status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($1::text, NOW())
+            status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($4::text, NOW())
         WHERE id = $3
-      `, [newStatus, obs, c.id]);
+      `, [newStatus, obs, c.id, newStatus]);
 
       await logAuditAction('CASE_STATUS_UPDATED', { caseId: c.id, status: newStatus, observations: obs });
       
