@@ -14,7 +14,8 @@ import {
   getDentalinkTreatmentEvolutionsAction,
   getDentalinkTreatmentAppointmentsAction,
   getDentalinkPatientAppointmentsAction,
-  getDentalinkPatientEvolutionsAction
+  getDentalinkPatientEvolutionsAction,
+  getDentalinkTreatmentDetailsAction
 } from '@/app/actions/dentalinkActions';
 
 // Memory-based rate limiting map to prevent brute-forcing
@@ -615,9 +616,17 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = 'sincronizado';
     let obs = 'Sincronizado automáticamente con Dentalink';
     
+    // Fetch details of the matching treatment to verify if all prestaciones are completed
+    const detailsRes = await getDentalinkTreatmentDetailsAction(matchingTreatment.id);
+    const details = detailsRes.success && detailsRes.details ? detailsRes.details : [];
+    const allDetailsCompleted = details.length > 0 && details.every((detail: any) => Number(detail.realizado) === 1);
+    
     if (matchingTreatment.finalizado === 1) {
       newStatus = 'finalizado';
       obs = 'Tratamiento finalizado y completado en Dentalink.';
+    } else if (allDetailsCompleted) {
+      newStatus = 'finalizado';
+      obs = 'Todas las prestaciones del plan de tratamiento han sido realizadas en Dentalink.';
     } else {
       const hasTreatmentStarted = evs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
       
