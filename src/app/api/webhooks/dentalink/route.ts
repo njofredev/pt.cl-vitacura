@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       const dbLookup = await pool.query(`
         SELECT c.id, p.rut FROM cases c
         JOIN persons p ON c.person_id = p.id
-        WHERE p.dentalink_patient_id = $1 AND c.status IN ('sincronizado', 'agendado', 'en_tratamiento')
+        WHERE p.dentalink_patient_id = $1 AND c.status IN ('ingresado', 'sincronizado', 'agendado', 'en_tratamiento')
         ORDER BY c.created_at DESC
         LIMIT 1
       `, [patientId]);
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
         const dbLookup = await pool.query(`
           SELECT c.id, p.rut FROM cases c
           JOIN persons p ON c.person_id = p.id
-          WHERE p.rut = $1 AND c.status IN ('sincronizado', 'agendado', 'en_tratamiento')
+          WHERE p.rut = $1 AND c.status IN ('ingresado', 'sincronizado', 'agendado', 'en_tratamiento')
           ORDER BY c.created_at DESC
           LIMIT 1
         `, [clean]);
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
                   const dbLookup = await pool.query(`
                     SELECT c.id, p.rut FROM cases c
                     JOIN persons p ON c.person_id = p.id
-                    WHERE p.rut = $1 AND c.status IN ('sincronizado', 'agendado', 'en_tratamiento')
+                    WHERE p.rut = $1 AND c.status IN ('ingresado', 'sincronizado', 'agendado', 'en_tratamiento')
                     ORDER BY c.created_at DESC
                     LIMIT 1
                   `, [clean]);

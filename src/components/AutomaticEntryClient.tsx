@@ -872,7 +872,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     const interval = setInterval(async () => {
       if (!active || isSyncing || isBulkVerifying) return;
       
-      const activeCases = paginatedCases.filter(c => ['sincronizado', 'agendado', 'en_tratamiento'].includes(c.status));
+      const activeCases = paginatedCases.filter(c => ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento'].includes(c.status));
       if (activeCases.length === 0) return;
 
       for (const c of activeCases) {
@@ -950,7 +950,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
 
     try {
       for (const c of paginatedCases) {
-        if (['sincronizado', 'agendado', 'en_tratamiento'].includes(c.status)) {
+        if (['ingresado', 'sincronizado', 'agendado', 'en_tratamiento'].includes(c.status)) {
           const res = await syncCaseStatusAction(c.id, c.yearly_correlative);
           if (res.success && res.statusChanged && res.newStatus) {
             setCases(prev => prev.map(item => item.id === c.id ? { ...item, status: res.newStatus as any } : item));
