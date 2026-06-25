@@ -196,9 +196,9 @@ export async function registerPersonAndCaseAction(formData: FormData) {
           medical_center, agreement_type, dental_diagnosis, treatment_needed,
           professional_name, professional_title, professional_position,
           professional_email, professional_phone, professional_website, professional_address,
-          registered_by, dental_count, xray_count
+          registered_by, dental_count, xray_count, status_history
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       `, [
         personId, 
         description ? description.trim() : '', 
@@ -217,7 +217,8 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         professionalAddress?.trim() || null,
         session.id,
         dentalCount,
-        xrayCount
+        xrayCount,
+        JSON.stringify({ ingresado: new Date().toISOString() })
       ]);
 
       await client.query('COMMIT');
@@ -266,7 +267,11 @@ export async function updateCaseStatusAction(caseId: string, status: 'ingresado'
   try {
     await pool.query(`
       UPDATE cases 
-      SET status = $1, observations = $2, updated_by = $3, updated_at = NOW()
+      SET status = $1, 
+          observations = $2, 
+          updated_by = $3, 
+          updated_at = NOW(),
+          status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($1::text, NOW())
       WHERE id = $4
     `, [status, observations.trim(), session.id, caseId]);
 
@@ -579,7 +584,11 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     if (c.status === 'sincronizado' && treatmentsList.length === 0) {
       await pool.query(`
         UPDATE cases 
-        SET status = $1, observations = $2, updated_by = NULL, updated_at = NOW()
+        SET status = $1, 
+            observations = $2, 
+            updated_by = NULL, 
+            updated_at = NOW(),
+            status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($1::text, NOW())
         WHERE id = $3
       `, ['en_tratamiento', 'Tratamiento eliminado en Dentalink. Revertido automáticamente para re-sincronización.', c.id]);
       
@@ -603,21 +612,34 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     const appts = patAppts.filter((appt: any) => appt.id_tratamiento === matchingTreatment.id && appt.estado_anulacion === 0);
     const evs = patEvs.filter((ev: any) => ev.id_tratamiento === matchingTreatment.id);
     
-    let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' = 'sincronizado';
+    let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = 'sincronizado';
     let obs = 'Sincronizado automáticamente con Dentalink';
     
-    if (evs.length > 0) {
-      newStatus = 'en_tratamiento';
-      obs = 'Tratamiento iniciado (evoluciones registradas en Dentalink).';
-    } else if (appts.length > 0) {
-      newStatus = 'agendado';
-      obs = 'Cita agendada registrada en Dentalink.';
+    if (matchingTreatment.finalizado === 1) {
+      newStatus = 'finalizado';
+      obs = 'Tratamiento finalizado y completado en Dentalink.';
+    } else {
+      const hasTreatmentStarted = evs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
+      
+      if (hasTreatmentStarted) {
+        newStatus = 'en_tratamiento';
+        obs = evs.length > 0 
+          ? 'Tratamiento iniciado (evoluciones registradas en Dentalink).'
+          : 'Tratamiento iniciado (cita atendida, en espera o atendiéndose en Dentalink).';
+      } else if (appts.length > 0) {
+        newStatus = 'agendado';
+        obs = 'Cita agendada registrada en Dentalink.';
+      }
     }
     
     if (c.status !== newStatus) {
       await pool.query(`
         UPDATE cases 
-        SET status = $1, observations = $2, updated_by = NULL, updated_at = NOW()
+        SET status = $1, 
+            observations = $2, 
+            updated_by = NULL, 
+            updated_at = NOW(),
+            status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($1::text, NOW())
         WHERE id = $3
       `, [newStatus, obs, c.id]);
 

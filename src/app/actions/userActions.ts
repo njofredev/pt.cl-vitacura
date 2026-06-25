@@ -16,7 +16,7 @@ export async function createUserAction(formData: FormData) {
   const name = formData.get('name') as string;
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
-  const role = formData.get('role') as 'admin' | 'internal' | 'external';
+  const role = formData.get('role') as 'admin' | 'internal' | 'external' | 'reader';
 
   const professionalTitle = formData.get('professional_title') as string;
   const professionalPosition = formData.get('professional_position') as string;
@@ -38,7 +38,7 @@ export async function createUserAction(formData: FormData) {
   const institutionIdsRaw = formData.getAll('institution_ids') as string[];
   let institutionIds = institutionIdsRaw.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
 
-  if (role === 'external') {
+  if (role === 'external' || role === 'reader') {
     institutionIds = institutionId ? [institutionId] : [];
   } else if (role === 'internal') {
     institutionId = institutionIds.length > 0 ? institutionIds[0] : null;
@@ -169,7 +169,7 @@ export async function updateUserAction(userId: string, formData: FormData) {
 
   const name = formData.get('name') as string;
   const email = formData.get('email') as string;
-  const role = formData.get('role') as 'admin' | 'internal' | 'external';
+  const role = formData.get('role') as 'admin' | 'internal' | 'external' | 'reader';
   const password = formData.get('password') as string;
 
   const professionalTitle = formData.get('professional_title') as string;
@@ -192,7 +192,7 @@ export async function updateUserAction(userId: string, formData: FormData) {
   const institutionIdsRaw = formData.getAll('institution_ids') as string[];
   let institutionIds = institutionIdsRaw.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
 
-  if (role === 'external') {
+  if (role === 'external' || role === 'reader') {
     institutionIds = institutionId ? [institutionId] : [];
   } else if (role === 'internal') {
     institutionId = institutionIds.length > 0 ? institutionIds[0] : null;

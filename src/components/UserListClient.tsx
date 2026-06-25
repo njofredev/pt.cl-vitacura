@@ -61,6 +61,30 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  // User list filters
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('todos');
+  const [userInstFilter, setUserInstFilter] = useState('todos');
+
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch = u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) || 
+                          u.email.toLowerCase().includes(userSearchTerm.toLowerCase());
+    
+    const matchesRole = userRoleFilter === 'todos' || u.role === userRoleFilter;
+    
+    let matchesInst = true;
+    if (userInstFilter !== 'todos') {
+      const targetInstId = parseInt(userInstFilter, 10);
+      if (u.role === 'internal') {
+        matchesInst = u.institution_ids ? u.institution_ids.includes(targetInstId) : false;
+      } else {
+        matchesInst = u.institution_id === targetInstId;
+      }
+    }
+    
+    return matchesSearch && matchesRole && matchesInst;
+  });
   
   // Institution Modals/States
   const [isInstModalOpen, setIsInstModalOpen] = useState(false);
@@ -267,10 +291,11 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
     loadEditAgreements();
   }, [editMedicalCenter]);
 
-  const roleLabels = {
+  const roleLabels: Record<string, string> = {
     admin: 'Admin',
     internal: 'Interno',
     external: 'Externo',
+    reader: 'Lector',
   };
 
   async function handleToggleStatus(userId: string, currentStatus: boolean) {
@@ -333,7 +358,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           used_dental: 0,
           used_xray: 0,
           institution_id,
-          institution_ids: role === 'external' ? (institution_id ? [institution_id] : []) : institution_ids,
+          institution_ids: (role === 'external' || role === 'reader') ? (institution_id ? [institution_id] : []) : institution_ids,
           institution_name: selectedInst ? selectedInst.name : null,
           inst_quota_dental: selectedInst ? selectedInst.quota_dental : undefined,
           inst_quota_xray: selectedInst ? selectedInst.quota_xray : undefined,
@@ -422,7 +447,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           quota_dental,
           quota_xray,
           institution_id,
-          institution_ids: role === 'external' ? (institution_id ? [institution_id] : []) : institution_ids,
+          institution_ids: (role === 'external' || role === 'reader') ? (institution_id ? [institution_id] : []) : institution_ids,
           institution_name: selectedInst ? selectedInst.name : null,
           inst_quota_dental: selectedInst ? selectedInst.quota_dental : undefined,
           inst_quota_xray: selectedInst ? selectedInst.quota_xray : undefined,
@@ -678,7 +703,67 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
 
       {activeTab === 'users' ? (
         /* Users View */
-        <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden' }}>
+        <>
+          {/* User List Filters */}
+          <div
+            className="glass-panel"
+            style={{
+              padding: '16px 20px',
+              display: 'flex',
+              gap: '16px',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              marginBottom: '20px',
+              width: '100%'
+            }}
+          >
+            <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
+              <input
+                className="form-input"
+                type="text"
+                placeholder="Buscar por nombre o correo..."
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
+                style={{ width: '100%', paddingLeft: '40px' }}
+              />
+              <div style={{ position: 'absolute', left: '14px', top: '15px', opacity: 0.5 }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.7, textTransform: 'uppercase' }}>Rol:</span>
+              <div style={{ minWidth: '160px' }}>
+                <CustomSelect
+                  value={userRoleFilter}
+                  onChange={setUserRoleFilter}
+                  options={[
+                    { value: 'todos', label: 'Todos los Roles' },
+                    { value: 'admin', label: 'Admin' },
+                    { value: 'internal', label: 'Interno' },
+                    { value: 'external', label: 'Externo' },
+                    { value: 'reader', label: 'Lector' }
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.7, textTransform: 'uppercase' }}>Institución:</span>
+              <div style={{ minWidth: '220px' }}>
+                <CustomSelect
+                  value={userInstFilter}
+                  onChange={setUserInstFilter}
+                  options={[
+                    { value: 'todos', label: 'Todas las Instituciones' },
+                    ...institutions.map((i) => ({ value: String(i.id), label: i.name }))
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden' }}>
           <div className="table-container">
             <table className="custom-table">
               <thead>
@@ -693,7 +778,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {filteredUsers.map((u) => (
                   <tr key={u.id}>
                     <td style={{ fontWeight: 600 }}>{u.name}</td>
                     <td style={{ opacity: 0.8 }}>{u.email}</td>
@@ -785,6 +870,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
             </table>
           </div>
         </div>
+      </>
       ) : (
         /* Institutions View */
         <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden' }}>
@@ -901,6 +987,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                   options={[
                     { value: 'internal', label: 'Interno (Revisión y Convenios)' },
                     { value: 'external', label: 'Externo (Inscripción de Casos)' },
+                    { value: 'reader', label: 'Lector (Consulta y Reportes)' },
                     { value: 'admin', label: 'Admin (Control Total)' }
                   ]}
                   disabled={loading}
@@ -936,7 +1023,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                   Institución y Cargo
                 </h4>
               </div>
-              {newRole === 'external' && (
+              {(newRole === 'external' || newRole === 'reader') && (
                 <>
                   <div className="form-group">
                     <label className="form-label" htmlFor="agreement_select">Convenio Asignado</label>
@@ -1148,6 +1235,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                     options={[
                       { value: 'internal', label: 'Interno (Revisión y Convenios)' },
                       { value: 'external', label: 'Externo (Inscripción de Casos)' },
+                      { value: 'reader', label: 'Lector (Consulta y Reportes)' },
                       { value: 'admin', label: 'Admin (Control Total)' }
                     ]}
                     disabled={loading}
@@ -1183,7 +1271,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                     Institución y Cargo
                   </h4>
                 </div>
-                {editRole === 'external' && (
+                {(editRole === 'external' || editRole === 'reader') && (
                   <>
                     <div className="form-group">
                       <label className="form-label" htmlFor="edit_agreement_select">Convenio Asignado</label>

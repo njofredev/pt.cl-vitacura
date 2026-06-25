@@ -11,7 +11,7 @@ export interface UserSession {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'internal' | 'external';
+  role: 'admin' | 'internal' | 'external' | 'reader';
   institutionName?: string;
   institution_ids?: number[];
 }
@@ -74,7 +74,7 @@ export async function loginUser(email: string, password: string): Promise<{ succ
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role as 'admin' | 'internal' | 'external',
+      role: user.role as 'admin' | 'internal' | 'external' | 'reader',
       institutionName: user.institution_name || undefined,
       institution_ids: user.institution_ids || [],
     };

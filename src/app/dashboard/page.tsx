@@ -98,7 +98,7 @@ export default async function DashboardPage() {
       `, [assignedInstIds]);
       recentCases = recentRes.rows;
 
-    } else if (user.role === 'external') {
+    } else if (user.role === 'external' || user.role === 'reader') {
       const casesCountRes = await pool.query(`
         SELECT COUNT(*) 
         FROM cases c 
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
   let quotaXrayTotal = 0;
 
   try {
-    if (user.role === 'external') {
+    if (user.role === 'external' || user.role === 'reader') {
       const quotaRes = await pool.query(
         `SELECT i.quota_dental, i.used_dental, i.quota_xray, i.used_xray 
          FROM users u 
@@ -214,7 +214,7 @@ export default async function DashboardPage() {
       topProfessional = topProfRes.rows[0].name;
       topProfessionalCount = parseInt(topProfRes.rows[0].count);
       topProfessionalSub = `Lidera con ${topProfessionalCount} casos ingresados`;
-    } else if (user.role === 'external' && stats.totalCases > 0) {
+    } else if ((user.role === 'external' || user.role === 'reader') && stats.totalCases > 0) {
       topProfessional = user.name;
       topProfessionalCount = stats.totalCases;
       topProfessionalSub = `Lidera con ${topProfessionalCount} casos ingresados`;
@@ -266,7 +266,7 @@ export default async function DashboardPage() {
     `;
     let queryParams: any[] = [];
 
-    if (user.role === 'external') {
+    if (user.role === 'external' || user.role === 'reader') {
       queryStr += `
         WHERE u.institution_id = (SELECT institution_id FROM users WHERE id = $1)
            OR (c.registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
@@ -310,7 +310,7 @@ export default async function DashboardPage() {
     `;
     let queryParams: any[] = [];
 
-    if (user.role === 'external') {
+    if (user.role === 'external' || user.role === 'reader') {
       queryStr += `
         WHERE u.institution_id = (SELECT institution_id FROM users WHERE id = $1)
            OR (c.registered_by = $1 AND (SELECT institution_id FROM users WHERE id = $1) IS NULL)
@@ -731,7 +731,7 @@ export default async function DashboardPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--foreground-hsl))' }}>Bandeja de Casos</span>
                   <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 500 }}>
-                    {user.role === 'external' ? 'Monitorear mis inscripciones' : 'Buscar y administrar casos sociales'}
+                    {user.role === 'external' || user.role === 'reader' ? 'Monitorear inscripciones de mi convenio' : 'Buscar y administrar casos sociales'}
                   </span>
                 </div>
               </Link>

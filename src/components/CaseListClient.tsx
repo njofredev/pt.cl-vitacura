@@ -36,7 +36,16 @@ interface CaseRecord {
   yearly_correlative?: number | string;
   dental_count?: number;
   xray_count?: number;
+  status_history?: Record<string, string>;
 }
+
+const formatDateTimeCompact = (dateInput: any) => {
+  if (!dateInput) return '';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 interface CaseListClientProps {
   initialCases: CaseRecord[];
@@ -445,7 +454,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
           </div>
         </div>
 
-        {user.role !== 'internal' && (
+        {user.role !== 'internal' && user.role !== 'reader' && (
           <Link href="/dashboard/register" className="login-pill-btn" style={{ gap: '8px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Nueva Derivación
@@ -597,7 +606,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
       </div>
 
       {/* Main Glass Table Container */}
-      <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden' }}>
+      <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden', minHeight: '380px' }}>
         {filteredCases.length === 0 ? (
           <div style={{ padding: '50px 20px', textAlign: 'center', opacity: 0.6 }}>
             No se encontraron casos registrados con los filtros seleccionados.
@@ -620,7 +629,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                 </tr>
               </thead>
               <tbody>
-                {filteredCases.map((c) => (
+                {filteredCases.map((c, idx) => (
                   <tr key={c.id}>
                     <td style={{ fontFamily: 'monospace', fontWeight: 600, opacity: 0.8 }}>
                       {c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}
@@ -683,9 +692,140 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     <td style={{ fontSize: '0.85rem', opacity: 0.7 }}>{formatDate(c.created_at)}</td>
                     <td style={{ fontSize: '0.85rem', opacity: 0.8 }}>{c.registered_by_name || 'Admin Semilla'}</td>
                     <td>
-                      <span className={`badge badge-${c.status}`}>
-                        {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
-                      </span>
+                      <div className="status-timeline-tooltip-container" style={{ position: 'relative', display: 'inline-block' }}>
+                        <style>{`
+                          .status-timeline-tooltip-container:hover .status-timeline-tooltip {
+                            display: flex !important;
+                          }
+                        `}</style>
+                        <span className={`badge badge-${c.status}`} style={{ cursor: 'help', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700 }}>
+                          {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                        </span>
+                        
+                          {/* Hover Tooltip Box */}
+                          {(() => {
+                            const isLastRow = idx === filteredCases.length - 1;
+                            const isFirstRow = idx === 0;
+                            
+                            const tooltipStyle: React.CSSProperties = {
+                              position: 'absolute',
+                              right: '110%',
+                              backgroundColor: '#111827',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              borderRadius: '8px',
+                              padding: '12px 16px',
+                              zIndex: 100,
+                              width: '270px',
+                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
+                              display: 'none',
+                              flexDirection: 'column',
+                              gap: '6px',
+                              pointerEvents: 'none',
+                              ...(isLastRow && !isFirstRow ? {
+                                bottom: '-8px',
+                                transform: 'none'
+                              } : isFirstRow ? {
+                                top: '-8px',
+                                transform: 'none'
+                              } : {
+                                top: '50%',
+                                transform: 'translateY(-50%)'
+                              })
+                            };
+                            
+                            const arrowStyle: React.CSSProperties = {
+                              position: 'absolute',
+                              left: '100%',
+                              width: '0',
+                              height: '0',
+                              borderTop: '6px solid transparent',
+                              borderBottom: '6px solid transparent',
+                              borderLeft: '6px solid #111827',
+                              ...(isLastRow && !isFirstRow ? {
+                                bottom: '12px',
+                                transform: 'none'
+                              } : isFirstRow ? {
+                                top: '12px',
+                                transform: 'none'
+                              } : {
+                                top: '50%',
+                                transform: 'translateY(-50%)'
+                              })
+                            };
+
+                            return (
+                              <div className="status-timeline-tooltip" style={tooltipStyle}>
+                                {/* Triangle Arrow */}
+                                <div style={arrowStyle} />
+                                
+                                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'hsl(var(--foreground-hsl))', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px', marginBottom: '4px', textAlign: 'left' }}>
+                                  Historial de Estados
+                                </div>
+                                
+                                {/* Timeline Items */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.72rem', textAlign: 'left' }}>
+                                  {[
+                                    { key: 'ingresado', label: 'Ingresado', color: '#10b981' },
+                                    { key: 'sincronizado', label: 'Sincronizado', color: '#10b981' },
+                                    { key: 'agendado', label: 'Agendado', color: '#3b82f6' },
+                                    { key: 'en_tratamiento', label: 'En Tto', color: '#a855f7' },
+                                    { key: 'finalizado', label: 'Finalizado', color: '#10b981' }
+                                  ].map((state) => {
+                                    const hasTimestamp = !!c.status_history?.[state.key];
+                                    const isCurrent = c.status === state.key;
+                                    const timestampValue = c.status_history?.[state.key];
+                                    
+                                    return (
+                                      <div 
+                                        key={state.key}
+                                        style={{ 
+                                          display: 'flex', 
+                                          justifyContent: 'space-between', 
+                                          alignItems: 'center', 
+                                          gap: '8px',
+                                          padding: '4px 6px',
+                                          borderRadius: '4px',
+                                          backgroundColor: isCurrent ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                                          border: isCurrent ? `1px solid ${state.color}` : '1px solid transparent'
+                                        }}
+                                      >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                          <span style={{ 
+                                            color: hasTimestamp ? state.color : 'rgba(255,255,255,0.25)', 
+                                            fontWeight: isCurrent ? 800 : 600 
+                                          }}>
+                                            ● {state.label}:
+                                          </span>
+                                          {isCurrent && (
+                                            <span style={{ 
+                                              fontSize: '0.58rem', 
+                                              color: '#fff', 
+                                              backgroundColor: state.color, 
+                                              padding: '1px 4px', 
+                                              borderRadius: '3px', 
+                                              fontWeight: 800,
+                                              textTransform: 'uppercase',
+                                              letterSpacing: '0.5px'
+                                            }}>
+                                              Actual
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span style={{ 
+                                          color: hasTimestamp ? '#ffffff' : 'rgba(255,255,255,0.25)', 
+                                          fontFamily: 'monospace',
+                                          fontWeight: isCurrent ? 700 : 'normal' 
+                                        }}>
+                                          {hasTimestamp ? formatDateTimeCompact(timestampValue) : '--/-- --:--'}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                      </div>
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -1053,8 +1193,8 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                 Evaluación Administrativa / Convenio
               </h4>
 
-              {/* Show-only panel for External Admins (who cannot edit statuses) */}
-              {user.role === 'external' ? (
+              {/* Show-only panel for External / Reader (who cannot edit statuses) */}
+              {user.role === 'external' || user.role === 'reader' ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                     <span style={{ fontSize: '0.9rem', opacity: 0.7, fontWeight: 600 }}>Estado actual:</span>

@@ -6,11 +6,11 @@ interface FAQItem {
   question: string;
   answer: string;
   category: 'general' | 'roles' | 'dentalink' | 'cases';
-  allowedRoles: ('admin' | 'internal' | 'external')[];
+  allowedRoles: ('admin' | 'internal' | 'external' | 'reader')[];
 }
 
 interface HelpPageClientProps {
-  userRole: 'admin' | 'internal' | 'external';
+  userRole: 'admin' | 'internal' | 'external' | 'reader';
 }
 
 export default function HelpPageClient({ userRole }: HelpPageClientProps) {
@@ -23,7 +23,7 @@ export default function HelpPageClient({ userRole }: HelpPageClientProps) {
       category: 'general',
       question: '¿Qué es el Correlativo Anual (ID) de los casos?',
       answer: 'Es un identificador único en formato "0001", "0002" asignado automáticamente a cada caso social derivado. Este número se genera correlativamente basado en el año de registro para mantener una trazabilidad organizada y simple.',
-      allowedRoles: ['admin', 'internal', 'external']
+      allowedRoles: ['admin', 'internal', 'external', 'reader']
     },
     {
       category: 'cases',
@@ -47,7 +47,7 @@ export default function HelpPageClient({ userRole }: HelpPageClientProps) {
       category: 'cases',
       question: '¿Qué significan los diferentes estados de un caso?',
       answer: '• Ingresado: Derivación registrada por el usuario Externo.\n• Sincronizado: Datos validados y sincronizados con Dentalink.\n• Agendado: Cita médica coordinada para el paciente.\n• En Tratamiento: Paciente realizando sus procedimientos.\n• Finalizado: Tratamiento concluido con éxito.',
-      allowedRoles: ['admin', 'internal', 'external']
+      allowedRoles: ['admin', 'internal', 'external', 'reader']
     },
     {
       category: 'roles',
@@ -123,7 +123,7 @@ export default function HelpPageClient({ userRole }: HelpPageClientProps) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         
         {/* Card: Externo (Visible to Admin and External) */}
-        {(userRole === 'admin' || userRole === 'external') && (
+        {(userRole === 'admin' || userRole === 'external' || userRole === 'reader') && (
           <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '1.75rem' }}>🩺</span>
@@ -136,6 +136,24 @@ export default function HelpPageClient({ userRole }: HelpPageClientProps) {
               <li>Creación rápida de casos mediante formulario de derivación digital.</li>
               <li>Uso del Odontograma interactivo para marcar tratamientos específicos.</li>
               <li>Autocompletado de datos del convenio seleccionado.</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Card: Lector (Visible to Admin and Reader) */}
+        {(userRole === 'admin' || userRole === 'reader') && (
+          <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '1.75rem' }}>📖</span>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Rol Lector</h3>
+            </div>
+            <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, lineHeight: '1.5' }}>
+              Acceso de consulta para profesionales de convenios. Permite visualizar la información de los casos de su institución asignada y exportar reportes.
+            </p>
+            <ul style={{ paddingLeft: '20px', fontSize: '0.85rem', opacity: 0.7, margin: '8px 0 0 0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <li>Consulta de bandeja de casos pertenecientes a su convenio/institución.</li>
+              <li>Revisión de detalles clínicos y de diagnóstico (modo lectura).</li>
+              <li>Reportería y análisis de estadísticas de los casos ingresados.</li>
             </ul>
           </div>
         )}

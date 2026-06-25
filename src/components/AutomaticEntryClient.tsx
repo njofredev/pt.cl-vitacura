@@ -363,15 +363,24 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             const evs = evolutionsMap[matchingTreatment.id] || [];
             const appts = appointmentsMap[matchingTreatment.id] || [];
             
-            let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' = 'sincronizado';
+            let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = 'sincronizado';
             let obs = 'Sincronizado automáticamente con Dentalink';
             
-            if (evs.length > 0) {
-              newStatus = 'en_tratamiento';
-              obs = 'Tratamiento iniciado (evoluciones registradas en Dentalink).';
-            } else if (appts.length > 0) {
-              newStatus = 'agendado';
-              obs = 'Cita agendada registrada en Dentalink.';
+            if (matchingTreatment.finalizado === 1) {
+              newStatus = 'finalizado';
+              obs = 'Tratamiento finalizado y completado en Dentalink.';
+            } else {
+              const hasTreatmentStarted = evs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
+              
+              if (hasTreatmentStarted) {
+                newStatus = 'en_tratamiento';
+                obs = evs.length > 0 
+                  ? 'Tratamiento iniciado (evoluciones registradas en Dentalink).'
+                  : 'Tratamiento iniciado (cita atendida, en espera o atendiéndose en Dentalink).';
+              } else if (appts.length > 0) {
+                newStatus = 'agendado';
+                obs = 'Cita agendada registrada en Dentalink.';
+              }
             }
             
             if (c.status !== newStatus) {
@@ -699,15 +708,24 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             const evs = evolutionsMap[matchingTreatment.id] || [];
             const appts = appointmentsMap[matchingTreatment.id] || [];
             
-            let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' = 'sincronizado';
+            let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = 'sincronizado';
             let obs = 'Sincronizado automáticamente con Dentalink';
             
-            if (evs.length > 0) {
-              newStatus = 'en_tratamiento';
-              obs = 'Tratamiento iniciado (evoluciones registradas en Dentalink).';
-            } else if (appts.length > 0) {
-              newStatus = 'agendado';
-              obs = 'Cita agendada registrada en Dentalink.';
+            if (matchingTreatment.finalizado === 1) {
+              newStatus = 'finalizado';
+              obs = 'Tratamiento finalizado y completado en Dentalink.';
+            } else {
+              const hasTreatmentStarted = evs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
+              
+              if (hasTreatmentStarted) {
+                newStatus = 'en_tratamiento';
+                obs = evs.length > 0 
+                  ? 'Tratamiento iniciado (evoluciones registradas en Dentalink).'
+                  : 'Tratamiento iniciado (cita atendida, en espera o atendiéndose en Dentalink).';
+              } else if (appts.length > 0) {
+                newStatus = 'agendado';
+                obs = 'Cita agendada registrada en Dentalink.';
+              }
             }
             
             if (wizardCase.status !== newStatus) {

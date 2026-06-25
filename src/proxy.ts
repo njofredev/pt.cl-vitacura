@@ -44,7 +44,7 @@ export async function proxy(request: NextRequest) {
 
       // External-only routes (if any, like dedicated registers)
       // If administrative external wants to register, dashboard/register is accessible to admin & external
-      if (pathname.startsWith('/dashboard/register') && role === 'internal') {
+      if (pathname.startsWith('/dashboard/register') && (role === 'internal' || role === 'reader')) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
 

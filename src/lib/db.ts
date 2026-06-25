@@ -15,6 +15,10 @@ if (process.env.NODE_ENV === 'production') {
     password: process.env.POSTGRES_PASSWORD,
     port: parseInt(process.env.POSTGRES_PORT || '5432'),
     ssl: false, // If the remote server requires SSL, change to true or configuration
+    max: 20, // Max 20 connections in pool for production
+    idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+    connectionTimeoutMillis: 2000, // Return an error if connection takes more than 2 seconds
+    maxUses: 7500, // Recreate connection after 7500 uses to prevent memory leaks
   });
 } else {
   // Prevent multiple instances of Pool in development hot-reloading
@@ -30,6 +34,9 @@ if (process.env.NODE_ENV === 'production') {
       password: process.env.POSTGRES_PASSWORD,
       port: parseInt(process.env.POSTGRES_PORT || '5432'),
       ssl: false,
+      max: 5, // Keep it low in development
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 2000,
     });
   }
   pool = globalWithPool._postgresPool;

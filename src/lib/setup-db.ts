@@ -50,7 +50,7 @@ async function setup() {
         name VARCHAR(100) NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
-        role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'internal', 'external')),
+        role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'internal', 'external', 'reader')),
         active BOOLEAN DEFAULT TRUE,
         password_plain VARCHAR(255),
         professional_title VARCHAR(255),
@@ -116,6 +116,7 @@ async function setup() {
         updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
         dental_count INT DEFAULT 0,
         xray_count INT DEFAULT 0,
+        status_history JSONB DEFAULT '{}'::jsonb,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
