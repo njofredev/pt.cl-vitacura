@@ -7,6 +7,7 @@ import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction } fro
 import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
 import { UserSession } from '@/lib/auth';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import CustomSelect from '@/components/ui/CustomSelect';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import Odontogram from '@/components/Odontogram';
@@ -53,7 +54,21 @@ interface CaseListClientProps {
 }
 
 export default function CaseListClient({ initialCases, user }: CaseListClientProps) {
+  const router = useRouter();
   const [cases, setCases] = useState<CaseRecord[]>(initialCases);
+
+  // Sync state when server returns updated cases (e.g. from background sync or webhooks)
+  useEffect(() => {
+    setCases(initialCases);
+  }, [initialCases]);
+
+  // Periodically refresh the route to fetch any background/webhook updates from the database
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 15000); // every 15 seconds
+    return () => clearInterval(interval);
+  }, [router]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [hoveredCase, setHoveredCase] = useState<{ case: CaseRecord; rect: { top: number; bottom: number; left: number; width: number } } | null>(null);
