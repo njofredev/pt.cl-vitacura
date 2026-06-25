@@ -664,7 +664,7 @@ export async function syncAllActiveCasesAction() {
     // Wait, let's select: agendado, sincronizado, en_tratamiento.
     const res = await pool.query(`
       SELECT id FROM cases 
-      WHERE status IN ('sincronizado', 'agendado', 'en_tratamiento')
+      WHERE status IN ('ingresado', 'sincronizado', 'agendado', 'en_tratamiento')
     `);
     
     const casesToSync = res.rows;
