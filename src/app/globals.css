@@ -369,6 +369,7 @@ button:active, .btn:active {
 .table-container {
   overflow-x: auto;
   width: 100%;
+  min-height: 240px;
 }
 
 .custom-table {
