@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portal de Derivación Digital — Policlínico Tabancura & Vitacura 🏥✨
 
-## Getting Started
+Este es el repositorio principal del portal de **Derivación Digital**, diseñado para conectar y agilizar el flujo de derivaciones y casos sociales entre la red asistencial del **Policlínico Tabancura** y la **Municipalidad de Vitacura**.
 
-First, run the development server:
+El sistema integra un odontograma interactivo de alta fidelidad, control inteligente de cupos para profesionales derivadores y sincronización bidireccional en tiempo real con **Dentalink**.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🚀 Características Principales
+
+### 1. Odontograma Digital Interactivo
+* **Soporte Completo:** Modos de dentición Permanente (Adulto - 32 piezas) e Infantil (Niño - 20 piezas).
+* **Diagnósticos Detallados:** Selección clínica por caras del diente (Vestibular, Oclusal, Mesial, Distal, Lingual) o condiciones globales (Ausente, Implante, Corona previa, Cariada, Obturada, Fracturada, Provisional).
+* **Acciones en Masa y Selección Múltiple:** Opciones avanzadas para aplicar tratamientos por arcadas completas (superior/inferior), boca completa o mediante multiselección de dientes.
+
+### 2. Gestión de Aranceles y Prestaciones
+* **Carga desde Excel:** Sincronización masiva de aranceles desde archivos de planillas Excel (`prestaciones.xlsx`) a PostgreSQL.
+* **Control de Visibilidad:** Panel administrativo para activar/desactivar la visibilidad de prestaciones específicas y categorías enteras en el odontograma.
+* **Búsqueda Avanzada:** Buscador integrado con mapeo clínico óptimo (por ejemplo, las obturaciones tradicionales se manejan y buscan bajo la nomenclatura de **"Resina"**).
+
+### 3. Control Inteligente de Cupos (Cuotas)
+* **Validación en Tiempo Real:** El sistema valida automáticamente los cupos disponibles de **Procedimientos Dentales** y **Radiología (Rayos X)** asignados a cada institución y profesional externo antes de registrar la derivación.
+* **Prevención de Sobrecupos:** Las transacciones de registro fallan de manera segura (`ROLLBACK`) si el caso excede el cupo disponible.
+
+### 4. Integración Robusta con la API de Dentalink
+* **Búsqueda Inteligente por RUT:** Valida en paralelo 3 formatos de RUT (limpio, con guion, con puntos y guion) para evitar registros duplicados.
+* **Asistente de Vinculación (Automatic Entry Wizard):**
+  1. Comprueba si el paciente existe en Dentalink y lo crea automáticamente si no es así.
+  2. Permite crear nuevos planes de tratamientos en Dentalink asociados a la derivación.
+  3. Vincula y asocia automáticamente las prestaciones del odontograma al plan de tratamiento con descuento del 100% (costo cero para el paciente derivado).
+* **Sincronización Bidireccional de Estados:** Monitorea evoluciones y citas agendadas en Dentalink para actualizar los estados del caso en el portal (`ingresado` ➔ `agendado` ➔ `en_tratamiento` ➔ `finalizado` / `sincronizado`).
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+* **Framework:** Next.js 16 (App Router)
+* **Lenguaje:** TypeScript / Python (Scripts de soporte)
+* **Base de Datos:** PostgreSQL con cliente nativo `pg` (Pool de conexiones optimizado)
+* **Estilos:** Vanilla CSS con variables de diseño moderno (Glassmorphism, vibrantes colores clínicos, animaciones suaves)
+* **Seguridad:** Autenticación de sesiones seguras mediante `jose` / JSON Web Tokens y encriptación con `bcryptjs`.
+
+---
+
+## 💻 Comandos y Guía de Operación
+
+### Configuración del Entorno
+Duplica el archivo `.env.example` como `.env.local` y configura las credenciales de base de datos PostgreSQL, SMTP para correos de notificación y el token de la API de Dentalink:
+```env
+POSTGRES_HOST=your_host
+POSTGRES_DATABASE=db_casos
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_password
+DENTALINK_API_TOKEN=Token your_token
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Ejecutar en Desarrollo
+Inicia el servidor local de Next.js:
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Gestión de Base de Datos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* **Inicializar Estructura de Base de Datos:**
+  Crea las tablas, restricciones, índices y datos semilla iniciales (convenios y administrador por defecto):
+  ```bash
+  npx tsx src/lib/setup-db.ts
+  ```
 
-## Learn More
+* **Sincronizar Aranceles desde Excel (`prestaciones.xlsx`):**
+  Limpia y actualiza el catálogo local con los aranceles activos (Base y Preferencial):
+  ```bash
+  python src/lib/sync-aranceles.py
+  ```
 
-To learn more about Next.js, take a look at the following resources:
+* **Reiniciar Base de Datos para Pruebas (Desarrollo):**
+  Limpia por completo las tablas de casos ingresados (`cases`), personas (`persons`) e historial de auditoría (`audit_logs`), y reestablece los contadores de cuotas usadas de instituciones y usuarios a `0`:
+  ```bash
+  npx tsx src/lib/reset-cases.ts
+  ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📂 Estructura del Código
 
-## Deploy on Vercel
+* `/src/app`: Rutas del sistema, vistas de dashboard y **Server Actions** lógicos (`/actions`).
+* `/src/components`: Componentes del cliente interactivo (Odontograma digital, Asistente de entrada, Administrador de aranceles).
+* `/src/lib`: Inicialización de base de datos, utilidades y scripts de migración/reinicio.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Para detalles profundos sobre la base de datos o lógica de negocio específica, por favor consulta el archivo [DOCUMENTATION.md](file:///c:/Users/EQUIPO/Desktop/Sandbox/devPythonActual/pt.cl-vitacura/DOCUMENTATION.md).*
