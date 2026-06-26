@@ -649,7 +649,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
       </div>
 
       {/* Main Glass Table Container */}
-      <div className="glass-panel" style={{ padding: '24px', overflow: 'hidden', minHeight: '380px' }}>
+      <div className="glass-panel" style={{ padding: '24px', overflow: 'visible', minHeight: '380px' }}>
         {filteredCases.length === 0 ? (
           <div style={{ padding: '50px 20px', textAlign: 'center', opacity: 0.6 }}>
             No se encontraron casos registrados con los filtros seleccionados.

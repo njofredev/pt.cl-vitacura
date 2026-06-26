@@ -372,6 +372,12 @@ button:active, .btn:active {
   min-height: 240px;
 }
 
+@media (min-width: 1024px) {
+  .table-container {
+    overflow: visible;
+  }
+}
+
 .custom-table {
   width: 100%;
   border-collapse: collapse;
