@@ -616,9 +616,9 @@ export default async function DashboardPage() {
                                 padding: '4px 12px', 
                                 fontSize: '0.75rem', 
                                 height: 'auto',
-                                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6) 100%)',
-                                color: '#fbbf24',
-                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                color: '#ffffff',
+                                border: '1px solid #b45309',
                                 fontWeight: 'bold'
                               }}
                             >
