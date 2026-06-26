@@ -35,6 +35,7 @@ interface CaseRecord {
   dental_diagnosis: string | null;
   treatment_needed: string | null;
   professional_name: string | null;
+  professional_email?: string | null;
   status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado';
   observations?: string | null;
   created_at: Date | string;
@@ -244,7 +245,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setNewTreatmentConvenioId(0);
     setNewTreatmentSucursalId(2);
     setNewTreatmentDentistaId('');
-    setNewTreatmentComentario('');
+    setNewTreatmentComentario(c.professional_name ? `Derivado por: ${c.professional_name}${c.professional_email ? ` (${c.professional_email})` : ''}` : '');
     setNewTreatmentFinalizado(0);
     setSelectedTreatmentForServices(null);
     setPendingServices([]);
@@ -276,7 +277,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setNewTreatmentConvenioId(0);
     setNewTreatmentSucursalId(2);
     setNewTreatmentDentistaId('');
-    setNewTreatmentComentario('');
+    setNewTreatmentComentario(c.professional_name ? `Derivado por: ${c.professional_name}${c.professional_email ? ` (${c.professional_email})` : ''}` : '');
     setNewTreatmentFinalizado(0);
     setSelectedTreatmentForServices(null);
     setPendingServices([]);
