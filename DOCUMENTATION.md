@@ -35,7 +35,7 @@ erDiagram
     users ||--o{ persons : "registra"
     persons ||--|{ cases : "tiene"
     users ||--o{ audit_logs : "genera"
-    
+  
     users {
         uuid id PK
         string name "Nombre Completo"
