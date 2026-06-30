@@ -309,6 +309,406 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
     }
   }, [editMedicalCenterSelect, customEditMedicalCenter, isEditing, selectedCase]);
 
+  const handleExportCSV = () => {
+    try {
+      const headers = [
+        'ID Correlativo',
+        'RUT',
+        'Nombres',
+        'Apellidos',
+        'Nacionalidad',
+        'Fecha Nacimiento',
+        'Comuna',
+        'Email',
+        'Celular',
+        'Centro Medico',
+        'Convenio',
+        'Diagnostico Dental',
+        'Tratamiento Requerido',
+        'Prestaciones Dentales',
+        'Prestaciones Rayos X',
+        'Profesional Derivador',
+        'Estado',
+        'Observaciones',
+        'Fecha Ingreso',
+        'Evaluador'
+      ];
+
+      const csvRows = [
+        headers.join(';'),
+        ...filteredCases.map(c => {
+          const bdStr = c.birth_date ? new Date(c.birth_date).toLocaleDateString('es-CL') : '';
+          const caStr = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CL') : '';
+          
+          return [
+            c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '',
+            c.rut,
+            c.first_names || '',
+            c.last_names || '',
+            c.nationality || '',
+            bdStr,
+            c.commune || '',
+            c.email || '',
+            c.mobile || '',
+            c.medical_center || '',
+            c.agreement_type || '',
+            (c.dental_diagnosis || '').replace(/[\n\r;]/g, ' '),
+            (c.treatment_needed || '').replace(/[\n\r;]/g, ' '),
+            c.dental_count || 0,
+            c.xray_count || 0,
+            c.registered_by_name || '',
+            c.status || '',
+            (c.observations || '').replace(/[\n\r;]/g, ' '),
+            caStr,
+            c.evaluator_name || ''
+          ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(';');
+        })
+      ];
+
+      const csvContent = '\uFEFF' + csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `reporte_casos_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Error al exportar CSV:', err);
+    }
+  };
+
+  const handleExportExcel = () => {
+    try {
+      const headerRow = `
+        <tr style="background-color: #10b981; color: white; font-weight: bold;">
+          <th>ID Correlativo</th>
+          <th>RUT</th>
+          <th>Nombres</th>
+          <th>Apellidos</th>
+          <th>Nacionalidad</th>
+          <th>Fecha Nacimiento</th>
+          <th>Comuna</th>
+          <th>Email</th>
+          <th>Celular</th>
+          <th>Centro Medico</th>
+          <th>Convenio</th>
+          <th>Diagnostico Dental</th>
+          <th>Tratamiento Requerido</th>
+          <th>Prestaciones Dentales</th>
+          <th>Prestaciones Rayos X</th>
+          <th>Profesional Derivador</th>
+          <th>Estado</th>
+          <th>Observaciones</th>
+          <th>Fecha Ingreso</th>
+          <th>Evaluador</th>
+        </tr>
+      `;
+
+      const rows = filteredCases.map(c => {
+        const bdStr = c.birth_date ? new Date(c.birth_date).toLocaleDateString('es-CL') : '';
+        const caStr = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CL') : '';
+        return `
+          <tr>
+            <td>${c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : ''}</td>
+            <td>${c.rut}</td>
+            <td>${c.first_names || ''}</td>
+            <td>${c.last_names || ''}</td>
+            <td>${c.nationality || ''}</td>
+            <td>${bdStr}</td>
+            <td>${c.commune || ''}</td>
+            <td>${c.email || ''}</td>
+            <td>${c.mobile || ''}</td>
+            <td>${c.medical_center || ''}</td>
+            <td>${c.agreement_type || ''}</td>
+            <td>${c.dental_diagnosis || ''}</td>
+            <td>${c.treatment_needed || ''}</td>
+            <td>${c.dental_count || 0}</td>
+            <td>${c.xray_count || 0}</td>
+            <td>${c.registered_by_name || ''}</td>
+            <td>${c.status || ''}</td>
+            <td>${c.observations || ''}</td>
+            <td>${caStr}</td>
+            <td>${c.evaluator_name || ''}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const htmlContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Casos Sociales</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+          <style>
+            table { border-collapse: collapse; }
+            th, td { border: 1px solid #ccc; padding: 6px; font-family: Arial, sans-serif; font-size: 10pt; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <thead>${headerRow}</thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `reporte_casos_${new Date().toISOString().split('T')[0]}.xls`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Error al exportar Excel:', err);
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        const bdFormatted = (d: any) => d ? new Date(d).toLocaleDateString('es-CL') : '-';
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Reporte de Casos Sociales - Derivación Digital</title>
+              <style>
+                body {
+                  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                  padding: 30px;
+                  color: #1f2937;
+                  background-color: #fff;
+                  margin: 0;
+                }
+                .header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  border-bottom: 3px solid #10b981;
+                  padding-bottom: 20px;
+                  margin-bottom: 25px;
+                }
+                .logo-section {
+                  display: flex;
+                  align-items: center;
+                  gap: 15px;
+                }
+                .logo-placeholder {
+                  width: 50px;
+                  height: 50px;
+                  border-radius: 50%;
+                  background-color: rgba(16, 185, 129, 0.1);
+                  border: 2px solid #10b981;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: #10b981;
+                  font-weight: 800;
+                  font-size: 1.5rem;
+                }
+                .title-block {
+                  display: flex;
+                  flex-direction: column;
+                }
+                .title {
+                  font-size: 20px;
+                  font-weight: 800;
+                  color: #111827;
+                  letter-spacing: -0.02em;
+                  margin: 0;
+                }
+                .subtitle {
+                  font-size: 12px;
+                  color: #4b5563;
+                  margin: 4px 0 0 0;
+                  font-weight: 600;
+                }
+                .meta-right {
+                  text-align: right;
+                  font-size: 11px;
+                  color: #4b5563;
+                  line-height: 1.5;
+                }
+                .filters-summary {
+                  background-color: #f9fafb;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 8px;
+                  padding: 12px 16px;
+                  margin-bottom: 25px;
+                  font-size: 11px;
+                  line-height: 1.6;
+                }
+                .filters-title {
+                  font-weight: 700;
+                  color: #374151;
+                  margin-bottom: 6px;
+                  text-transform: uppercase;
+                  font-size: 9px;
+                  letter-spacing: 0.05em;
+                }
+                .filters-grid {
+                  display: grid;
+                  grid-template-columns: repeat(3, 1fr);
+                  gap: 10px;
+                }
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-top: 15px;
+                  font-size: 10px;
+                }
+                th {
+                  background-color: #f3f4f6;
+                  color: #374151;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  font-size: 9px;
+                  letter-spacing: 0.02em;
+                  border-bottom: 2px solid #e5e7eb;
+                  padding: 10px 8px;
+                  text-align: left;
+                }
+                td {
+                  border-bottom: 1px solid #e5e7eb;
+                  padding: 10px 8px;
+                  color: #4b5563;
+                  vertical-align: top;
+                }
+                tr:nth-child(even) td {
+                  background-color: #fcfdfd;
+                }
+                .badge {
+                  display: inline-block;
+                  padding: 3px 6px;
+                  border-radius: 4px;
+                  font-size: 8px;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 0.02em;
+                }
+                .badge-ingresado { background-color: rgba(59, 130, 246, 0.1); color: #2563eb; }
+                .badge-sincronizado { background-color: rgba(16, 185, 129, 0.1); color: #059669; }
+                .badge-agendado { background-color: rgba(245, 158, 11, 0.1); color: #d97706; }
+                .badge-en_tratamiento { background-color: rgba(168, 85, 247, 0.1); color: #7c3aed; }
+                .badge-finalizado { background-color: rgba(107, 114, 128, 0.1); color: #4b5563; }
+                .bold { font-weight: 700; color: #111827; }
+                .footer {
+                  margin-top: 40px;
+                  border-top: 1px solid #e5e7eb;
+                  padding-top: 15px;
+                  text-align: center;
+                  font-size: 10px;
+                  color: #9ca3af;
+                }
+                @media print {
+                  body { padding: 15px; }
+                  @page {
+                    size: letter landscape;
+                    margin: 0.4in;
+                  }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo-section">
+                  <div class="logo-placeholder">VT</div>
+                  <div class="title-block">
+                    <h1 class="title">Reporte Personalizado de Casos Sociales</h1>
+                    <span class="subtitle">Derivación Digital | Vitacura - Policlínico Tabancura</span>
+                  </div>
+                </div>
+                <div class="meta-right">
+                  <strong>Fecha Emisión:</strong> ${new Date().toLocaleDateString('es-CL')}<br>
+                  <strong>Generado por:</strong> ${user.name} (${user.role === 'admin' ? 'Administrador' : 'Lector'})<br>
+                  <strong>Total Registros:</strong> ${filteredCases.length}
+                </div>
+              </div>
+
+              <div class="filters-summary">
+                <div class="filters-title">Filtros Activos en este Reporte</div>
+                <div class="filters-grid">
+                  <div><strong>Rango Fechas:</strong> ${startDate ? bdFormatted(startDate) : 'Inicio'} al ${endDate ? bdFormatted(endDate) : 'Fin'}</div>
+                  <div><strong>Estado:</strong> ${statusFilter === 'todos' ? 'Todos' : statusFilter}</div>
+                  <div><strong>Centro Médico:</strong> ${institutionFilter === 'todos' ? 'Todos' : institutionFilter}</div>
+                  <div><strong>Convenio:</strong> ${agreementFilter === 'todos' ? 'Todos' : agreementFilter}</div>
+                  <div><strong>Búsqueda:</strong> ${searchTerm ? '"' + searchTerm + '"' : 'Ninguna'}</div>
+                  <div><strong>Prestación:</strong> ${prestacionFilter === 'todos' ? 'Todas' : prestacionFilter === 'dental' ? 'Solo Dentales' : 'Solo Rayos X'}</div>
+                </div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">ID</th>
+                    <th style="width: 140px;">Beneficiario</th>
+                    <th style="width: 80px;">RUT</th>
+                    <th style="width: 80px;">Comuna</th>
+                    <th style="width: 100px;">Centro / Convenio</th>
+                    <th>Diagnóstico y Prestaciones</th>
+                    <th style="width: 80px;">Fecha Ingreso</th>
+                    <th style="width: 100px;">Profesional</th>
+                    <th style="width: 85px;">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filteredCases.map(c => `
+                    <tr>
+                      <td class="bold">${c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}</td>
+                      <td>
+                        <span class="bold">${c.first_names} ${c.last_names}</span>
+                        ${c.mobile ? `<br><span style="font-size: 8px; opacity: 0.85;">📞 ${c.mobile}</span>` : ''}
+                      </td>
+                      <td style="white-space: nowrap;">${c.rut}</td>
+                      <td>${c.commune || '-'}</td>
+                      <td>
+                        <span class="bold" style="color: #10b981;">${c.agreement_type || 'Sin Convenio'}</span>
+                        ${c.medical_center ? `<br><span style="font-size: 8px; opacity: 0.85;">📍 ${c.medical_center}</span>` : ''}
+                      </td>
+                      <td>
+                        <div style="font-weight: 500;">${c.dental_diagnosis ? `🦷 Diag: ${c.dental_diagnosis}` : c.description || '-'}</div>
+                        <div style="font-size: 8px; margin-top: 4px; color: #6b7280; font-weight: 700;">
+                          [🦷 ${c.dental_count || 0} prest. dentales / ⚡ ${c.xray_count || 0} rayos X]
+                        </div>
+                      </td>
+                      <td>${bdFormatted(c.created_at)}</td>
+                      <td>${c.registered_by_name || 'Admin Semilla'}</td>
+                      <td>
+                        <span class="badge badge-${c.status}">
+                          ${c.status === 'en_tratamiento' ? 'En tratamiento' : c.status}
+                        </span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+
+              <div class="footer">
+                Documento generado automáticamente por el Sistema de Derivación Digital de Vitacura. Confidencialidad bajo Ley de Derechos del Paciente.
+              </div>
+
+              <script>
+                window.onload = function() {
+                  window.print();
+                  setTimeout(function() {
+                    window.close();
+                  }, 1000);
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+    } catch (err) {
+      console.error('Error al exportar PDF:', err);
+    }
+  };
+
   async function handleDeleteCase(caseId: string, name: string) {
     const confirmed = window.confirm(`¿Está seguro de que desea eliminar permanentemente el caso social de ${name}? Esta acción no se puede deshacer.`);
     if (!confirmed) return;
@@ -497,12 +897,82 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
           </div>
         </div>
 
-        {user.role !== 'internal' && user.role !== 'reader' && (
-          <Link href="/dashboard/register" className="login-pill-btn" style={{ gap: '8px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Nueva Derivación
-          </Link>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {(user.role === 'admin' || user.role === 'reader') && (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={handleExportPDF}
+                className="btn btn-secondary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 14px',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  border: '1px solid #10b981',
+                  color: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                  cursor: 'pointer',
+                  borderRadius: 'var(--radius-sm)'
+                }}
+                title="Generar reporte PDF optimizado para impresión"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Exportar PDF
+              </button>
+              <button
+                onClick={handleExportExcel}
+                className="btn btn-secondary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 14px',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  border: '1px solid #10b981',
+                  color: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                  cursor: 'pointer',
+                  borderRadius: 'var(--radius-sm)'
+                }}
+                title="Exportar a Excel (.xls)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+                Exportar Excel
+              </button>
+              <button
+                onClick={handleExportCSV}
+                className="btn btn-secondary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 14px',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  border: '1px solid #10b981',
+                  color: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                  cursor: 'pointer',
+                  borderRadius: 'var(--radius-sm)'
+                }}
+                title="Exportar a CSV"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exportar CSV
+              </button>
+            </div>
+          )}
+
+          {user.role !== 'internal' && user.role !== 'reader' && (
+            <Link href="/dashboard/register" className="login-pill-btn" style={{ gap: '8px' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Nueva Derivación
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Filter panel */}
