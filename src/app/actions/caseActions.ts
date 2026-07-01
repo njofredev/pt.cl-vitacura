@@ -266,15 +266,36 @@ export async function updateCaseStatusAction(caseId: string, status: 'ingresado'
   }
 
   try {
+    // Obtener historial actual para rellenar estados si corresponde
+    const caseRes = await pool.query('SELECT status_history, created_at FROM cases WHERE id = $1', [caseId]);
+    const c = caseRes.rows[0] || {};
+    const currentHistory = c.status_history || {};
+    const newHistory = { ...currentHistory };
+    const nowStr = new Date().toISOString();
+
+    if (!newHistory['ingresado']) {
+      newHistory['ingresado'] = c.created_at ? new Date(c.created_at).toISOString() : nowStr;
+    }
+
+    const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+    const targetIndex = STATUS_ORDER.indexOf(status);
+    for (let i = 0; i <= targetIndex; i++) {
+      const stateName = STATUS_ORDER[i];
+      if (!newHistory[stateName]) {
+        const backfillTime = new Date(Date.now() - (targetIndex - i) * 1000).toISOString();
+        newHistory[stateName] = backfillTime;
+      }
+    }
+
     await pool.query(`
       UPDATE cases 
       SET status = $1, 
           observations = $2, 
           updated_by = $3, 
           updated_at = NOW(),
-          status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($5::text, NOW())
+          status_history = $5::jsonb
       WHERE id = $4
-    `, [status, observations.trim(), session.id, caseId, status]);
+    `, [status, observations.trim(), session.id, caseId, JSON.stringify(newHistory)]);
 
     await logAuditAction('CASE_STATUS_UPDATED', { caseId, status, observations: observations.trim() });
 
@@ -528,9 +549,9 @@ export async function getPersonByRutAction(rutRaw: string) {
 
 export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: number | string) {
   try {
-    // 1. Get the case details (rut, status, created_at, dentalink_patient_id)
+    // 1. Get the case details (rut, status, created_at, dentalink_patient_id, status_history)
     const caseRes = await pool.query(`
-      SELECT c.id, c.status, c.observations, p.rut, c.created_at, p.dentalink_patient_id
+      SELECT c.id, c.status, c.observations, c.status_history, p.rut, c.created_at, p.dentalink_patient_id
       FROM cases c
       JOIN persons p ON c.person_id = p.id
       WHERE c.id = $1
@@ -642,15 +663,33 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     }
     
     if (c.status !== newStatus) {
+      const currentHistory = c.status_history || {};
+      const newHistory = { ...currentHistory };
+      const nowStr = new Date().toISOString();
+
+      if (!newHistory['ingresado']) {
+        newHistory['ingresado'] = c.created_at ? new Date(c.created_at).toISOString() : nowStr;
+      }
+
+      const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+      const targetIndex = STATUS_ORDER.indexOf(newStatus);
+      for (let i = 0; i <= targetIndex; i++) {
+        const stateName = STATUS_ORDER[i];
+        if (!newHistory[stateName]) {
+          const backfillTime = new Date(Date.now() - (targetIndex - i) * 1000).toISOString();
+          newHistory[stateName] = backfillTime;
+        }
+      }
+
       await pool.query(`
         UPDATE cases 
         SET status = $1, 
             observations = $2, 
             updated_by = NULL, 
             updated_at = NOW(),
-            status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($4::text, NOW())
+            status_history = $4::jsonb
         WHERE id = $3
-      `, [newStatus, obs, c.id, newStatus]);
+      `, [newStatus, obs, c.id, JSON.stringify(newHistory)]);
 
       await logAuditAction('CASE_STATUS_UPDATED', { caseId: c.id, status: newStatus, observations: obs });
       
