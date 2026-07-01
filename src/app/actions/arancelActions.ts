@@ -68,9 +68,9 @@ export async function getArancelesAction(
       FROM (
         SELECT DISTINCT ON (name) id, name, category, source, price_base, price_pref, show_in_odontogram, id_prestacion, created_at, updated_at
         FROM arancel
+        ${whereClause}
         ORDER BY name ASC, price_base DESC NULLS LAST
       ) as sub
-      ${whereClause}
       ORDER BY category ASC, name ASC
       LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
     `;
