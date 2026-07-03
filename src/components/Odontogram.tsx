@@ -172,11 +172,11 @@ function getCategoryColor(category: string): string {
   return '#10b981'; // Green
 }
 
-export default function Odontogram({ 
-  initialType = 'adult', 
-  initialDentalDiagnosis, 
-  initialTreatmentNeeded, 
-  onChange 
+export default function Odontogram({
+  initialType = 'adult',
+  initialDentalDiagnosis,
+  initialTreatmentNeeded,
+  onChange
 }: OdontogramProps) {
   const [activeTab, setActiveTab] = useState<'adult' | 'child'>(initialType);
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
@@ -360,7 +360,7 @@ export default function Odontogram({
   // Mass operations application logic
   const handleApplyMassTreatment = (treatmentId: string) => {
     if (!massSelectionType) return;
-    
+
     // Instead of entering the treatment piece by piece, assign it to a single pseudo-ID representing the complete arch
     let pseudoId = 0;
     if (massSelectionType === 'upper') pseudoId = 101;
@@ -570,7 +570,7 @@ export default function Odontogram({
     const isLastStep = stepNumber === 5;
 
     return createPortal(
-      <div 
+      <div
         className="glass-panel animate-fade-in"
         style={{
           position: 'fixed',
@@ -603,18 +603,18 @@ export default function Odontogram({
               {step.title}
             </h5>
           </div>
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={(e) => { e.stopPropagation(); closeTourAndClear(); }}
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.15)', 
-              border: 'none', 
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              border: 'none',
               borderRadius: '50%',
               width: '28px',
               height: '28px',
-              cursor: 'pointer', 
-              color: '#ffffff', 
-              display: 'flex', 
+              cursor: 'pointer',
+              color: '#ffffff',
+              display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'all 0.2s',
@@ -635,12 +635,12 @@ export default function Odontogram({
             onClick={(e) => { e.stopPropagation(); setTourStep(prev => Math.max(0, prev - 1)); }}
             disabled={stepNumber === 0}
             className="odont-option-btn"
-            style={{ 
-              padding: '6px 14px', 
-              fontSize: '0.78rem', 
-              borderRadius: '8px', 
-              opacity: stepNumber === 0 ? 0.4 : 1, 
-              margin: 0, 
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.78rem',
+              borderRadius: '8px',
+              opacity: stepNumber === 0 ? 0.4 : 1,
+              margin: 0,
               cursor: stepNumber === 0 ? 'not-allowed' : 'pointer',
               fontWeight: 700
             }}
@@ -651,14 +651,14 @@ export default function Odontogram({
             type="button"
             onClick={(e) => { e.stopPropagation(); if (stepNumber < 5) setTourStep(prev => prev + 1); else closeTourAndClear(); }}
             className="odont-option-btn"
-            style={{ 
-              padding: '6px 16px', 
-              fontSize: '0.78rem', 
-              borderRadius: '8px', 
-              backgroundColor: isLastStep ? '#10b981' : '#fb923c', 
-              color: '#ffffff', 
-              border: isLastStep ? '1px solid #10b981' : '1px solid #fb923c', 
-              margin: 0, 
+            style={{
+              padding: '6px 16px',
+              fontSize: '0.78rem',
+              borderRadius: '8px',
+              backgroundColor: isLastStep ? '#10b981' : '#fb923c',
+              color: '#ffffff',
+              border: isLastStep ? '1px solid #10b981' : '1px solid #fb923c',
+              margin: 0,
               fontWeight: 800,
               boxShadow: isLastStep ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
             }}
@@ -1130,13 +1130,13 @@ export default function Odontogram({
         padding: '6px',
         gap: '8px'
       }}>
-        <span style={{ 
-          fontSize: '0.82rem', 
-          fontWeight: 700, 
-          opacity: 0.8, 
-          textTransform: 'uppercase', 
-          letterSpacing: '0.04em', 
-          paddingLeft: '12px', 
+        <span style={{
+          fontSize: '0.82rem',
+          fontWeight: 700,
+          opacity: 0.8,
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          paddingLeft: '12px',
           color: 'hsla(var(--foreground-hsl) / 0.8)',
           display: 'flex',
           alignItems: 'center',
@@ -1229,7 +1229,7 @@ export default function Odontogram({
               <Layers size={13} style={{ strokeWidth: 2.5 }} /> Temporal (Niño)
             </button>
           </div>
- 
+
           {Object.keys(chartState).length > 0 && (
             <button
               type="button"
@@ -1245,8 +1245,8 @@ export default function Odontogram({
               }}
               onClick={() => {
                 if (window.confirm("¿Está seguro de que desea limpiar por completo todos los diagnósticos y tratamientos del odontograma?")) {
-                   setChartState({});
-                   setSelectedTooth(null);
+                  setChartState({});
+                  setSelectedTooth(null);
                 }
               }}
             >
@@ -1255,7 +1255,7 @@ export default function Odontogram({
           )}
         </div>
       </div>
- 
+
       {/* Anatomical Odontogram Chart */}
       <div style={{
         padding: '10px 0 0 0',
@@ -1295,7 +1295,7 @@ export default function Odontogram({
             }}>
               <XCircle size={32} style={{ color: 'hsl(var(--danger-hsl))' }} />
             </div>
-            
+
             <h3 style={{
               fontSize: '1.2rem',
               fontWeight: 800,
@@ -1305,7 +1305,7 @@ export default function Odontogram({
             }}>
               No se encuentran prestaciones disponibles para cargar
             </h3>
-            
+
             <p style={{
               fontSize: '0.9rem',
               lineHeight: '1.6',
@@ -1315,11 +1315,11 @@ export default function Odontogram({
               margin: 0
             }}>
               Por favor, contactarse con su encargado más cercano, o escríbanos directamente a{' '}
-              <a 
-                href="mailto:soporte@policlinicotabancura.cl" 
-                style={{ 
-                  color: 'hsl(var(--primary-hsl))', 
-                  fontWeight: 700, 
+              <a
+                href="mailto:soporte@policlinicotabancura.cl"
+                style={{
+                  color: 'hsl(var(--primary-hsl))',
+                  fontWeight: 700,
                   textDecoration: 'underline',
                   transition: 'opacity 0.2s ease'
                 }}
@@ -1329,11 +1329,11 @@ export default function Odontogram({
                 soporte@policlinicotabancura.cl
               </a>{' '}
               o{' '}
-              <a 
-                href="mailto:derivaciones@policlinicotabancura.cl" 
-                style={{ 
-                  color: 'hsl(var(--primary-hsl))', 
-                  fontWeight: 700, 
+              <a
+                href="mailto:derivaciones@policlinicotabancura.cl"
+                style={{
+                  color: 'hsl(var(--primary-hsl))',
+                  fontWeight: 700,
                   textDecoration: 'underline',
                   transition: 'opacity 0.2s ease'
                 }}
@@ -1360,576 +1360,576 @@ export default function Odontogram({
               padding: '0 10px'
             }}>
 
-          {/* Left Operations Panel */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '14px',
-            justifyContent: 'center',
-            borderRight: '1.5px solid var(--glass-border)',
-            minWidth: '270px',
-            flexShrink: 0,
-            // Tour Step 3 Highlight
-            border: (showTour && tourStep === 3) ? '2.5px solid #fb923c' : '2.5px solid transparent',
-            borderRadius: '16px',
-            paddingTop: (showTour && tourStep === 3) ? '16px' : '0px',
-            paddingRight: (showTour && (tourStep === 3 || tourStep === 4)) ? '16px' : '32px',
-            paddingBottom: (showTour && tourStep === 3) ? '16px' : '0px',
-            paddingLeft: (showTour && tourStep === 3) ? '16px' : '0px',
-            backgroundColor: (showTour && tourStep === 3) ? 'rgba(251, 146, 60, 0.04)' : 'transparent',
-            boxShadow: (showTour && tourStep === 3) ? '0 0 25px rgba(251, 146, 60, 0.15)' : 'none',
-            transition: 'all 0.3s ease',
-            position: 'relative'
-          }}>
-            <div style={{
-              fontSize: '0.74rem',
-              fontWeight: 800,
-              opacity: 0.65,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginBottom: '6px',
-              color: 'hsla(var(--foreground-hsl) / 0.85)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><path d="m9 12 2 2 4-4" /></svg>
-              Selecciona 2 o más piezas
-            </div>
-
-            {/* Arcada Superior Button */}
-            <button
-              type="button"
-              className="odont-option-btn animate-fade-in"
-              onMouseEnter={() => setHoveredBtn('upper')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                gap: '12px',
-                padding: '12px 18px',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                backgroundColor: hoveredBtn === 'upper' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.05)',
-                color: '#10b981',
-                border: hoveredBtn === 'upper' ? '1.5px solid rgba(16, 185, 129, 0.45)' : '1.5px solid rgba(16, 185, 129, 0.20)',
-                boxShadow: hoveredBtn === 'upper' ? '0 6px 20px -4px rgba(16, 185, 129, 0.18)' : 'none',
-                transform: hoveredBtn === 'upper' ? 'translateY(-2px)' : 'none',
-                cursor: 'pointer',
-                width: '100%',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                margin: 0
-              }}
-              onClick={() => setMassSelectionType('upper')}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                backgroundColor: hoveredBtn === 'upper' ? 'rgba(16, 185, 129, 0.20)' : 'rgba(16, 185, 129, 0.12)',
-                flexShrink: 0,
-                transition: 'all 0.2s ease'
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-              </div>
-              <span style={{ whiteSpace: 'nowrap' }}>Arcada Superior</span>
-            </button>
-
-            {/* Arcada Inferior Button */}
-            <button
-              type="button"
-              className="odont-option-btn animate-fade-in"
-              onMouseEnter={() => setHoveredBtn('lower')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                gap: '12px',
-                padding: '12px 18px',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                backgroundColor: hoveredBtn === 'lower' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(59, 130, 246, 0.05)',
-                color: '#3b82f6',
-                border: hoveredBtn === 'lower' ? '1.5px solid rgba(59, 130, 246, 0.45)' : '1.5px solid rgba(59, 130, 246, 0.20)',
-                boxShadow: hoveredBtn === 'lower' ? '0 6px 20px -4px rgba(59, 130, 246, 0.18)' : 'none',
-                transform: hoveredBtn === 'lower' ? 'translateY(-2px)' : 'none',
-                cursor: 'pointer',
-                width: '100%',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                margin: 0
-              }}
-              onClick={() => setMassSelectionType('lower')}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                backgroundColor: hoveredBtn === 'lower' ? 'rgba(59, 130, 246, 0.20)' : 'rgba(59, 130, 246, 0.12)',
-                flexShrink: 0,
-                transition: 'all 0.2s ease'
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-              </div>
-              <span style={{ whiteSpace: 'nowrap' }}>Arcada Inferior</span>
-            </button>
-
-            {/* Toda la Boca Button */}
-            <button
-              type="button"
-              className="odont-option-btn animate-fade-in"
-              onMouseEnter={() => setHoveredBtn('full')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                gap: '12px',
-                padding: '12px 18px',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                backgroundColor: hoveredBtn === 'full' ? 'rgba(168, 85, 247, 0.12)' : 'rgba(168, 85, 247, 0.05)',
-                color: '#a855f7',
-                border: hoveredBtn === 'full' ? '1.5px solid rgba(168, 85, 247, 0.45)' : '1.5px solid rgba(168, 85, 247, 0.20)',
-                boxShadow: hoveredBtn === 'full' ? '0 6px 20px -4px rgba(168, 85, 247, 0.18)' : 'none',
-                transform: hoveredBtn === 'full' ? 'translateY(-2px)' : 'none',
-                cursor: 'pointer',
-                width: '100%',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                margin: 0
-              }}
-              onClick={() => setMassSelectionType('full')}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                backgroundColor: hoveredBtn === 'full' ? 'rgba(168, 85, 247, 0.20)' : 'rgba(168, 85, 247, 0.12)',
-                flexShrink: 0,
-                transition: 'all 0.2s ease'
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M4 8.5C4 6 6 4 12 4c6 0 8 2 8 4.5 0 3.5-3 5-3 8.5 0 1.5 1 2 1 2s-1.5 1-4 1c-1.5 0-2-.5-2-.5s-.5.5-2 .5c-2.5 0-4-1-4-1s1-.5 1-2c0-3.5-3-5-3-8.5Z"/></svg>
-              </div>
-              <span style={{ whiteSpace: 'nowrap' }}>Toda la Boca</span>
-            </button>
-
-            {/* Selección Múltiple Toggle Button */}
-            <button
-              type="button"
-              className="odont-option-btn animate-fade-in"
-              onMouseEnter={() => setHoveredBtn('multiselect')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                gap: '12px',
-                padding: '12px 18px',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                backgroundColor: isMultiSelectMode 
-                  ? 'rgba(20, 184, 166, 0.15)' 
-                  : (hoveredBtn === 'multiselect' ? 'rgba(120, 120, 120, 0.12)' : 'rgba(120, 120, 120, 0.05)'),
-                color: isMultiSelectMode ? '#14b8a6' : 'hsla(var(--foreground-hsl) / 0.85)',
-                border: (showTour && tourStep === 4) 
-                  ? '2px solid #fb923c' 
-                  : (isMultiSelectMode ? '1.5px solid #14b8a6' : (hoveredBtn === 'multiselect' ? '1.5px solid rgba(120, 120, 120, 0.4)' : '1.5px solid rgba(120, 120, 120, 0.18)')),
-                boxShadow: (showTour && tourStep === 4) 
-                  ? '0 0 20px rgba(251, 146, 60, 0.25)' 
-                  : (isMultiSelectMode ? '0 6px 20px -4px rgba(20, 184, 166, 0.22)' : 'none'),
-                transform: hoveredBtn === 'multiselect' ? 'translateY(-2px)' : 'none',
-                cursor: 'pointer',
-                width: '100%',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                margin: 0
-              }}
-              onClick={() => {
-                setIsMultiSelectMode(!isMultiSelectMode);
-                if (isMultiSelectMode) {
-                  setMultiSelectedTeeth([]);
-                  setSelectedMultiTreatment(null);
-                }
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                backgroundColor: isMultiSelectMode ? 'rgba(20, 184, 166, 0.25)' : 'rgba(120, 120, 120, 0.12)',
-                flexShrink: 0,
-                transition: 'all 0.2s ease'
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><polyline points="9 11 12 14 22 4"></polyline></svg>
-              </div>
-              <span style={{ whiteSpace: 'nowrap' }}>Selección Múltiple</span>
-              {isMultiSelectMode && (
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#14b8a6',
-                  marginLeft: 'auto',
-                  display: 'inline-block',
-                  boxShadow: '0 0 8px #14b8a6',
-                  animation: 'pulse 1.5s infinite'
-                }} />
-              )}
-            </button>
-
-          </div>
- 
-          {/* Right Anatomical Jaws Rows Panel */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '28px',
-            minWidth: activeTab === 'child' ? '450px' : '600px',
-            maxWidth: activeTab === 'child' ? '540px' : '820px',
-            width: '100%',
-            alignItems: 'center',
-            paddingLeft: '20px',
-            flex: 1,
-            // Tour Step 0 Highlight
-            border: (showTour && tourStep === 0) ? '2.5px solid #fb923c' : '2.5px dashed transparent',
-            borderRadius: '16px',
-            padding: '16px 16px 16px 20px',
-            boxShadow: (showTour && tourStep === 0) ? '0 0 25px rgba(251, 146, 60, 0.25)' : 'none',
-            transition: 'all 0.3s ease'
-          }}>
- 
-            {/* MAXILAR SUPERIOR (Upper Jaw) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              {/* Left Operations Panel */}
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
+                gap: '14px',
                 justifyContent: 'center',
-                borderBottom: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
-                paddingBottom: '8px',
-                marginBottom: '6px',
-                gap: '6px'
+                borderRight: '1.5px solid var(--glass-border)',
+                minWidth: '270px',
+                flexShrink: 0,
+                // Tour Step 3 Highlight
+                border: (showTour && tourStep === 3) ? '2.5px solid #fb923c' : '2.5px solid transparent',
+                borderRadius: '16px',
+                paddingTop: (showTour && tourStep === 3) ? '16px' : '0px',
+                paddingRight: (showTour && (tourStep === 3 || tourStep === 4)) ? '16px' : '32px',
+                paddingBottom: (showTour && tourStep === 3) ? '16px' : '0px',
+                paddingLeft: (showTour && tourStep === 3) ? '16px' : '0px',
+                backgroundColor: (showTour && tourStep === 3) ? 'rgba(251, 146, 60, 0.04)' : 'transparent',
+                boxShadow: (showTour && tourStep === 3) ? '0 0 25px rgba(251, 146, 60, 0.15)' : 'none',
+                transition: 'all 0.3s ease',
+                position: 'relative'
               }}>
                 <div style={{
-                  fontSize: '0.82rem',
+                  fontSize: '0.74rem',
                   fontWeight: 800,
-                  color: 'hsla(var(--foreground-hsl) / 0.95)',
+                  opacity: 0.65,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
+                  letterSpacing: '0.06em',
+                  marginBottom: '6px',
+                  color: 'hsla(var(--foreground-hsl) / 0.85)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}>
-                  Maxilar Superior (Arcada Superior)
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><path d="m9 12 2 2 4-4" /></svg>
+                  Selecciona 2 o más piezas
                 </div>
-                {chartState[101] && chartState[101].treatments.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
-                    {chartState[101].treatments.map(tid => {
-                      const opt = treatmentOptions.find(o => o.id === tid);
-                      return (
-                        <span key={tid} style={{
-                          fontSize: '0.7rem',
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          backgroundColor: opt ? `${opt.color}1c` : 'rgba(255,255,255,0.06)',
-                          color: opt ? opt.color : 'var(--foreground-hsl)',
-                          border: '1px solid',
-                          borderColor: opt ? `${opt.color}44` : 'rgba(255,255,255,0.1)',
-                          fontWeight: 700,
-                          textTransform: 'none'
-                        }}>
-                          Arcada Superior: {opt ? (opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name.split(' (')[0]}` : opt.name.split(' (')[0]) : tid}
-                        </span>
-                      );
-                    })}
+
+                {/* Arcada Superior Button */}
+                <button
+                  type="button"
+                  className="odont-option-btn animate-fade-in"
+                  onMouseEnter={() => setHoveredBtn('upper')}
+                  onMouseLeave={() => setHoveredBtn(null)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    gap: '12px',
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    backgroundColor: hoveredBtn === 'upper' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.05)',
+                    color: '#10b981',
+                    border: hoveredBtn === 'upper' ? '1.5px solid rgba(16, 185, 129, 0.45)' : '1.5px solid rgba(16, 185, 129, 0.20)',
+                    boxShadow: hoveredBtn === 'upper' ? '0 6px 20px -4px rgba(16, 185, 129, 0.18)' : 'none',
+                    transform: hoveredBtn === 'upper' ? 'translateY(-2px)' : 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    margin: 0
+                  }}
+                  onClick={() => setMassSelectionType('upper')}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    backgroundColor: hoveredBtn === 'upper' ? 'rgba(16, 185, 129, 0.20)' : 'rgba(16, 185, 129, 0.12)',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease'
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
                   </div>
-                )}
+                  <span style={{ whiteSpace: 'nowrap' }}>Arcada Superior</span>
+                </button>
+
+                {/* Arcada Inferior Button */}
+                <button
+                  type="button"
+                  className="odont-option-btn animate-fade-in"
+                  onMouseEnter={() => setHoveredBtn('lower')}
+                  onMouseLeave={() => setHoveredBtn(null)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    gap: '12px',
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    backgroundColor: hoveredBtn === 'lower' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(59, 130, 246, 0.05)',
+                    color: '#3b82f6',
+                    border: hoveredBtn === 'lower' ? '1.5px solid rgba(59, 130, 246, 0.45)' : '1.5px solid rgba(59, 130, 246, 0.20)',
+                    boxShadow: hoveredBtn === 'lower' ? '0 6px 20px -4px rgba(59, 130, 246, 0.18)' : 'none',
+                    transform: hoveredBtn === 'lower' ? 'translateY(-2px)' : 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    margin: 0
+                  }}
+                  onClick={() => setMassSelectionType('lower')}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    backgroundColor: hoveredBtn === 'lower' ? 'rgba(59, 130, 246, 0.20)' : 'rgba(59, 130, 246, 0.12)',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease'
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                  </div>
+                  <span style={{ whiteSpace: 'nowrap' }}>Arcada Inferior</span>
+                </button>
+
+                {/* Toda la Boca Button */}
+                <button
+                  type="button"
+                  className="odont-option-btn animate-fade-in"
+                  onMouseEnter={() => setHoveredBtn('full')}
+                  onMouseLeave={() => setHoveredBtn(null)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    gap: '12px',
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    backgroundColor: hoveredBtn === 'full' ? 'rgba(168, 85, 247, 0.12)' : 'rgba(168, 85, 247, 0.05)',
+                    color: '#a855f7',
+                    border: hoveredBtn === 'full' ? '1.5px solid rgba(168, 85, 247, 0.45)' : '1.5px solid rgba(168, 85, 247, 0.20)',
+                    boxShadow: hoveredBtn === 'full' ? '0 6px 20px -4px rgba(168, 85, 247, 0.18)' : 'none',
+                    transform: hoveredBtn === 'full' ? 'translateY(-2px)' : 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    margin: 0
+                  }}
+                  onClick={() => setMassSelectionType('full')}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    backgroundColor: hoveredBtn === 'full' ? 'rgba(168, 85, 247, 0.20)' : 'rgba(168, 85, 247, 0.12)',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease'
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M4 8.5C4 6 6 4 12 4c6 0 8 2 8 4.5 0 3.5-3 5-3 8.5 0 1.5 1 2 1 2s-1.5 1-4 1c-1.5 0-2-.5-2-.5s-.5.5-2 .5c-2.5 0-4-1-4-1s1-.5 1-2c0-3.5-3-5-3-8.5Z" /></svg>
+                  </div>
+                  <span style={{ whiteSpace: 'nowrap' }}>Toda la Boca</span>
+                </button>
+
+                {/* Selección Múltiple Toggle Button */}
+                <button
+                  type="button"
+                  className="odont-option-btn animate-fade-in"
+                  onMouseEnter={() => setHoveredBtn('multiselect')}
+                  onMouseLeave={() => setHoveredBtn(null)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    gap: '12px',
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    backgroundColor: isMultiSelectMode
+                      ? 'rgba(20, 184, 166, 0.15)'
+                      : (hoveredBtn === 'multiselect' ? 'rgba(120, 120, 120, 0.12)' : 'rgba(120, 120, 120, 0.05)'),
+                    color: isMultiSelectMode ? '#14b8a6' : 'hsla(var(--foreground-hsl) / 0.85)',
+                    border: (showTour && tourStep === 4)
+                      ? '2px solid #fb923c'
+                      : (isMultiSelectMode ? '1.5px solid #14b8a6' : (hoveredBtn === 'multiselect' ? '1.5px solid rgba(120, 120, 120, 0.4)' : '1.5px solid rgba(120, 120, 120, 0.18)')),
+                    boxShadow: (showTour && tourStep === 4)
+                      ? '0 0 20px rgba(251, 146, 60, 0.25)'
+                      : (isMultiSelectMode ? '0 6px 20px -4px rgba(20, 184, 166, 0.22)' : 'none'),
+                    transform: hoveredBtn === 'multiselect' ? 'translateY(-2px)' : 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    margin: 0
+                  }}
+                  onClick={() => {
+                    setIsMultiSelectMode(!isMultiSelectMode);
+                    if (isMultiSelectMode) {
+                      setMultiSelectedTeeth([]);
+                      setSelectedMultiTreatment(null);
+                    }
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    backgroundColor: isMultiSelectMode ? 'rgba(20, 184, 166, 0.25)' : 'rgba(120, 120, 120, 0.12)',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease'
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><polyline points="9 11 12 14 22 4"></polyline></svg>
+                  </div>
+                  <span style={{ whiteSpace: 'nowrap' }}>Selección Múltiple</span>
+                  {isMultiSelectMode && (
+                    <span style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: '#14b8a6',
+                      marginLeft: 'auto',
+                      display: 'inline-block',
+                      boxShadow: '0 0 8px #14b8a6',
+                      animation: 'pulse 1.5s infinite'
+                    }} />
+                  )}
+                </button>
+
               </div>
- 
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
-                {upperRow.map((tooth) => {
-                  const isModified = isToothModified(tooth.id);
-                  const isFocused = selectedTooth === tooth.id;
-                  return (
-                    <div
-                      key={tooth.id}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '6px',
-                        flex: 1,
-                      }}
-                    >
-                      {/* Upper layout: Number -> Anatomical Shape -> Circle Selector */}
-                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isFocused ? 'hsl(var(--primary-hsl))' : (isModified ? 'hsl(var(--accent-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)') }}>
-                        {tooth.id}
-                      </span>
- 
-                      {/* Tooth anatomical drawing */}
-                      {renderToothIcon(tooth.id, tooth.type, true)}
- 
-                      {/* Circle 5-surface selector */}
-                      {renderCircularSelector(tooth.id)}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
- 
-            {/* DIVIDER LINE FOR UPPER/LOWER */}
-            <div style={{
-              height: '2.5px',
-              width: '100%',
-              background: 'linear-gradient(90deg, transparent 0%, hsla(var(--primary-hsl) / 0.2) 50%, transparent 100%)'
-            }} />
- 
-            {/* MANDÍBULA INFERIOR (Lower Jaw) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
-                {lowerRow.map((tooth) => {
-                  const isModified = isToothModified(tooth.id);
-                  const isFocused = selectedTooth === tooth.id;
-                  return (
-                    <div
-                      key={tooth.id}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '6px',
-                        flex: 1,
-                      }}
-                    >
-                      {/* Lower layout: Circle Selector -> Anatomical Shape -> Number */}
-                      {renderCircularSelector(tooth.id)}
- 
-                      {/* Tooth anatomical drawing (flipped vertically) */}
-                      {renderToothIcon(tooth.id, tooth.type, false)}
- 
-                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isFocused ? 'hsl(var(--primary-hsl))' : (isModified ? 'hsl(var(--accent-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)') }}>
-                        {tooth.id}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
- 
+
+              {/* Right Anatomical Jaws Rows Panel */}
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
+                gap: '28px',
+                minWidth: activeTab === 'child' ? '450px' : '600px',
+                maxWidth: activeTab === 'child' ? '540px' : '820px',
+                width: '100%',
                 alignItems: 'center',
-                justifyContent: 'center',
-                borderTop: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
-                paddingTop: '10px',
-                marginTop: '6px',
-                gap: '6px'
+                paddingLeft: '20px',
+                flex: 1,
+                // Tour Step 0 Highlight
+                border: (showTour && tourStep === 0) ? '2.5px solid #fb923c' : '2.5px dashed transparent',
+                borderRadius: '16px',
+                padding: '16px 16px 16px 20px',
+                boxShadow: (showTour && tourStep === 0) ? '0 0 25px rgba(251, 146, 60, 0.25)' : 'none',
+                transition: 'all 0.3s ease'
               }}>
-                {chartState[102] && chartState[102].treatments.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center', marginBottom: '4px' }}>
-                    {chartState[102].treatments.map(tid => {
-                      const opt = treatmentOptions.find(o => o.id === tid);
+
+                {/* MAXILAR SUPERIOR (Upper Jaw) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderBottom: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
+                    paddingBottom: '8px',
+                    marginBottom: '6px',
+                    gap: '6px'
+                  }}>
+                    <div style={{
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      color: 'hsla(var(--foreground-hsl) / 0.95)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.12em',
+                    }}>
+                      Maxilar Superior (Arcada Superior)
+                    </div>
+                    {chartState[101] && chartState[101].treatments.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
+                        {chartState[101].treatments.map(tid => {
+                          const opt = treatmentOptions.find(o => o.id === tid);
+                          return (
+                            <span key={tid} style={{
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              backgroundColor: opt ? `${opt.color}1c` : 'rgba(255,255,255,0.06)',
+                              color: opt ? opt.color : 'var(--foreground-hsl)',
+                              border: '1px solid',
+                              borderColor: opt ? `${opt.color}44` : 'rgba(255,255,255,0.1)',
+                              fontWeight: 700,
+                              textTransform: 'none'
+                            }}>
+                              Arcada Superior: {opt ? (opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name.split(' (')[0]}` : opt.name.split(' (')[0]) : tid}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
+                    {upperRow.map((tooth) => {
+                      const isModified = isToothModified(tooth.id);
+                      const isFocused = selectedTooth === tooth.id;
                       return (
-                        <span key={tid} style={{
-                          fontSize: '0.7rem',
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          backgroundColor: opt ? `${opt.color}1c` : 'rgba(255,255,255,0.06)',
-                          color: opt ? opt.color : 'var(--foreground-hsl)',
-                          border: '1px solid',
-                          borderColor: opt ? `${opt.color}44` : 'rgba(255,255,255,0.1)',
-                          fontWeight: 700,
-                          textTransform: 'none'
-                        }}>
-                          Arcada Inferior: {opt ? (opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name.split(' (')[0]}` : opt.name.split(' (')[0]) : tid}
-                        </span>
+                        <div
+                          key={tooth.id}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '6px',
+                            flex: 1,
+                          }}
+                        >
+                          {/* Upper layout: Number -> Anatomical Shape -> Circle Selector */}
+                          <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isFocused ? 'hsl(var(--primary-hsl))' : (isModified ? 'hsl(var(--accent-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)') }}>
+                            {tooth.id}
+                          </span>
+
+                          {/* Tooth anatomical drawing */}
+                          {renderToothIcon(tooth.id, tooth.type, true)}
+
+                          {/* Circle 5-surface selector */}
+                          {renderCircularSelector(tooth.id)}
+                        </div>
                       );
                     })}
                   </div>
-                )}
-                <div style={{
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  color: 'hsla(var(--foreground-hsl) / 0.95)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                }}>
-                  Mandíbula Inferior (Arcada Inferior)
                 </div>
-              </div>
-            </div>
- 
-          </div>
- 
-        </div>
 
-        {/* Dynamic Multi-Select Action Panel at the bottom */}
-        {isMultiSelectMode && (
-          <div className="glass-panel animate-fade-in" style={{
-            padding: '16px 24px',
-            borderRadius: '16px',
-            border: '1.5px solid var(--glass-border)',
-            background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.06) 0%, rgba(59, 130, 246, 0.03) 100%), hsla(var(--foreground-hsl) / 0.02)',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '24px',
-            marginTop: '10px',
-            width: '100%',
-            boxShadow: '0 8px 32px -4px rgba(20, 184, 166, 0.08)',
-            flexWrap: 'wrap'
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 auto', minWidth: '250px' }}>
-              <div style={{ 
-                fontSize: '0.8rem', 
-                fontWeight: 800, 
-                color: '#14b8a6', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.06em',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#14b8a6',
-                  display: 'inline-block',
-                  boxShadow: '0 0 8px #14b8a6',
-                  animation: 'pulse 1.5s infinite'
+                {/* DIVIDER LINE FOR UPPER/LOWER */}
+                <div style={{
+                  height: '2.5px',
+                  width: '100%',
+                  background: 'linear-gradient(90deg, transparent 0%, hsla(var(--primary-hsl) / 0.2) 50%, transparent 100%)'
                 }} />
-                Selección Múltiple Activa
+
+                {/* MÁXILAR INFERIOR (Lower Jaw) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px', width: '100%', padding: '0 4px' }}>
+                    {lowerRow.map((tooth) => {
+                      const isModified = isToothModified(tooth.id);
+                      const isFocused = selectedTooth === tooth.id;
+                      return (
+                        <div
+                          key={tooth.id}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '6px',
+                            flex: 1,
+                          }}
+                        >
+                          {/* Lower layout: Circle Selector -> Anatomical Shape -> Number */}
+                          {renderCircularSelector(tooth.id)}
+
+                          {/* Tooth anatomical drawing (flipped vertically) */}
+                          {renderToothIcon(tooth.id, tooth.type, false)}
+
+                          <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isFocused ? 'hsl(var(--primary-hsl))' : (isModified ? 'hsl(var(--accent-hsl))' : 'hsla(var(--foreground-hsl) / 0.85)') }}>
+                            {tooth.id}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderTop: '2.5px solid hsla(var(--primary-hsl) / 0.15)',
+                    paddingTop: '10px',
+                    marginTop: '6px',
+                    gap: '6px'
+                  }}>
+                    {chartState[102] && chartState[102].treatments.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center', marginBottom: '4px' }}>
+                        {chartState[102].treatments.map(tid => {
+                          const opt = treatmentOptions.find(o => o.id === tid);
+                          return (
+                            <span key={tid} style={{
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              backgroundColor: opt ? `${opt.color}1c` : 'rgba(255,255,255,0.06)',
+                              color: opt ? opt.color : 'var(--foreground-hsl)',
+                              border: '1px solid',
+                              borderColor: opt ? `${opt.color}44` : 'rgba(255,255,255,0.1)',
+                              fontWeight: 700,
+                              textTransform: 'none'
+                            }}>
+                              Arcada Inferior: {opt ? (opt.id_prestacion ? `[ID: ${opt.id_prestacion}] ${opt.name.split(' (')[0]}` : opt.name.split(' (')[0]) : tid}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div style={{
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      color: 'hsla(var(--foreground-hsl) / 0.95)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.12em',
+                    }}>
+                      Maxilar Inferior (Arcada Inferior)
+                    </div>
+                  </div>
+                </div>
+
               </div>
-              <div style={{
-                fontSize: '0.86rem',
-                fontWeight: 700,
-                color: 'var(--foreground-hsl)',
-                opacity: 0.95
-              }}>
-                Piezas seleccionadas ({multiSelectedTeeth.length}): {multiSelectedTeeth.length > 0 ? (
-                  <span style={{ color: '#14b8a6', fontWeight: 800 }}>{multiSelectedTeeth.sort((a,b)=>a-b).join(', ')}</span>
-                ) : (
-                  <span style={{ opacity: 0.6, fontStyle: 'italic', fontWeight: 500 }}>Ninguna pieza seleccionada. Haz clic en las piezas para seleccionarlas.</span>
-                )}
-              </div>
+
             </div>
-            
-            {multiSelectedTeeth.length > 0 ? (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '20px',
-                flex: '1 1 auto',
-                justifyContent: 'flex-end',
+
+            {/* Dynamic Multi-Select Action Panel at the bottom */}
+            {isMultiSelectMode && (
+              <div className="glass-panel animate-fade-in" style={{
+                padding: '16px 24px',
+                borderRadius: '16px',
+                border: '1.5px solid var(--glass-border)',
+                background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.06) 0%, rgba(59, 130, 246, 0.03) 100%), hsla(var(--foreground-hsl) / 0.02)',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '24px',
+                marginTop: '10px',
+                width: '100%',
+                boxShadow: '0 8px 32px -4px rgba(20, 184, 166, 0.08)',
                 flexWrap: 'wrap'
               }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '280px' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, opacity: 0.7 }}>Asignar Prestación Masiva:</span>
-                  <select
-                    value={selectedMultiTreatment || ''}
-                    onChange={(e) => setSelectedMultiTreatment(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1.5px solid var(--glass-border)',
-                      backgroundColor: 'var(--card-hsl)',
-                      color: 'var(--foreground-hsl)',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="" style={{ color: '#334155', backgroundColor: '#ffffff' }}>-- Seleccionar --</option>
-                    {categories.map(cat => {
-                      const catOpts = treatmentOptions.filter(opt => opt.category === cat);
-                      if (catOpts.length === 0) return null;
-                      return (
-                        <optgroup key={cat} label={cat.toUpperCase()} style={{ fontWeight: 800, color: '#334155', backgroundColor: '#ffffff' }}>
-                          {catOpts.map(opt => (
-                            <option key={opt.id} value={opt.id} style={{ color: '#334155', backgroundColor: '#ffffff', fontWeight: 500 }}>
-                              {opt.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      );
-                    })}
-                  </select>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}>
-                  <button
-                    type="button"
-                    className="btn btn-accent"
-                    disabled={!selectedMultiTreatment}
-                    onClick={handleApplyMultiTreatment}
-                    style={{
-                      padding: '10px 20px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      borderRadius: '8px',
-                      cursor: !selectedMultiTreatment ? 'not-allowed' : 'pointer',
-                      opacity: !selectedMultiTreatment ? 0.6 : 1,
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 auto', minWidth: '250px' }}>
+                  <div style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    color: '#14b8a6',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
                       backgroundColor: '#14b8a6',
-                      borderColor: '#14b8a6',
-                      color: '#ffffff',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    Aplicar
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={handleCancelMultiSelect}
-                    style={{
-                      padding: '10px 20px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                    Limpiar
-                  </button>
+                      display: 'inline-block',
+                      boxShadow: '0 0 8px #14b8a6',
+                      animation: 'pulse 1.5s infinite'
+                    }} />
+                    Selección Múltiple Activa
+                  </div>
+                  <div style={{
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    color: 'var(--foreground-hsl)',
+                    opacity: 0.95
+                  }}>
+                    Piezas seleccionadas ({multiSelectedTeeth.length}): {multiSelectedTeeth.length > 0 ? (
+                      <span style={{ color: '#14b8a6', fontWeight: 800 }}>{multiSelectedTeeth.sort((a, b) => a - b).join(', ')}</span>
+                    ) : (
+                      <span style={{ opacity: 0.6, fontStyle: 'italic', fontWeight: 500 }}>Ninguna pieza seleccionada. Haz clic en las piezas para seleccionarlas.</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: '0.82rem', opacity: 0.7, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center', padding: '8px 0' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                Haz clic en las piezas del odontograma para seleccionarlas.
+
+                {multiSelectedTeeth.length > 0 ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    flex: '1 1 auto',
+                    justifyContent: 'flex-end',
+                    flexWrap: 'wrap'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '280px' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, opacity: 0.7 }}>Asignar Prestación Masiva:</span>
+                      <select
+                        value={selectedMultiTreatment || ''}
+                        onChange={(e) => setSelectedMultiTreatment(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          border: '1.5px solid var(--glass-border)',
+                          backgroundColor: 'var(--card-hsl)',
+                          color: 'var(--foreground-hsl)',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="" style={{ color: '#334155', backgroundColor: '#ffffff' }}>-- Seleccionar --</option>
+                        {categories.map(cat => {
+                          const catOpts = treatmentOptions.filter(opt => opt.category === cat);
+                          if (catOpts.length === 0) return null;
+                          return (
+                            <optgroup key={cat} label={cat.toUpperCase()} style={{ fontWeight: 800, color: '#334155', backgroundColor: '#ffffff' }}>
+                              {catOpts.map(opt => (
+                                <option key={opt.id} value={opt.id} style={{ color: '#334155', backgroundColor: '#ffffff', fontWeight: 500 }}>
+                                  {opt.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}>
+                      <button
+                        type="button"
+                        className="btn btn-accent"
+                        disabled={!selectedMultiTreatment}
+                        onClick={handleApplyMultiTreatment}
+                        style={{
+                          padding: '10px 20px',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                          cursor: !selectedMultiTreatment ? 'not-allowed' : 'pointer',
+                          opacity: !selectedMultiTreatment ? 0.6 : 1,
+                          backgroundColor: '#14b8a6',
+                          borderColor: '#14b8a6',
+                          color: '#ffffff',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Aplicar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={handleCancelMultiSelect}
+                        style={{
+                          padding: '10px 20px',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                        Limpiar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.82rem', opacity: 0.7, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center', padding: '8px 0' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Haz clic en las piezas del odontograma para seleccionarlas.
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
           </>
         )}
- 
+
       </div>
 
       {/* Editor & Detail Panel for Active Tooth as Popup Modal in React Portal */}
@@ -2013,9 +2013,9 @@ export default function Odontogram({
                 </button>
 
                 {/* Left Column: Tooth details, graphic selection diagram, special conditions, and faces selection buttons */}
-                <div style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: '20px',
                   border: (showTour && tourStep === 1) ? '2px solid #fb923c' : '2.5px solid transparent',
                   borderRadius: '16px',
@@ -2184,10 +2184,10 @@ export default function Odontogram({
                 </div>
 
                 {/* Right Column: Prestaciones (Treatments Checklist) with Instant Search Bar */}
-                <div style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: '16px', 
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
                   overflow: 'hidden',
                   border: (showTour && tourStep === 2) ? '2px solid #fb923c' : '2.5px solid transparent',
                   borderRadius: '16px',
@@ -2346,10 +2346,10 @@ export default function Odontogram({
                                     );
                                   })}
                                   {filtered.length > 50 && (
-                                    <div style={{ 
-                                      textAlign: 'center', 
-                                      padding: '12px', 
-                                      fontSize: '0.8rem', 
+                                    <div style={{
+                                      textAlign: 'center',
+                                      padding: '12px',
+                                      fontSize: '0.8rem',
                                       color: 'hsla(var(--foreground-hsl) / 0.5)',
                                       border: '1.5px dashed var(--glass-border)',
                                       borderRadius: '10px',
@@ -2649,10 +2649,10 @@ export default function Odontogram({
 
       {/* Summary Table of Selected Treatments (Inspirada en el segundo pantallazo) */}
       {Object.keys(chartState).length > 0 && (
-        <div 
-          className="glass-panel animate-fade-in" 
-          style={{ 
-            padding: '24px', 
+        <div
+          className="glass-panel animate-fade-in"
+          style={{
+            padding: '24px',
             border: showTour && tourStep === 5 ? '2px solid #fb923c' : '1px solid var(--glass-border)',
             boxShadow: showTour && tourStep === 5 ? '0 0 20px rgba(251, 146, 60, 0.4)' : 'none',
             transition: 'all 0.3s ease'
@@ -2677,11 +2677,11 @@ export default function Odontogram({
                 {Object.entries(chartState).map(([idStr, state]) => {
                   const id = parseInt(idStr, 10);
                   const isPseudo = id === 101 || id === 102 || id === 103;
-                  
+
                   let nameLabel = '';
                   let typeLabel = '';
                   let activeFaces = '';
-                  
+
                   if (isPseudo) {
                     if (id === 101) {
                       nameLabel = 'Arcada Superior';
@@ -2722,33 +2722,33 @@ export default function Odontogram({
                     <tr key={id}>
                       <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--foreground-hsl)' }}>
                         {nameLabel} {toothConditionLabel && (
-                          <span style={{ 
-                            fontSize: '0.72rem', 
-                            padding: '2px 6px', 
-                            borderRadius: '4px', 
+                          <span style={{
+                            fontSize: '0.72rem',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
                             backgroundColor: state.condition === 'ausente' || state.condition === 'perdida' || state.condition === 'cariada' || state.condition === 'fracturada'
-                              ? 'rgba(239, 68, 68, 0.15)' 
+                              ? 'rgba(239, 68, 68, 0.15)'
                               : state.condition === 'implante'
-                              ? 'rgba(245, 158, 11, 0.15)'
-                              : state.condition === 'corona_existente'
-                              ? 'rgba(168, 85, 247, 0.15)'
-                              : state.condition === 'obturada'
-                              ? 'rgba(59, 130, 246, 0.15)'
-                              : state.condition === 'provisional'
-                              ? 'rgba(6, 182, 212, 0.15)'
-                              : 'rgba(16, 185, 129, 0.15)', 
+                                ? 'rgba(245, 158, 11, 0.15)'
+                                : state.condition === 'corona_existente'
+                                  ? 'rgba(168, 85, 247, 0.15)'
+                                  : state.condition === 'obturada'
+                                    ? 'rgba(59, 130, 246, 0.15)'
+                                    : state.condition === 'provisional'
+                                      ? 'rgba(6, 182, 212, 0.15)'
+                                      : 'rgba(16, 185, 129, 0.15)',
                             color: state.condition === 'ausente' || state.condition === 'perdida' || state.condition === 'cariada' || state.condition === 'fracturada'
-                              ? '#ef4444' 
+                              ? '#ef4444'
                               : state.condition === 'implante'
-                              ? '#f59e0b'
-                              : state.condition === 'corona_existente'
-                              ? '#a855f7'
-                              : state.condition === 'obturada'
-                              ? '#3b82f6'
-                              : state.condition === 'provisional'
-                              ? '#06b6d4'
-                              : '#10b981',
-                            marginLeft: '6px' 
+                                ? '#f59e0b'
+                                : state.condition === 'corona_existente'
+                                  ? '#a855f7'
+                                  : state.condition === 'obturada'
+                                    ? '#3b82f6'
+                                    : state.condition === 'provisional'
+                                      ? '#06b6d4'
+                                      : '#10b981',
+                            marginLeft: '6px'
                           }}>
                             {toothConditionLabel}
                           </span>
@@ -2920,7 +2920,7 @@ export default function Odontogram({
                 <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'hsl(var(--primary-hsl))' }}>
                   Selecciona la prestación a aplicar:
                 </span>
-                
+
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
