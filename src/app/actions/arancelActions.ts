@@ -117,9 +117,15 @@ export async function toggleArancelOdontogramAction(
       return { success: false, error: 'No autorizado' };
     }
 
+    const nameRes = await pool.query('SELECT name FROM arancel WHERE id = $1', [id]);
+    if (nameRes.rows.length === 0) {
+      return { success: false, error: 'Arancel no encontrado' };
+    }
+    const name = nameRes.rows[0].name;
+
     await pool.query(
-      `UPDATE arancel SET show_in_odontogram = $1, updated_at = NOW() WHERE id = $2`,
-      [show, id]
+      `UPDATE arancel SET show_in_odontogram = $1, updated_at = NOW() WHERE name = $2`,
+      [show, name]
     );
 
     revalidatePath('/dashboard/aranceles');
@@ -208,5 +214,22 @@ export async function getOdontogramPrestacionesAction(): Promise<{ success: bool
   } catch (error) {
     console.error('Error fetching odontogram prestaciones:', error);
     return { success: false, error: 'Error al cargar prestaciones del odontograma' };
+  }
+}
+
+export async function getAllArancelItemsAction(): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: 'No autorizado' };
+    }
+    const res = await pool.query("SELECT id_prestacion, name, price_base, price_pref FROM arancel");
+    return {
+      success: true,
+      data: res.rows
+    };
+  } catch (error: any) {
+    console.error('Error in getAllArancelItemsAction:', error);
+    return { success: false, error: error.message || 'Error del servidor' };
   }
 }

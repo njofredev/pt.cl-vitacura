@@ -621,8 +621,8 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
       return { success: true, statusChanged: true, newStatus: 'en_tratamiento' };
     }
     
-    // Find matching treatment by caseIdStr
-    const matchingTreatment = treatmentsList.find((t: any) => t.nombre.toUpperCase().includes(caseIdStr));
+    // Find matching treatment by caseIdStr (matching caseIdStr only as a standalone number)
+    const matchingTreatment = treatmentsList.find((t: any) => new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()));
     if (!matchingTreatment) {
       return { success: true, statusChanged: false, message: 'No se encontró tratamiento correspondiente en Dentalink' };
     }
@@ -634,8 +634,8 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     const appts = patAppts.filter((appt: any) => appt.id_tratamiento === matchingTreatment.id && appt.estado_anulacion === 0);
     const evs = patEvs.filter((ev: any) => ev.id_tratamiento === matchingTreatment.id);
     
-    let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = 'sincronizado';
-    let obs = 'Sincronizado automáticamente con Dentalink';
+    let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = c.status;
+    let obs = c.observations || '';
     
     // Fetch details of the matching treatment to verify if all prestaciones are completed
     const detailsRes = await getDentalinkTreatmentDetailsAction(matchingTreatment.id);
@@ -659,6 +659,12 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
       } else if (appts.length > 0) {
         newStatus = 'agendado';
         obs = 'Cita agendada registrada en Dentalink.';
+      } else if (details.length > 0) {
+        newStatus = 'sincronizado';
+        obs = 'Sincronizado automáticamente con Dentalink';
+      } else {
+        newStatus = 'ingresado';
+        obs = 'Tratamiento creado en Dentalink, pendiente de vincular prestaciones.';
       }
     }
     
@@ -787,7 +793,7 @@ export async function getCaseDentalinkDetailsAction(caseId: string, yearlyCorrel
     }
 
     const treatmentsList = resTreatments.treatments || [];
-    const matchingTreatment = treatmentsList.find((t: any) => t.nombre.toUpperCase().includes(caseIdStr));
+    const matchingTreatment = treatmentsList.find((t: any) => new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()));
     
     if (!matchingTreatment) {
       return { success: false, error: 'No se encontró tratamiento correspondiente en Dentalink' };

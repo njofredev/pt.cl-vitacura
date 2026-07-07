@@ -1937,14 +1937,14 @@ export default function RegisterCasePage() {
             Revisión y Confirmación de Inscripción
           </span>
         }
-        maxWidth="750px"
+        maxWidth="550px"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative' }}>
           {(loading || success) && (
             <div style={{
               position: 'absolute',
               top: '-24px', left: '-24px', right: '-24px', bottom: '-24px',
-              backgroundColor: 'rgba(10, 17, 36, 0.95)',
+              backgroundColor: 'hsl(var(--card-hsl))',
               backdropFilter: 'blur(10px)',
               display: 'flex',
               flexDirection: 'column',
@@ -1962,7 +1962,7 @@ export default function RegisterCasePage() {
                   <div className="animate-spin" style={{ width: '56px', height: '56px', border: '4px solid rgba(16, 185, 129, 0.1)', borderTopColor: '#10b981', borderRadius: '50%' }}></div>
                   <div>
                     <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#10b981' }}>Registrando Derivación</h4>
-                    <p style={{ margin: '6px 0 0 0', opacity: 0.7, fontSize: '0.9rem', fontWeight: 500 }}>Por favor, espere mientras se guardan los datos en el sistema...</p>
+                    <p style={{ margin: '6px 0 0 0', opacity: 0.7, fontSize: '0.9rem', fontWeight: 500, color: 'hsl(var(--foreground-hsl))' }}>Por favor, espere mientras se guardan los datos en el sistema...</p>
                   </div>
                 </>
               ) : (
@@ -1987,23 +1987,23 @@ export default function RegisterCasePage() {
                     <h4 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-display)' }}>
                       ¡Registro Exitoso!
                     </h4>
-                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: '#ffffff', opacity: 0.95 }}>
+                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: 'hsl(var(--foreground-hsl))', opacity: 0.95 }}>
                       La derivación ha sido ingresada de forma definitiva.
                     </p>
                     <div style={{ 
                       marginTop: '8px',
                       padding: '8px 16px',
                       borderRadius: '20px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      backgroundColor: 'rgba(var(--foreground-hsl-rgb, 255, 255, 255), 0.05)',
+                      border: '1px solid var(--glass-border)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      color: '#94a3b8'
+                      color: 'hsla(var(--foreground-hsl) / 0.6)'
                     }}>
-                      <div className="animate-spin" style={{ width: '12px', height: '12px', border: '2px solid rgba(148, 163, 184, 0.2)', borderTopColor: '#94a3b8', borderRadius: '50%' }}></div>
+                      <div className="animate-spin" style={{ width: '12px', height: '12px', border: '2px solid rgba(148, 163, 184, 0.2)', borderTopColor: 'currentColor', borderRadius: '50%' }}></div>
                       <span style={{ fontSize: '0.84rem', fontWeight: 600, letterSpacing: '0.01em' }}>
-                        Será redirigido automáticamente a la bandeja de casos sociales...
+                        Será redirigido automáticamente...
                       </span>
                     </div>
                   </div>

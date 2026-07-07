@@ -56,11 +56,47 @@ interface CaseListClientProps {
 export default function CaseListClient({ initialCases, user }: CaseListClientProps) {
   const router = useRouter();
   const [cases, setCases] = useState<CaseRecord[]>(initialCases);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [nextSyncCountdown, setNextSyncCountdown] = useState<number>(60);
 
   // Sync state when server returns updated cases (e.g. from background sync or webhooks)
   useEffect(() => {
     setCases(initialCases);
   }, [initialCases]);
+
+  // Load last sync time from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('last_sync_timestamp');
+      if (stored) {
+        setLastSyncTime(new Date(stored));
+      }
+    }
+  }, []);
+
+  // Background sync countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNextSyncCountdown(prev => {
+        if (prev <= 1) {
+          fetch('/api/sync/cases')
+            .then(res => res.json())
+            .then(data => {
+              const now = new Date();
+              setLastSyncTime(now);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('last_sync_timestamp', now.toISOString());
+              }
+              router.refresh();
+            })
+            .catch(err => console.warn('Background sync failed:', err));
+          return 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [router]);
 
   // Periodically refresh the route to fetch any background/webhook updates from the database
   useEffect(() => {
@@ -1137,7 +1173,20 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   <th>Prestaciones</th>
                   <th>Fecha Ingreso</th>
                   <th>Profesional Derivador</th>
-                  <th>Estado</th>
+                   <th>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', lineHeight: 1.2 }}>
+                       <span style={{ fontWeight: 600 }}>Estado</span>
+                       <span style={{ fontSize: '0.62rem', fontWeight: 500, opacity: 0.45, whiteSpace: 'nowrap' }}>
+                         Frecuencia: 60s
+                       </span>
+                       <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'hsl(var(--primary-hsl))', whiteSpace: 'nowrap' }}>
+                         Sinc. en: {nextSyncCountdown}s
+                       </span>
+                       <span style={{ fontSize: '0.62rem', fontWeight: 500, opacity: 0.45, whiteSpace: 'nowrap' }}>
+                         Última: {lastSyncTime ? lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Reciente'}
+                       </span>
+                     </div>
+                   </th>
                   <th style={{ textAlign: 'right' }}>Acciones</th>
                 </tr>
               </thead>
@@ -1681,56 +1730,118 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                                             </div>
                                           </td>
                                           <td style={{ fontSize: '0.82rem', padding: '12px 16px' }}>
-                                            {loadingDetails ? (
-                                              <span style={{ opacity: 0.5, fontStyle: 'italic' }}>Cargando...</span>
-                                            ) : matchingDetail ? (
-                                              Number(matchingDetail.realizado) === 1 ? (
-                                                <span style={{
-                                                  padding: '2px 8px',
-                                                  borderRadius: '9999px',
-                                                  fontSize: '0.72rem',
-                                                  fontWeight: 700,
-                                                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                                                  color: '#10b981',
-                                                  textTransform: 'uppercase',
-                                                  display: 'inline-flex',
-                                                  alignItems: 'center',
-                                                  gap: '4px'
-                                                }}>
-                                                  ● Realizado
-                                                </span>
-                                              ) : (
-                                                <span style={{
-                                                  padding: '2px 8px',
-                                                  borderRadius: '9999px',
-                                                  fontSize: '0.72rem',
-                                                  fontWeight: 700,
-                                                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                                                  color: '#f59e0b',
-                                                  textTransform: 'uppercase',
-                                                  display: 'inline-flex',
-                                                  alignItems: 'center',
-                                                  gap: '4px'
-                                                }}>
-                                                  ● Pendiente
-                                                </span>
-                                              )
-                                            ) : (
-                                              <span style={{
-                                                padding: '2px 8px',
-                                                borderRadius: '9999px',
-                                                fontSize: '0.72rem',
-                                                fontWeight: 700,
-                                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                                color: 'rgba(255, 255, 255, 0.4)',
-                                                textTransform: 'uppercase',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '4px'
-                                              }}>
-                                                ● Sin Sinc.
-                                              </span>
-                                            )}
+                                             {loadingDetails ? (
+                                               <span style={{ opacity: 0.5, fontStyle: 'italic' }}>Cargando...</span>
+                                             ) : (
+                                               (() => {
+                                                 if (matchingDetail && Number(matchingDetail.realizado) === 1) {
+                                                   return (
+                                                     <span style={{
+                                                       padding: '2px 8px',
+                                                       borderRadius: '9999px',
+                                                       fontSize: '0.72rem',
+                                                       fontWeight: 700,
+                                                       backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                                       color: '#10b981',
+                                                       textTransform: 'uppercase',
+                                                       display: 'inline-flex',
+                                                       alignItems: 'center',
+                                                       gap: '4px'
+                                                     }}>
+                                                       ● Realizado
+                                                     </span>
+                                                   );
+                                                 }
+                                                 switch (selectedCase.status) {
+                                                   case 'finalizado':
+                                                     return (
+                                                       <span style={{
+                                                         padding: '2px 8px',
+                                                         borderRadius: '9999px',
+                                                         fontSize: '0.72rem',
+                                                         fontWeight: 700,
+                                                         backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                                         color: '#10b981',
+                                                         textTransform: 'uppercase',
+                                                         display: 'inline-flex',
+                                                         alignItems: 'center',
+                                                         gap: '4px'
+                                                       }}>
+                                                         ● Finalizado
+                                                       </span>
+                                                     );
+                                                   case 'en_tratamiento':
+                                                     return (
+                                                       <span style={{
+                                                         padding: '2px 8px',
+                                                         borderRadius: '9999px',
+                                                         fontSize: '0.72rem',
+                                                         fontWeight: 700,
+                                                         backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                                         color: '#f59e0b',
+                                                         textTransform: 'uppercase',
+                                                         display: 'inline-flex',
+                                                         alignItems: 'center',
+                                                         gap: '4px'
+                                                       }}>
+                                                         ● En Tratamiento
+                                                       </span>
+                                                     );
+                                                   case 'agendado':
+                                                     return (
+                                                       <span style={{
+                                                         padding: '2px 8px',
+                                                         borderRadius: '9999px',
+                                                         fontSize: '0.72rem',
+                                                         fontWeight: 700,
+                                                         backgroundColor: 'rgba(168, 85, 247, 0.15)',
+                                                         color: '#a855f7',
+                                                         textTransform: 'uppercase',
+                                                         display: 'inline-flex',
+                                                         alignItems: 'center',
+                                                         gap: '4px'
+                                                       }}>
+                                                         ● Agendado
+                                                       </span>
+                                                     );
+                                                   case 'sincronizado':
+                                                     return (
+                                                       <span style={{
+                                                         padding: '2px 8px',
+                                                         borderRadius: '9999px',
+                                                         fontSize: '0.72rem',
+                                                         fontWeight: 700,
+                                                         backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                                                         color: '#3b82f6',
+                                                         textTransform: 'uppercase',
+                                                         display: 'inline-flex',
+                                                         alignItems: 'center',
+                                                         gap: '4px'
+                                                       }}>
+                                                         ● Sincronizado
+                                                       </span>
+                                                     );
+                                                   case 'ingresado':
+                                                   default:
+                                                     return (
+                                                       <span style={{
+                                                         padding: '2px 8px',
+                                                         borderRadius: '9999px',
+                                                         fontSize: '0.72rem',
+                                                         fontWeight: 700,
+                                                         backgroundColor: 'hsla(var(--foreground-hsl) / 0.06)',
+                                                         color: 'hsla(var(--foreground-hsl) / 0.5)',
+                                                         textTransform: 'uppercase',
+                                                         display: 'inline-flex',
+                                                         alignItems: 'center',
+                                                         gap: '4px'
+                                                       }}>
+                                                         ● Sin Sinc.
+                                                       </span>
+                                                     );
+                                                 }
+                                               })()
+                                             )}
                                           </td>
                                           <td style={{ fontSize: '0.82rem', opacity: 0.8, padding: '12px 16px', fontFamily: 'monospace' }}>
                                             {loadingDetails ? (

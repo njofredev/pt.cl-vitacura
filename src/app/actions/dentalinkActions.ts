@@ -310,6 +310,46 @@ export async function createDentalinkPatientAction(patientData: {
     return { success: false, error: error.message || 'Error de red' };
   }
 }
+export async function addDentalinkPatientConvenioAction(idPaciente: number | string, idConvenio: number) {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: 'No autorizado' };
+  }
+
+  if (session.role !== 'admin' && session.role !== 'internal') {
+    return { success: false, error: 'No autorizado para esta función' };
+  }
+
+  const apiToken = process.env.DENTALINK_API_TOKEN || '';
+  if (!apiToken) {
+    return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
+  }
+
+  const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
+  const url = `https://api.dentalink.healthatom.com/api/v1/pacientes/${idPaciente}/convenios`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': formattedToken,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id_convenio: idConvenio }),
+      cache: 'no-store'
+    });
+
+    const result = await response.json();
+    return {
+      success: response.ok,
+      data: result.data || result
+    };
+  } catch (error: any) {
+    console.error('Error adding patient convenio:', error);
+    return { success: false, error: error.message || 'Error de red' };
+  }
+}
 
 export async function getDentalinkPatientTreatmentsAction(idPaciente: number | string) {
   const session = await getSession();

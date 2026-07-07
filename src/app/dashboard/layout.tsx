@@ -18,8 +18,7 @@ export default async function DashboardLayout({
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
-      {/* Background case status synchronizer */}
-      <SyncTrigger />
+      {/* Background case status synchronizer (now managed reactively in CaseListClient) */}
 
       {/* Session Inactivity Timeout Handler */}
       <SessionTimeout />

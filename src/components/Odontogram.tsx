@@ -189,6 +189,7 @@ export default function Odontogram({
   }, [generalObservations]);
 
   const [hoveredFace, setHoveredFace] = useState<keyof SelectedToothState['faces'] | null>(null);
+  const [hoveredTooltip, setHoveredTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [hoveredBtn, setHoveredBtn] = useState<'upper' | 'lower' | 'full' | 'multiselect' | null>(null);
@@ -938,6 +939,43 @@ export default function Odontogram({
     );
   };
 
+  // Helper to map visual left and right sectors to clinical Mesial (M) / Distal (D)
+  const getLeftAndRightFaces = (id: number, isChild: boolean): { left: 'M' | 'D'; right: 'M' | 'D' } => {
+    if (isChild) {
+      if ((id >= 1 && id <= 5) || (id >= 11 && id <= 15)) {
+        return { left: 'D', right: 'M' };
+      } else {
+        return { left: 'M', right: 'D' };
+      }
+    } else {
+      if ((id >= 1 && id <= 8) || (id >= 17 && id <= 24)) {
+        return { left: 'D', right: 'M' };
+      } else {
+        return { left: 'M', right: 'D' };
+      }
+    }
+  };
+
+  const getFaceLabel = (faceKey: 'V' | 'O' | 'M' | 'D' | 'L', toothId: number, isChild: boolean) => {
+    if (faceKey === 'V') return 'Vestibular';
+    if (faceKey === 'O') return 'Oclusal / Incisal';
+    if (faceKey === 'L') return 'Lingual / Palatina';
+    
+    const { left, right } = getLeftAndRightFaces(toothId, isChild);
+    if (faceKey === 'M') return 'Mesial';
+    if (faceKey === 'D') return 'Distal';
+    return '';
+  };
+
+  const handleFaceHover = (e: React.MouseEvent, faceKey: 'V' | 'O' | 'M' | 'D' | 'L', toothId: number) => {
+    const text = getFaceLabel(faceKey, toothId, activeTab === 'child');
+    setHoveredTooltip({
+      x: e.clientX,
+      y: e.clientY,
+      text
+    });
+  };
+
   // Render high-fidelity Concentric Circular 5-face interactive SVG cross
   const renderCircularSelector = (id: number, interactive = true, size = 36) => {
     const state = getToothState(id);
@@ -949,6 +987,8 @@ export default function Odontogram({
     if (isFocused) strokeColor = 'hsl(var(--primary-hsl))';
     else if (isMultiSelected) strokeColor = 'hsl(var(--accent-hsl))';
     else if (isToothModified(id)) strokeColor = 'hsl(var(--accent-hsl))';
+
+    const { left: leftFace, right: rightFace } = getLeftAndRightFaces(id, activeTab === 'child');
 
     return (
       <svg
@@ -977,6 +1017,17 @@ export default function Odontogram({
           fill={isFocused && hoveredFace === 'O' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.18)' : (state.faces.O ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.03)'))}
           stroke={isFocused && hoveredFace === 'O' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
           strokeWidth={isFocused && hoveredFace === 'O' ? "1.5" : "0.8"}
+          onMouseEnter={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, 'O', id);
+          }}
+          onMouseMove={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, 'O', id);
+          }}
+          onMouseLeave={() => {
+            setHoveredTooltip(null);
+          }}
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
@@ -996,6 +1047,17 @@ export default function Odontogram({
           fill={isFocused && hoveredFace === 'V' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces.V ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
           stroke={isFocused && hoveredFace === 'V' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
           strokeWidth={isFocused && hoveredFace === 'V' ? "1.5" : "0.8"}
+          onMouseEnter={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, 'V', id);
+          }}
+          onMouseMove={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, 'V', id);
+          }}
+          onMouseLeave={() => {
+            setHoveredTooltip(null);
+          }}
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
@@ -1015,6 +1077,17 @@ export default function Odontogram({
           fill={isFocused && hoveredFace === 'L' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces.L ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
           stroke={isFocused && hoveredFace === 'L' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
           strokeWidth={isFocused && hoveredFace === 'L' ? "1.5" : "0.8"}
+          onMouseEnter={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, 'L', id);
+          }}
+          onMouseMove={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, 'L', id);
+          }}
+          onMouseLeave={() => {
+            setHoveredTooltip(null);
+          }}
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
@@ -1027,13 +1100,24 @@ export default function Odontogram({
           }}
         />
 
-        {/* Left: Mesial (M) */}
+        {/* Left: Mesial/Distal (leftFace) */}
         <path
           d="M 15 15 L 5 5 A 21 21 0 0 0 5 35 L 15 25 A 7 7 0 0 1 15 15 Z"
           className={interactive ? "odont-face-sector" : ""}
-          fill={isFocused && hoveredFace === 'M' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces.M ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
-          stroke={isFocused && hoveredFace === 'M' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
-          strokeWidth={isFocused && hoveredFace === 'M' ? "1.5" : "0.8"}
+          fill={isFocused && hoveredFace === leftFace ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces[leftFace] ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
+          stroke={isFocused && hoveredFace === leftFace ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
+          strokeWidth={isFocused && hoveredFace === leftFace ? "1.5" : "0.8"}
+          onMouseEnter={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, leftFace, id);
+          }}
+          onMouseMove={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, leftFace, id);
+          }}
+          onMouseLeave={() => {
+            setHoveredTooltip(null);
+          }}
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
@@ -1041,18 +1125,29 @@ export default function Odontogram({
               selectToothAndScroll(id, e);
             } else {
               selectToothAndScroll(id, e);
-              toggleFace(id, 'M');
+              toggleFace(id, leftFace);
             }
           }}
         />
 
-        {/* Right: Distal (D) */}
+        {/* Right: Distal/Mesial (rightFace) */}
         <path
           d="M 25 15 L 35 5 A 21 21 0 0 1 35 35 L 25 25 A 7 7 0 0 0 25 15 Z"
           className={interactive ? "odont-face-sector" : ""}
-          fill={isFocused && hoveredFace === 'D' ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces.D ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
-          stroke={isFocused && hoveredFace === 'D' ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
-          strokeWidth={isFocused && hoveredFace === 'D' ? "1.5" : "0.8"}
+          fill={isFocused && hoveredFace === rightFace ? 'rgba(20, 184, 166, 0.65)' : ((state.condition === 'ausente' || state.condition === 'perdida') ? 'rgba(239, 68, 68, 0.12)' : (state.faces[rightFace] ? (state.condition === 'cariada' ? 'rgba(244, 63, 94, 0.6)' : state.condition === 'obturada' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(20, 184, 166, 0.38)') : 'hsla(var(--foreground-hsl) / 0.015)'))}
+          stroke={isFocused && hoveredFace === rightFace ? '#14b8a6' : "hsla(var(--foreground-hsl) / 0.08)"}
+          strokeWidth={isFocused && hoveredFace === rightFace ? "1.5" : "0.8"}
+          onMouseEnter={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, rightFace, id);
+          }}
+          onMouseMove={(e) => {
+            if (!interactive) return;
+            handleFaceHover(e, rightFace, id);
+          }}
+          onMouseLeave={() => {
+            setHoveredTooltip(null);
+          }}
           onClick={(e) => {
             if (!interactive) return;
             e.stopPropagation();
@@ -1060,7 +1155,7 @@ export default function Odontogram({
               selectToothAndScroll(id, e);
             } else {
               selectToothAndScroll(id, e);
-              toggleFace(id, 'D');
+              toggleFace(id, rightFace);
             }
           }}
         />
@@ -3025,6 +3120,33 @@ export default function Odontogram({
       ) : null}
 
       {mounted && showTour && renderTourBubble(tourStep)}
+
+      {mounted && hoveredTooltip && typeof document !== 'undefined' ? (
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              left: hoveredTooltip.x,
+              top: hoveredTooltip.y - 12,
+              transform: 'translate(-50%, -100%)',
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              color: '#ffffff',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              pointerEvents: 'none',
+              zIndex: 999999,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {hoveredTooltip.text}
+          </div>,
+          document.body
+        )
+      ) : null}
 
     </div>
   );

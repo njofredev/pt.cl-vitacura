@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction, getDentalinkPatientEvolutionsAction, getDentalinkTreatmentDetailsAction, getDentalinkTreatmentEvolutionsAction, getDentalinkDentistasAction, getDentalinkTreatmentAppointmentsAction, getDentalinkPatientAppointmentsAction } from '@/app/actions/dentalinkActions';
-import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
+import { checkDentalinkPatientAction, createDentalinkPatientAction, getDentalinkPatientTreatmentsAction, createDentalinkPatientTreatmentAction, addDentalinkTreatmentDetailAction, getDentalinkPatientEvolutionsAction, getDentalinkTreatmentDetailsAction, getDentalinkTreatmentEvolutionsAction, getDentalinkDentistasAction, getDentalinkTreatmentAppointmentsAction, getDentalinkPatientAppointmentsAction, addDentalinkPatientConvenioAction } from '@/app/actions/dentalinkActions';
+import { getOdontogramPrestacionesAction, getAllArancelItemsAction } from '@/app/actions/arancelActions';
 import { updateCaseStatusAction, syncCaseStatusAction } from '@/app/actions/caseActions';
 import { formatRUT, formatDate } from '@/lib/utils';
 import Modal from '@/components/ui/Modal';
@@ -134,13 +134,19 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   const [pendingServices, setPendingServices] = useState<string[]>([]);
   const [linkedServices, setLinkedServices] = useState<string[]>([]);
   const [localAranceles, setLocalAranceles] = useState<any[]>([]);
-
+  const [allArancelesRaw, setAllArancelesRaw] = useState<any[]>([]);
+ 
   // Fetch local aranceles on mount
   React.useEffect(() => {
     async function loadInitialData() {
       const res = await getOdontogramPrestacionesAction();
       if (res.success && res.data) {
         setLocalAranceles(res.data);
+      }
+
+      const resRaw = await getAllArancelItemsAction();
+      if (resRaw.success && resRaw.data) {
+        setAllArancelesRaw(resRaw.data);
       }
       
       setLoadingDentistas(true);
@@ -156,7 +162,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     loadInitialData();
   }, []);
 
-  const getPrestacionIdFromName = (serviceString: string) => {
+  const getPrestacionIdFromName = (serviceString: string, treatmentOverride?: any) => {
     const firstBracket = serviceString.indexOf('[');
     const lastBracket = serviceString.lastIndexOf(']');
     if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
@@ -165,13 +171,19 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
       content = content.replace(/\s*\[(Dental|Rayos X)\]\s*$/i, '').trim();
       
       const serviceName = content.toLowerCase();
-      const matches = localAranceles.filter(a => a.name.toLowerCase().trim() === serviceName);
+      const matches = (allArancelesRaw.length > 0 ? allArancelesRaw : localAranceles)
+        .filter(a => a.name.toLowerCase().trim() === serviceName);
       
       if (matches.length > 0) {
+        const activeTreatment = treatmentOverride || selectedTreatmentForServices;
         // Determine if selected treatment is Preferencial
         const isPreferencial = !!(
-          selectedTreatmentForServices?.nombre_convenio?.toLowerCase().includes('preferencial') ||
-          selectedTreatmentForServices?.nombre?.toLowerCase().includes('preferencial')
+          activeTreatment?.nombre_convenio?.toLowerCase().includes('preferencial') ||
+          activeTreatment?.nombre?.toLowerCase().includes('preferencial') ||
+          [2, 3, 4, 5, 7].includes(Number(activeTreatment?.id_convenio)) ||
+          ['beneficiarios', 'histórico', 'mivita', 'mi vita', 'prótesis', 'protesis', 'mater filius'].some(c => 
+            activeTreatment?.nombre_convenio?.toLowerCase().includes(c)
+          )
         );
 
         if (isPreferencial) {
@@ -241,8 +253,10 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     const year = dateObj.getFullYear();
     const calculatedName = `${caseId} DERIVACIÓN DIGITAL ${month}/${year}`.trim();
     
+    let mappedConvenioId = 0; // Default to Sin Convenio (0) / Arancel General
+
     setNewTreatmentName(calculatedName);
-    setNewTreatmentConvenioId(0);
+    setNewTreatmentConvenioId(mappedConvenioId);
     setNewTreatmentSucursalId(2);
     setNewTreatmentDentistaId('');
     setNewTreatmentComentario(c.professional_name ? `Derivado por: ${c.professional_name}${c.professional_email ? ` (${c.professional_email})` : ''}` : '');
@@ -359,13 +373,14 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
 
           // Auto-transition status based on Dentalink activity
           const caseIdStr = c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '';
-          const matchingTreatment = treatmentsList.find((t: any) => t.nombre.toUpperCase().includes(caseIdStr));
+          const matchingTreatment = treatmentsList.find((t: any) => caseIdStr ? new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()) : false);
           if (matchingTreatment) {
             const evs = evolutionsMap[matchingTreatment.id] || [];
             const appts = appointmentsMap[matchingTreatment.id] || [];
             
-            let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = 'sincronizado';
-            let obs = 'Sincronizado automáticamente con Dentalink';
+            const details = detailsMap[matchingTreatment.id] || [];
+            let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = c.status;
+            let obs = c.observations || '';
             
             if (matchingTreatment.finalizado === 1) {
               newStatus = 'finalizado';
@@ -381,6 +396,12 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
               } else if (appts.length > 0) {
                 newStatus = 'agendado';
                 obs = 'Cita agendada registrada en Dentalink.';
+              } else if (details.length > 0) {
+                newStatus = 'sincronizado';
+                obs = 'Sincronizado automáticamente con Dentalink';
+              } else {
+                newStatus = 'ingresado';
+                obs = 'Tratamiento creado en Dentalink, pendiente de vincular prestaciones.';
               }
             }
             
@@ -427,27 +448,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
 
     // Helper to get prestacion ID
     const getPrestacionId = (serviceString: string) => {
-      const firstBracket = serviceString.indexOf('[');
-      const lastBracket = serviceString.lastIndexOf(']');
-      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-        let content = serviceString.substring(firstBracket + 1, lastBracket).trim();
-        content = content.replace(/\s*\[(Dental|Rayos X)\]\s*$/i, '').trim();
-        
-        const serviceName = content.toLowerCase();
-        const matches = localAranceles.filter(a => a.name.toLowerCase().trim() === serviceName);
-        
-        if (matches.length > 0) {
-          if (isPreferencial) {
-            const prefMatch = matches.find(a => a.price_pref !== null && a.price_pref !== undefined);
-            if (prefMatch && prefMatch.id_prestacion) return prefMatch.id_prestacion;
-          } else {
-            const baseMatch = matches.find(a => a.price_base !== null && a.price_base !== undefined);
-            if (baseMatch && baseMatch.id_prestacion) return baseMatch.id_prestacion;
-          }
-          return matches[0].id_prestacion || null;
-        }
-      }
-      return null;
+      return getPrestacionIdFromName(serviceString, treatment);
     };
 
     // Build a pool of existing linked prestacion IDs that we can consume to avoid duplicates
@@ -704,13 +705,14 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
         // Auto-transition status based on Dentalink activity
         if (wizardCase) {
           const caseIdStr = wizardCase.yearly_correlative ? String(wizardCase.yearly_correlative).padStart(4, '0') : '';
-          const matchingTreatment = treatmentsList.find((t: any) => t.nombre.toUpperCase().includes(caseIdStr));
+          const matchingTreatment = treatmentsList.find((t: any) => caseIdStr ? new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()) : false);
           if (matchingTreatment) {
             const evs = evolutionsMap[matchingTreatment.id] || [];
             const appts = appointmentsMap[matchingTreatment.id] || [];
             
-            let newStatus: 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = 'sincronizado';
-            let obs = 'Sincronizado automáticamente con Dentalink';
+            const details = detailsMap[matchingTreatment.id] || [];
+            let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = wizardCase.status;
+            let obs = wizardCase.observations || '';
             
             if (matchingTreatment.finalizado === 1) {
               newStatus = 'finalizado';
@@ -726,6 +728,12 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
               } else if (appts.length > 0) {
                 newStatus = 'agendado';
                 obs = 'Cita agendada registrada en Dentalink.';
+              } else if (details.length > 0) {
+                newStatus = 'sincronizado';
+                obs = 'Sincronizado automáticamente con Dentalink';
+              } else {
+                newStatus = 'ingresado';
+                obs = 'Tratamiento creado en Dentalink, pendiente de vincular prestaciones.';
               }
             }
             
@@ -1145,7 +1153,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                         ) : (
                           <>
                             {checkResult.state === 'idle' && (
-                              <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                              <span className="badge" style={{ backgroundColor: 'hsla(var(--foreground-hsl) / 0.05)', color: 'hsla(var(--foreground-hsl) / 0.6)', border: '1px solid hsla(var(--foreground-hsl) / 0.1)' }}>
                                 No verificado
                               </span>
                             )}
@@ -1640,43 +1648,43 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                 width: '24px', 
                 height: '24px', 
                 borderRadius: '50%', 
-                backgroundColor: wizardStep === 1 ? 'hsl(var(--primary-hsl))' : 'rgba(255,255,255,0.05)',
-                color: wizardStep === 1 ? 'white' : 'rgba(255,255,255,0.4)',
+                backgroundColor: wizardStep === 1 ? 'hsl(var(--primary-hsl))' : 'hsla(var(--foreground-hsl) / 0.05)',
+                color: wizardStep === 1 ? 'white' : 'hsla(var(--foreground-hsl) / 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.8rem',
                 fontWeight: 'bold'
               }}>1</div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: wizardStep === 1 ? 'hsl(var(--foreground-hsl))' : 'rgba(255,255,255,0.4)' }}>Verificación</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: wizardStep === 1 ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.4)' }}>Verificación</span>
               <div style={{ width: '30px', height: '1.5px', backgroundColor: 'var(--glass-border)' }}></div>
               <div style={{ 
                 width: '24px', 
                 height: '24px', 
                 borderRadius: '50%', 
-                backgroundColor: wizardStep === 2 ? 'hsl(var(--primary-hsl))' : 'rgba(255,255,255,0.05)',
-                color: wizardStep === 2 ? 'white' : 'rgba(255,255,255,0.4)',
+                backgroundColor: wizardStep === 2 ? 'hsl(var(--primary-hsl))' : 'hsla(var(--foreground-hsl) / 0.05)',
+                color: wizardStep === 2 ? 'white' : 'hsla(var(--foreground-hsl) / 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.8rem',
                 fontWeight: 'bold'
               }}>2</div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: wizardStep === 2 ? 'hsl(var(--foreground-hsl))' : 'rgba(255,255,255,0.4)' }}>Tratamientos Clínicos</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: wizardStep === 2 ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.4)' }}>Tratamientos Clínicos</span>
               <div style={{ width: '30px', height: '1.5px', backgroundColor: 'var(--glass-border)' }}></div>
               <div style={{ 
                 width: '24px', 
                 height: '24px', 
                 borderRadius: '50%', 
-                backgroundColor: wizardStep === 3 ? 'hsl(var(--primary-hsl))' : 'rgba(255,255,255,0.05)',
-                color: wizardStep === 3 ? 'white' : 'rgba(255,255,255,0.4)',
+                backgroundColor: wizardStep === 3 ? 'hsl(var(--primary-hsl))' : 'hsla(var(--foreground-hsl) / 0.05)',
+                color: wizardStep === 3 ? 'white' : 'hsla(var(--foreground-hsl) / 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.8rem',
                 fontWeight: 'bold'
               }}>3</div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: wizardStep === 3 ? 'hsl(var(--foreground-hsl))' : 'rgba(255,255,255,0.4)' }}>Prestaciones del Tratamiento</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: wizardStep === 3 ? 'hsl(var(--foreground-hsl))' : 'hsla(var(--foreground-hsl) / 0.4)' }}>Prestaciones del Tratamiento</span>
             </div>
 
             {/* Error Message banner */}
@@ -1792,6 +1800,8 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                     </p>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {/* Convenio is handled automatically under Arancel Preferencial (BENEFICIARIOS) */}
+
                       <div className="form-group">
                         <label className="form-label" htmlFor="new_treatment_dentista">Dentista a asignar *</label>
                         <select 
@@ -1860,8 +1870,12 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                               const year = dateObj.getFullYear();
                               const calculatedName = `${caseId} DERIVACIÓN DIGITAL ${month}/${year}`.trim();
                               setNewTreatmentName(calculatedName);
+
+                              let mappedConvenioId = 0; // Default to Sin Convenio (0) / Arancel General
+                              setNewTreatmentConvenioId(mappedConvenioId);
                             } else {
                               setNewTreatmentName('Nuevo plan de tratamiento');
+                              setNewTreatmentConvenioId(0);
                             }
                             setIsCreateTreatmentFormOpen(true);
                           }}
@@ -1871,7 +1885,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                           + Crear Tratamiento
                         </button>
                         {wizardTreatments && (
-                          <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <span className="badge" style={{ backgroundColor: 'hsla(var(--foreground-hsl) / 0.05)', color: 'hsla(var(--foreground-hsl) / 0.7)', border: '1px solid hsla(var(--foreground-hsl) / 0.1)' }}>
                             {wizardTreatments.length} Registrado(s)
                           </span>
                         )}
@@ -1893,8 +1907,12 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                               const year = dateObj.getFullYear();
                               const calculatedName = `${caseId} DERIVACIÓN DIGITAL ${month}/${year}`.trim();
                               setNewTreatmentName(calculatedName);
+
+                              let mappedConvenioId = 0; // Default to Sin Convenio (0) / Arancel General
+                              setNewTreatmentConvenioId(mappedConvenioId);
                             } else {
                               setNewTreatmentName('Nuevo plan de tratamiento');
+                              setNewTreatmentConvenioId(0);
                             }
                             setIsCreateTreatmentFormOpen(true);
                           }}
