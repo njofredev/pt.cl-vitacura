@@ -714,11 +714,11 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
 
 export async function syncAllActiveCasesAction() {
   try {
-    // Select cases that are in active workflow statuses but not 'finalizado' or 'ingresado' (unless we want to verify them too)
-    // Wait, let's select: agendado, sincronizado, en_tratamiento.
+    // Select cases that are in active workflow statuses but not 'finalizado' or 'ingresado'
+    // agendado, sincronizado, en_tratamiento.
     const res = await pool.query(`
       SELECT id FROM cases 
-      WHERE status IN ('ingresado', 'sincronizado', 'agendado', 'en_tratamiento')
+      WHERE status IN ('sincronizado', 'agendado', 'en_tratamiento')
     `);
     
     const casesToSync = res.rows;
