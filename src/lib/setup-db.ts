@@ -62,6 +62,8 @@ async function setup() {
         professional_phone VARCHAR(255),
         operator_email VARCHAR(255),
         operator_phone VARCHAR(255),
+        medical_center VARCHAR(255),
+        agreement_type VARCHAR(255),
         quota_dental INT DEFAULT 0,
         quota_xray INT DEFAULT 0,
         used_dental INT DEFAULT 0,
