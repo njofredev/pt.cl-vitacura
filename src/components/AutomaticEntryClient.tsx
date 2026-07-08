@@ -167,14 +167,24 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     const lastBracket = serviceString.lastIndexOf(']');
     if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
       let content = serviceString.substring(firstBracket + 1, lastBracket).trim();
+      const isRayosX = serviceString.toLowerCase().includes('[rayos x]');
       // Remove trailing metadata like [Dental] or [Rayos X]
       content = content.replace(/\s*\[(Dental|Rayos X)\]\s*$/i, '').trim();
       
       const serviceName = content.toLowerCase();
-      const matches = (allArancelesRaw.length > 0 ? allArancelesRaw : localAranceles)
+      let matches = (allArancelesRaw.length > 0 ? allArancelesRaw : localAranceles)
         .filter(a => a.name.toLowerCase().trim() === serviceName);
       
       if (matches.length > 0) {
+        // Disambiguate by category (Radiología vs others)
+        const categoryFiltered = isRayosX
+          ? matches.filter(a => a.category.toLowerCase().trim() === 'radiologia' || a.category.toLowerCase().trim() === 'radiología')
+          : matches.filter(a => a.category.toLowerCase().trim() !== 'radiologia' && a.category.toLowerCase().trim() !== 'radiología');
+        
+        if (categoryFiltered.length > 0) {
+          matches = categoryFiltered;
+        }
+
         const activeTreatment = treatmentOverride || selectedTreatmentForServices;
         // Determine if selected treatment is Preferencial
         const isPreferencial = !!(
