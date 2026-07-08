@@ -48,7 +48,6 @@ export async function getSession(): Promise<UserSession | null> {
       name: 'System Sync Bot',
       email: 'system@tabancura.cl',
       role: 'admin',
-      active: true,
       institution_ids: []
     };
   }
