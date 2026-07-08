@@ -178,8 +178,8 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
       if (matches.length > 0) {
         // Disambiguate by category (Radiología vs others)
         const categoryFiltered = isRayosX
-          ? matches.filter(a => a.category.toLowerCase().trim() === 'radiologia' || a.category.toLowerCase().trim() === 'radiología')
-          : matches.filter(a => a.category.toLowerCase().trim() !== 'radiologia' && a.category.toLowerCase().trim() !== 'radiología');
+          ? matches.filter(a => a.category && (a.category.toLowerCase().trim() === 'radiologia' || a.category.toLowerCase().trim() === 'radiología'))
+          : matches.filter(a => !a.category || (a.category.toLowerCase().trim() !== 'radiologia' && a.category.toLowerCase().trim() !== 'radiología'));
         
         if (categoryFiltered.length > 0) {
           matches = categoryFiltered;

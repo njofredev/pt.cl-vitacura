@@ -223,7 +223,7 @@ export async function getAllArancelItemsAction(): Promise<{ success: boolean; da
     if (!session) {
       return { success: false, error: 'No autorizado' };
     }
-    const res = await pool.query("SELECT id_prestacion, name, price_base, price_pref FROM arancel");
+    const res = await pool.query("SELECT id_prestacion, name, category, price_base, price_pref FROM arancel");
     return {
       success: true,
       data: res.rows
