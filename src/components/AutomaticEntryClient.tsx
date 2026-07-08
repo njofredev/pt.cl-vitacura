@@ -1016,7 +1016,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
           </div>
         </div>
 
-        <Link href="/dashboard" className="btn btn-secondary">
+        <Link href="/dashboard" className="btn-secondary-pill">
           <ArrowLeft size={16} /> Volver al Panel de Control
         </Link>
       </div>
@@ -2284,7 +2284,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                   >
                     Ver Ficha del Caso
                   </button>
-                  <Link href="/dashboard" className="btn btn-secondary">
+                  <Link href="/dashboard" className="btn-secondary-pill">
                     Ir al Panel de Control
                   </Link>
                   <button 
@@ -2292,7 +2292,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                     onClick={() => {
                       setIsWizardOpen(false);
                     }} 
-                    className="btn btn-secondary"
+                    className="btn-secondary-pill"
                   >
                     Ver bandeja de casos
                   </button>

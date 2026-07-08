@@ -1161,3 +1161,232 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .tooltip-section-value:last-child {
   margin-bottom: 0;
 }
+
+/* Export Buttons Styles */
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-export:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.btn-export:active {
+  transform: translateY(0);
+}
+
+/* PDF - Red theme */
+.btn-export-pdf {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+  background-color: rgba(239, 68, 68, 0.04);
+}
+.btn-export-pdf:hover {
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.09);
+  color: #b91c1c;
+}
+:root.dark .btn-export-pdf {
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.06);
+}
+:root.dark .btn-export-pdf:hover {
+  border-color: #f87171;
+  background-color: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
+}
+
+/* Excel - Green theme */
+.btn-export-excel {
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #059669;
+  background-color: rgba(16, 185, 129, 0.04);
+}
+.btn-export-excel:hover {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.09);
+  color: #047857;
+}
+:root.dark .btn-export-excel {
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #34d399;
+  background-color: rgba(52, 211, 153, 0.06);
+}
+:root.dark .btn-export-excel:hover {
+  border-color: #34d399;
+  background-color: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+}
+
+/* CSV - Blue/Teal theme */
+.btn-export-csv {
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  color: #2563eb;
+  background-color: rgba(37, 99, 235, 0.04);
+}
+.btn-export-csv:hover {
+  border-color: #3b82f6;
+  background-color: rgba(37, 99, 235, 0.09);
+  color: #1d4ed8;
+}
+:root.dark .btn-export-csv {
+  border-color: rgba(96, 165, 250, 0.3);
+  color: #60a5fa;
+  background-color: rgba(96, 165, 250, 0.06);
+}
+:root.dark .btn-export-csv:hover {
+  border-color: #60a5fa;
+  background-color: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+}
+
+/* Normalized Primary Button (Pill style) */
+.btn-primary-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0 22px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  background-color: hsl(var(--primary-hsl));
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  outline: none;
+  text-decoration: none !important;
+}
+
+.btn-primary-pill:hover {
+  background-color: hsl(var(--primary-hover-hsl));
+  color: #ffffff !important;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary-pill:active {
+  transform: translateY(0);
+}
+
+.btn-primary-pill:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Normalized Secondary Button (Pill style) */
+.btn-secondary-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0 22px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--glass-border);
+  background-color: hsl(var(--secondary-hsl));
+  color: hsl(var(--secondary-foreground-hsl)) !important;
+  box-shadow: var(--shadow-sm);
+  outline: none;
+  text-decoration: none !important;
+  gap: 8px;
+}
+
+.btn-secondary-pill:hover {
+  background-color: hsl(var(--secondary-hover-hsl));
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+:root.dark .btn-secondary-pill:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary-pill:active {
+  transform: translateY(0);
+}
+
+/* Premium Tab Switcher Styles */
+.tab-switcher-container {
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.tab-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.02);
+  color: hsl(var(--foreground-hsl));
+  opacity: 0.75;
+}
+
+.tab-toggle-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(15, 23, 42, 0.25);
+  opacity: 1;
+}
+
+:root.dark .tab-toggle-btn:hover:not(.active) {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tab-toggle-btn.active {
+  opacity: 1;
+  transform: translateY(-0.5px);
+}
+
+/* Active tab specific color themes */
+.tab-toggle-btn-users.active {
+  background-color: rgba(59, 130, 246, 0.08);
+  border-color: #3b82f6;
+  color: #2563eb !important;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.1);
+}
+:root.dark .tab-toggle-btn-users.active {
+  background-color: rgba(59, 130, 246, 0.12);
+  border-color: #60a5fa;
+  color: #60a5fa !important;
+}
+
+.tab-toggle-btn-institutions.active {
+  background-color: rgba(16, 185, 129, 0.08);
+  border-color: #10b981;
+  color: #059669 !important;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.1);
+}
+:root.dark .tab-toggle-btn-institutions.active {
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: #34d399;
+  color: #34d399 !important;
+}

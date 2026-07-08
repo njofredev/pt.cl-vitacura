@@ -298,6 +298,50 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
     reader: 'Lector',
   };
 
+  const getRoleBadgeStyle = (role: string) => {
+    const styles: Record<string, { bg: string, border: string, text: string }> = {
+      admin: {
+        bg: 'rgba(239, 68, 68, 0.06)',
+        border: 'rgba(239, 68, 68, 0.2)',
+        text: '#dc2626'
+      },
+      internal: {
+        bg: 'rgba(59, 130, 246, 0.06)',
+        border: 'rgba(59, 130, 246, 0.2)',
+        text: '#2563eb'
+      },
+      external: {
+        bg: 'rgba(16, 185, 129, 0.06)',
+        border: 'rgba(16, 185, 129, 0.2)',
+        text: '#059669'
+      },
+      reader: {
+        bg: 'rgba(139, 92, 246, 0.06)',
+        border: 'rgba(139, 92, 246, 0.2)',
+        text: '#7c3aed'
+      }
+    };
+    
+    const config = styles[role] || {
+      bg: 'rgba(255, 255, 255, 0.05)',
+      border: 'var(--glass-border)',
+      text: 'currentColor'
+    };
+
+    return {
+      fontSize: '0.75rem',
+      fontWeight: 700,
+      padding: '4px 10px',
+      borderRadius: '24px',
+      backgroundColor: config.bg,
+      border: `1px solid ${config.border}`,
+      color: config.text,
+      textTransform: 'uppercase' as const,
+      display: 'inline-block',
+      letterSpacing: '0.04em'
+    };
+  };
+
   async function handleToggleStatus(userId: string, currentStatus: boolean) {
     if (userId === currentUserId) {
       alert('No puedes desactivar tu propia cuenta.');
@@ -644,7 +688,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-              {activeTab === 'users' ? 'Gestión de Personal' : 'Gestión de Instituciones'}
+              {activeTab === 'users' ? 'Gestión de Usuarios' : 'Gestión de Instituciones'}
             </h2>
             <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
               {activeTab === 'users' 
@@ -654,7 +698,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
           </div>
         </div>
         {activeTab === 'users' ? (
-          <button onClick={() => setIsModalOpen(true)} className="login-pill-btn" style={{ gap: '8px' }}>
+          <button onClick={() => setIsModalOpen(true)} className="btn-primary-pill" style={{ gap: '8px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Nuevo Funcionario
           </button>
@@ -682,19 +726,17 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
       </div>
 
       {/* Tab Switcher */}
-      <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
+      <div className="tab-switcher-container">
         <button
           onClick={() => { setActiveTab('users'); setError(null); setSuccess(null); }}
-          className={`chart-toggle-btn ${activeTab === 'users' ? 'active' : ''}`}
-          style={{ borderRadius: 'var(--radius-sm)', padding: '8px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+          className={`tab-toggle-btn tab-toggle-btn-users ${activeTab === 'users' ? 'active' : ''}`}
         >
           <Users size={16} />
-          Gestionar Personal
+          Gestión de Usuarios
         </button>
         <button
           onClick={() => { setActiveTab('institutions'); setError(null); setSuccess(null); }}
-          className={`chart-toggle-btn ${activeTab === 'institutions' ? 'active' : ''}`}
-          style={{ borderRadius: 'var(--radius-sm)', padding: '8px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+          className={`tab-toggle-btn tab-toggle-btn-institutions ${activeTab === 'institutions' ? 'active' : ''}`}
         >
           <Building size={16} />
           Gestionar Instituciones
@@ -783,15 +825,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                     <td style={{ fontWeight: 600 }}>{u.name}</td>
                     <td style={{ opacity: 0.8 }}>{u.email}</td>
                     <td>
-                      <span style={{
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid var(--glass-border)',
-                        textTransform: 'uppercase'
-                      }}>
+                      <span style={getRoleBadgeStyle(u.role)}>
                         {roleLabels[u.role] || u.role}
                       </span>
                     </td>

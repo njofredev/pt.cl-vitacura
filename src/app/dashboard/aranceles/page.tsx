@@ -5,7 +5,7 @@ import ArancelManager from '@/components/ArancelManager';
 import { Sparkles, ShieldCheck } from 'lucide-react';
 
 export const metadata = {
-  title: 'Mantenedor de Aranceles | Policlínico Tabancura',
+  title: 'Aranceles | Policlínico Tabancura',
   description: 'Gestione las prestaciones dentales del odontograma interactivo.',
 };
 
@@ -36,7 +36,7 @@ export default async function ArancelesPage() {
             Acceso Restringido
           </h2>
           <p style={{ opacity: 0.8, fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
-            No tiene los permisos necesarios para acceder a esta área de configuración de aranceles. 
+            No tiene los permisos necesarios para acceder a esta área de configuración de aranceles.
             Esta página está reservada exclusivamente para Administradores Generales.
           </p>
         </div>
@@ -46,7 +46,7 @@ export default async function ArancelesPage() {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
+
       {/* Title Header with Glowing Lucide Shield Icon */}
       <div
         className="glass-panel"
@@ -77,7 +77,7 @@ export default async function ArancelesPage() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-            Mantenedor de Aranceles (Dentalink)
+            Aranceles
           </h2>
           <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
             Seleccione qué prestaciones dentales de la plataforma Dentalink se mostrarán en el odontograma interactivo.

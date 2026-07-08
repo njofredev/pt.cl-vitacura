@@ -505,13 +505,13 @@ export default async function DashboardPage() {
               Panel de Control - Derivación Digital
             </h2>
             <p style={{ opacity: 0.6, margin: 0, fontWeight: 500, fontSize: '0.95rem', maxWidth: '700px' }}>
-              Visualización integrada de la red asistencial entre Policlínico Tabancura y Municipalidad de Vitacura. Convenios de derivación preferencial a costo cero.
+              Visualización integrada de la red asistencial entre Policlínico Tabancura y Municipalidad de Vitacura.
             </p>
           </div>
         </div>
 
         {(user.role === 'admin' || user.role === 'external') && (
-          <Link href="/dashboard/register" className="login-pill-btn" style={{ gap: '8px' }}>
+          <Link href="/dashboard/register" className="btn-primary-pill" style={{ gap: '8px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Nueva Derivación
           </Link>
@@ -539,7 +539,7 @@ export default async function DashboardPage() {
           <div className="glass-panel" style={{ padding: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg>
                 {user.role === 'internal' ? 'Casos Pendientes Recientes' : 'Inscripciones Recientes'}
               </h3>
               <Link href="/dashboard/cases" className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.82rem', borderRadius: '9999px' }}>
@@ -609,12 +609,12 @@ export default async function DashboardPage() {
                         </td>
                         {user.role === 'internal' && (
                           <td style={{ textAlign: 'right' }}>
-                            <Link 
-                              href={`/dashboard/ingreso-automatico?search=${c.rut}`} 
-                              className="btn btn-secondary" 
-                              style={{ 
-                                padding: '4px 12px', 
-                                fontSize: '0.75rem', 
+                            <Link
+                              href={`/dashboard/ingreso-automatico?search=${c.rut}`}
+                              className="btn btn-secondary"
+                              style={{
+                                padding: '4px 12px',
+                                fontSize: '0.75rem',
                                 height: 'auto',
                                 background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                                 color: '#ffffff',
@@ -642,7 +642,7 @@ export default async function DashboardPage() {
           <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
                 Flujo de Trabajo por Estado
               </h3>
               <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
@@ -687,7 +687,7 @@ export default async function DashboardPage() {
           <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
                 Accesos Rápidos
               </h3>
               <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>
@@ -762,7 +762,7 @@ export default async function DashboardPage() {
           <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 700, margin: 0, color: 'hsl(var(--foreground-hsl))', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
                 Estados de Derivación
               </h3>
               <span style={{ fontSize: '0.78rem', opacity: 0.5, fontWeight: 500 }}>

@@ -12,6 +12,7 @@ import CustomSelect from '@/components/ui/CustomSelect';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import Odontogram from '@/components/Odontogram';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
+import { Activity, Zap, MessageSquare } from 'lucide-react';
 
 interface CaseRecord {
   id: string;
@@ -375,7 +376,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
         ...filteredCases.map(c => {
           const bdStr = c.birth_date ? new Date(c.birth_date).toLocaleDateString('es-CL') : '';
           const caStr = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CL') : '';
-          
+
           return [
             c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '',
             c.rut,
@@ -938,72 +939,33 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={handleExportPDF}
-                className="btn btn-secondary"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '10px 14px',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  border: '1px solid #10b981',
-                  color: '#10b981',
-                  backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                  cursor: 'pointer',
-                  borderRadius: 'var(--radius-sm)'
-                }}
+                className="btn-export btn-export-pdf"
                 title="Generar reporte PDF optimizado para impresión"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                 Exportar PDF
               </button>
               <button
                 onClick={handleExportExcel}
-                className="btn btn-secondary"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '10px 14px',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  border: '1px solid #10b981',
-                  color: '#10b981',
-                  backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                  cursor: 'pointer',
-                  borderRadius: 'var(--radius-sm)'
-                }}
+                className="btn-export btn-export-excel"
                 title="Exportar a Excel (.xls)"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /></svg>
                 Exportar Excel
               </button>
               <button
                 onClick={handleExportCSV}
-                className="btn btn-secondary"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '10px 14px',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  border: '1px solid #10b981',
-                  color: '#10b981',
-                  backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                  cursor: 'pointer',
-                  borderRadius: 'var(--radius-sm)'
-                }}
+                className="btn-export btn-export-csv"
                 title="Exportar a CSV"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                 Exportar CSV
               </button>
             </div>
           )}
 
           {user.role !== 'internal' && user.role !== 'reader' && (
-            <Link href="/dashboard/register" className="login-pill-btn" style={{ gap: '8px' }}>
+            <Link href="/dashboard/register" className="btn-primary-pill" style={{ gap: '8px' }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               Nueva Derivación
             </Link>
@@ -1173,20 +1135,20 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   <th>Prestaciones</th>
                   <th>Fecha Ingreso</th>
                   <th>Profesional Derivador</th>
-                   <th>
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', lineHeight: 1.2 }}>
-                       <span style={{ fontWeight: 600 }}>Estado</span>
-                       <span style={{ fontSize: '0.62rem', fontWeight: 500, opacity: 0.45, whiteSpace: 'nowrap' }}>
-                         Frecuencia: 60s
-                       </span>
-                       <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'hsl(var(--primary-hsl))', whiteSpace: 'nowrap' }}>
-                         Sinc. en: {nextSyncCountdown}s
-                       </span>
-                       <span style={{ fontSize: '0.62rem', fontWeight: 500, opacity: 0.45, whiteSpace: 'nowrap' }}>
-                         Última: {lastSyncTime ? lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Reciente'}
-                       </span>
-                     </div>
-                   </th>
+                  <th>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', lineHeight: 1.2 }}>
+                      <span style={{ fontWeight: 600 }}>Estado</span>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 500, opacity: 0.45, whiteSpace: 'nowrap' }}>
+
+                      </span>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'hsl(var(--primary-hsl))', whiteSpace: 'nowrap' }}>
+                        Sinc. en: {nextSyncCountdown}s
+                      </span>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 500, opacity: 0.45, whiteSpace: 'nowrap' }}>
+                        Última: {lastSyncTime ? lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Reciente'}
+                      </span>
+                    </div>
+                  </th>
                   <th style={{ textAlign: 'right' }}>Acciones</th>
                 </tr>
               </thead>
@@ -1237,17 +1199,20 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                           }}
                           title={c.dental_diagnosis ? `Diag: ${c.dental_diagnosis}` : c.description || ''}
                         >
-                          💬 {c.dental_diagnosis ? `Diag: ${c.dental_diagnosis}` : c.description || 'Sin descripción'}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <MessageSquare size={13} style={{ opacity: 0.6, flexShrink: 0 }} />
+                            {c.dental_diagnosis ? `Diag: ${c.dental_diagnosis}` : c.description || 'Sin descripción'}
+                          </span>
                         </span>
                       </div>
                     </td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                         <span style={{ fontWeight: 700, color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          🦷 {c.dental_count || 0} Dentales
+                          <Activity size={13} /> {c.dental_count || 0} Dentales
                         </span>
                         <span style={{ fontWeight: 700, color: '#a855f7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          ⚡ {c.xray_count || 0} Rayos X
+                          <Zap size={13} /> {c.xray_count || 0} Rayos X
                         </span>
                       </div>
                     </td>
@@ -1263,130 +1228,130 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         <span className={`badge badge-${c.status}`} style={{ cursor: 'help', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700 }}>
                           {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                         </span>
-                        
-                          {/* Hover Tooltip Box */}
-                          {(() => {
-                            const isLastRow = idx === filteredCases.length - 1;
-                            const isFirstRow = idx === 0;
-                            
-                            const tooltipStyle: React.CSSProperties = {
-                              position: 'absolute',
-                              right: '110%',
-                              backgroundColor: '#111827',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              borderRadius: '8px',
-                              padding: '12px 16px',
-                              zIndex: 100,
-                              width: '270px',
-                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
-                              display: 'none',
-                              flexDirection: 'column',
-                              gap: '6px',
-                              pointerEvents: 'none',
-                              ...(isLastRow && !isFirstRow ? {
-                                bottom: '-8px',
-                                transform: 'none'
-                              } : isFirstRow ? {
-                                top: '-8px',
-                                transform: 'none'
-                              } : {
-                                top: '50%',
-                                transform: 'translateY(-50%)'
-                              })
-                            };
-                            
-                            const arrowStyle: React.CSSProperties = {
-                              position: 'absolute',
-                              left: '100%',
-                              width: '0',
-                              height: '0',
-                              borderTop: '6px solid transparent',
-                              borderBottom: '6px solid transparent',
-                              borderLeft: '6px solid #111827',
-                              ...(isLastRow && !isFirstRow ? {
-                                bottom: '12px',
-                                transform: 'none'
-                              } : isFirstRow ? {
-                                top: '12px',
-                                transform: 'none'
-                              } : {
-                                top: '50%',
-                                transform: 'translateY(-50%)'
-                              })
-                            };
 
-                            return (
-                              <div className="status-timeline-tooltip" style={tooltipStyle}>
-                                {/* Triangle Arrow */}
-                                <div style={arrowStyle} />
-                                
-                                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', opacity: 0.8, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px', marginBottom: '4px', textAlign: 'left' }}>
-                                  Hist. estado:
-                                </div>
-                                
-                                {/* Timeline Items */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.72rem', textAlign: 'left' }}>
-                                  {[
-                                    { key: 'ingresado', label: 'Ingresado', color: '#10b981' },
-                                    { key: 'sincronizado', label: 'Sincronizado', color: '#f59e0b' },
-                                    { key: 'agendado', label: 'Agendado', color: '#3b82f6' },
-                                    { key: 'en_tratamiento', label: 'En Tto', color: '#a855f7' },
-                                    { key: 'finalizado', label: 'Finalizado', color: '#10b981' }
-                                  ].map((state) => {
-                                    const hasTimestamp = !!c.status_history?.[state.key];
-                                    const isCurrent = c.status === state.key;
-                                    const timestampValue = c.status_history?.[state.key];
-                                    
-                                    return (
-                                      <div 
-                                        key={state.key}
-                                        style={{ 
-                                          display: 'flex', 
-                                          justifyContent: 'space-between', 
-                                          alignItems: 'center', 
-                                          gap: '8px',
-                                          padding: '4px 6px',
-                                          borderRadius: '4px',
-                                          backgroundColor: isCurrent ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                                          border: isCurrent ? `1px solid ${state.color}` : '1px solid transparent'
-                                        }}
-                                      >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                          <span style={{ 
-                                            color: hasTimestamp ? state.color : 'rgba(255,255,255,0.25)', 
-                                            fontWeight: isCurrent ? 800 : 600 
-                                          }}>
-                                            ● {state.label}:
-                                          </span>
-                                          {isCurrent && (
-                                            <span style={{ 
-                                              fontSize: '0.58rem', 
-                                              color: '#fff', 
-                                              backgroundColor: state.color, 
-                                              padding: '1px 4px', 
-                                              borderRadius: '3px', 
-                                              fontWeight: 800,
-                                              textTransform: 'uppercase',
-                                              letterSpacing: '0.5px'
-                                            }}>
-                                              Actual
-                                            </span>
-                                          )}
-                                        </div>
-                                        <span style={{ 
-                                          color: hasTimestamp ? '#ffffff' : 'rgba(255,255,255,0.25)', 
-                                          fontFamily: 'monospace',
-                                          fontWeight: isCurrent ? 700 : 'normal' 
-                                        }}>
-                                          {hasTimestamp ? formatDateTimeCompact(timestampValue) : '--/-- --:--'}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
+                        {/* Hover Tooltip Box */}
+                        {(() => {
+                          const isLastRow = idx === filteredCases.length - 1;
+                          const isFirstRow = idx === 0;
+
+                          const tooltipStyle: React.CSSProperties = {
+                            position: 'absolute',
+                            right: '110%',
+                            backgroundColor: '#111827',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            borderRadius: '8px',
+                            padding: '12px 16px',
+                            zIndex: 100,
+                            width: '270px',
+                            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
+                            display: 'none',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            pointerEvents: 'none',
+                            ...(isLastRow && !isFirstRow ? {
+                              bottom: '-8px',
+                              transform: 'none'
+                            } : isFirstRow ? {
+                              top: '-8px',
+                              transform: 'none'
+                            } : {
+                              top: '50%',
+                              transform: 'translateY(-50%)'
+                            })
+                          };
+
+                          const arrowStyle: React.CSSProperties = {
+                            position: 'absolute',
+                            left: '100%',
+                            width: '0',
+                            height: '0',
+                            borderTop: '6px solid transparent',
+                            borderBottom: '6px solid transparent',
+                            borderLeft: '6px solid #111827',
+                            ...(isLastRow && !isFirstRow ? {
+                              bottom: '12px',
+                              transform: 'none'
+                            } : isFirstRow ? {
+                              top: '12px',
+                              transform: 'none'
+                            } : {
+                              top: '50%',
+                              transform: 'translateY(-50%)'
+                            })
+                          };
+
+                          return (
+                            <div className="status-timeline-tooltip" style={tooltipStyle}>
+                              {/* Triangle Arrow */}
+                              <div style={arrowStyle} />
+
+                              <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', opacity: 0.8, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px', marginBottom: '4px', textAlign: 'left' }}>
+                                Hist. estado:
                               </div>
-                            );
-                          })()}
+
+                              {/* Timeline Items */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.72rem', textAlign: 'left' }}>
+                                {[
+                                  { key: 'ingresado', label: 'Ingresado', color: '#10b981' },
+                                  { key: 'sincronizado', label: 'Sincronizado', color: '#f59e0b' },
+                                  { key: 'agendado', label: 'Agendado', color: '#3b82f6' },
+                                  { key: 'en_tratamiento', label: 'En Tto', color: '#a855f7' },
+                                  { key: 'finalizado', label: 'Finalizado', color: '#10b981' }
+                                ].map((state) => {
+                                  const hasTimestamp = !!c.status_history?.[state.key];
+                                  const isCurrent = c.status === state.key;
+                                  const timestampValue = c.status_history?.[state.key];
+
+                                  return (
+                                    <div
+                                      key={state.key}
+                                      style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '4px 6px',
+                                        borderRadius: '4px',
+                                        backgroundColor: isCurrent ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                                        border: isCurrent ? `1px solid ${state.color}` : '1px solid transparent'
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{
+                                          color: hasTimestamp ? state.color : 'rgba(255,255,255,0.25)',
+                                          fontWeight: isCurrent ? 800 : 600
+                                        }}>
+                                          ● {state.label}:
+                                        </span>
+                                        {isCurrent && (
+                                          <span style={{
+                                            fontSize: '0.58rem',
+                                            color: '#fff',
+                                            backgroundColor: state.color,
+                                            padding: '1px 4px',
+                                            borderRadius: '3px',
+                                            fontWeight: 800,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                          }}>
+                                            Actual
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span style={{
+                                        color: hasTimestamp ? '#ffffff' : 'rgba(255,255,255,0.25)',
+                                        fontFamily: 'monospace',
+                                        fontWeight: isCurrent ? 700 : 'normal'
+                                      }}>
+                                        {hasTimestamp ? formatDateTimeCompact(timestampValue) : '--/-- --:--'}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td style={{ textAlign: 'right' }}>
@@ -1730,118 +1695,118 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                                             </div>
                                           </td>
                                           <td style={{ fontSize: '0.82rem', padding: '12px 16px' }}>
-                                             {loadingDetails ? (
-                                               <span style={{ opacity: 0.5, fontStyle: 'italic' }}>Cargando...</span>
-                                             ) : (
-                                               (() => {
-                                                 if (matchingDetail && Number(matchingDetail.realizado) === 1) {
-                                                   return (
-                                                     <span style={{
-                                                       padding: '2px 8px',
-                                                       borderRadius: '9999px',
-                                                       fontSize: '0.72rem',
-                                                       fontWeight: 700,
-                                                       backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                                                       color: '#10b981',
-                                                       textTransform: 'uppercase',
-                                                       display: 'inline-flex',
-                                                       alignItems: 'center',
-                                                       gap: '4px'
-                                                     }}>
-                                                       ● Realizado
-                                                     </span>
-                                                   );
-                                                 }
-                                                 switch (selectedCase.status) {
-                                                   case 'finalizado':
-                                                     return (
-                                                       <span style={{
-                                                         padding: '2px 8px',
-                                                         borderRadius: '9999px',
-                                                         fontSize: '0.72rem',
-                                                         fontWeight: 700,
-                                                         backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                                                         color: '#10b981',
-                                                         textTransform: 'uppercase',
-                                                         display: 'inline-flex',
-                                                         alignItems: 'center',
-                                                         gap: '4px'
-                                                       }}>
-                                                         ● Finalizado
-                                                       </span>
-                                                     );
-                                                   case 'en_tratamiento':
-                                                     return (
-                                                       <span style={{
-                                                         padding: '2px 8px',
-                                                         borderRadius: '9999px',
-                                                         fontSize: '0.72rem',
-                                                         fontWeight: 700,
-                                                         backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                                                         color: '#f59e0b',
-                                                         textTransform: 'uppercase',
-                                                         display: 'inline-flex',
-                                                         alignItems: 'center',
-                                                         gap: '4px'
-                                                       }}>
-                                                         ● En Tratamiento
-                                                       </span>
-                                                     );
-                                                   case 'agendado':
-                                                     return (
-                                                       <span style={{
-                                                         padding: '2px 8px',
-                                                         borderRadius: '9999px',
-                                                         fontSize: '0.72rem',
-                                                         fontWeight: 700,
-                                                         backgroundColor: 'rgba(168, 85, 247, 0.15)',
-                                                         color: '#a855f7',
-                                                         textTransform: 'uppercase',
-                                                         display: 'inline-flex',
-                                                         alignItems: 'center',
-                                                         gap: '4px'
-                                                       }}>
-                                                         ● Agendado
-                                                       </span>
-                                                     );
-                                                   case 'sincronizado':
-                                                     return (
-                                                       <span style={{
-                                                         padding: '2px 8px',
-                                                         borderRadius: '9999px',
-                                                         fontSize: '0.72rem',
-                                                         fontWeight: 700,
-                                                         backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                                                         color: '#3b82f6',
-                                                         textTransform: 'uppercase',
-                                                         display: 'inline-flex',
-                                                         alignItems: 'center',
-                                                         gap: '4px'
-                                                       }}>
-                                                         ● Sincronizado
-                                                       </span>
-                                                     );
-                                                   case 'ingresado':
-                                                   default:
-                                                     return (
-                                                       <span style={{
-                                                         padding: '2px 8px',
-                                                         borderRadius: '9999px',
-                                                         fontSize: '0.72rem',
-                                                         fontWeight: 700,
-                                                         backgroundColor: 'hsla(var(--foreground-hsl) / 0.06)',
-                                                         color: 'hsla(var(--foreground-hsl) / 0.5)',
-                                                         textTransform: 'uppercase',
-                                                         display: 'inline-flex',
-                                                         alignItems: 'center',
-                                                         gap: '4px'
-                                                       }}>
-                                                         ● Sin Sinc.
-                                                       </span>
-                                                     );
-                                                 }
-                                               })()
-                                             )}
+                                            {loadingDetails ? (
+                                              <span style={{ opacity: 0.5, fontStyle: 'italic' }}>Cargando...</span>
+                                            ) : (
+                                              (() => {
+                                                if (matchingDetail && Number(matchingDetail.realizado) === 1) {
+                                                  return (
+                                                    <span style={{
+                                                      padding: '2px 8px',
+                                                      borderRadius: '9999px',
+                                                      fontSize: '0.72rem',
+                                                      fontWeight: 700,
+                                                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                                      color: '#10b981',
+                                                      textTransform: 'uppercase',
+                                                      display: 'inline-flex',
+                                                      alignItems: 'center',
+                                                      gap: '4px'
+                                                    }}>
+                                                      ● Realizado
+                                                    </span>
+                                                  );
+                                                }
+                                                switch (selectedCase.status) {
+                                                  case 'finalizado':
+                                                    return (
+                                                      <span style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: '9999px',
+                                                        fontSize: '0.72rem',
+                                                        fontWeight: 700,
+                                                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                                        color: '#10b981',
+                                                        textTransform: 'uppercase',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                      }}>
+                                                        ● Finalizado
+                                                      </span>
+                                                    );
+                                                  case 'en_tratamiento':
+                                                    return (
+                                                      <span style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: '9999px',
+                                                        fontSize: '0.72rem',
+                                                        fontWeight: 700,
+                                                        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                                        color: '#f59e0b',
+                                                        textTransform: 'uppercase',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                      }}>
+                                                        ● En Tratamiento
+                                                      </span>
+                                                    );
+                                                  case 'agendado':
+                                                    return (
+                                                      <span style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: '9999px',
+                                                        fontSize: '0.72rem',
+                                                        fontWeight: 700,
+                                                        backgroundColor: 'rgba(168, 85, 247, 0.15)',
+                                                        color: '#a855f7',
+                                                        textTransform: 'uppercase',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                      }}>
+                                                        ● Agendado
+                                                      </span>
+                                                    );
+                                                  case 'sincronizado':
+                                                    return (
+                                                      <span style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: '9999px',
+                                                        fontSize: '0.72rem',
+                                                        fontWeight: 700,
+                                                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                                                        color: '#3b82f6',
+                                                        textTransform: 'uppercase',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                      }}>
+                                                        ● Sincronizado
+                                                      </span>
+                                                    );
+                                                  case 'ingresado':
+                                                  default:
+                                                    return (
+                                                      <span style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: '9999px',
+                                                        fontSize: '0.72rem',
+                                                        fontWeight: 700,
+                                                        backgroundColor: 'hsla(var(--foreground-hsl) / 0.06)',
+                                                        color: 'hsla(var(--foreground-hsl) / 0.5)',
+                                                        textTransform: 'uppercase',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                      }}>
+                                                        ● Sin Sinc.
+                                                      </span>
+                                                    );
+                                                }
+                                              })()
+                                            )}
                                           </td>
                                           <td style={{ fontSize: '0.82rem', opacity: 0.8, padding: '12px 16px', fontFamily: 'monospace' }}>
                                             {loadingDetails ? (
@@ -2051,31 +2016,31 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
           <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(var(--accent-hsl))', marginBottom: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '6px' }}>
             Detalles del Ingreso
           </h4>
-          
+
           <div className="tooltip-section-title">Convenio</div>
           <div className="tooltip-section-value">{hoveredCase.case.agreement_type || 'Sin convenio'}</div>
-          
+
           {(hoveredCase.case.dental_diagnosis || hoveredCase.case.description) && (
             <>
               <div className="tooltip-section-title">Diagnóstico / Descripción</div>
               <div className="tooltip-section-value">{hoveredCase.case.dental_diagnosis || hoveredCase.case.description}</div>
             </>
           )}
-          
+
           {hoveredCase.case.treatment_needed && (
             <>
               <div className="tooltip-section-title">Prestaciones / Tratamiento</div>
               <div className="tooltip-section-value" style={{ whiteSpace: 'pre-line', fontSize: '0.8rem' }}>{hoveredCase.case.treatment_needed}</div>
             </>
           )}
-          
+
           {hoveredCase.case.medical_center && (
             <>
               <div className="tooltip-section-title">Centro Derivador</div>
               <div className="tooltip-section-value">{hoveredCase.case.medical_center}</div>
             </>
           )}
-          
+
           {hoveredCase.case.professional_name && (
             <>
               <div className="tooltip-section-title">Profesional Derivador</div>
