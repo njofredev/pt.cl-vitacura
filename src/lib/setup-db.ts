@@ -37,6 +37,7 @@ async function setup() {
         quota_xray INT DEFAULT 0,
         used_dental INT DEFAULT 0,
         used_xray INT DEFAULT 0,
+        active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
