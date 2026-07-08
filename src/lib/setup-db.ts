@@ -136,6 +136,7 @@ async function setup() {
         price_base INT,
         price_pref INT,
         show_in_odontogram BOOLEAN DEFAULT TRUE,
+        id_prestacion INT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
