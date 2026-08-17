@@ -265,6 +265,7 @@ export default function LoginPage() {
                   fontWeight: 500,
                   maxWidth: '340px'
                 }}>
+                  Realice derivaciones clínicas digitales de forma rápida, segura y 100% en línea.
                 </p>
               </div>
             </div>
