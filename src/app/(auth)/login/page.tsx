@@ -265,22 +265,7 @@ export default function LoginPage() {
                   fontWeight: 500,
                   maxWidth: '340px'
                 }}>
-                  Realice derivaciones clínicas digitales de forma rápida, segura y 100% en línea.
                 </p>
-                <span style={{
-                  display: 'inline-block',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                  color: 'hsl(var(--primary-hsl))',
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  marginTop: '8px'
-                }}>
-                  v1.0
-                </span>
               </div>
             </div>
 
@@ -559,6 +544,20 @@ export default function LoginPage() {
                   derivaciones@policlinicotabancura.cl
                 </a>
               </p>
+              <span style={{
+                display: 'inline-block',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                color: 'hsl(var(--primary-hsl))',
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                marginTop: '10px'
+              }}>
+                v1.0
+              </span>
             </div>
           </form>
         </div>
