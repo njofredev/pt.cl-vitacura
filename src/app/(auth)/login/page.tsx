@@ -7,7 +7,7 @@ import ShowcaseInteractive from '@/components/ShowcaseInteractive';
 import { Search } from 'lucide-react';
 
 const partnerLogos = [
-  { name: 'Municipalidad de Vitacura', path: '/logos_convenios_prevision/mivita_trans.png' },
+  { name: 'Municipalidad de Vitacura', path: '/logos_convenios_prevision/logo_vitacura_nuevo.svg' },
   { name: 'FONASA', path: '/logos_convenios_prevision/logoFonasa.svg' },
   { name: 'Banmédica', path: '/logos_convenios_prevision/banmedica.png' },
   { name: 'Vida Tres', path: '/logos_convenios_prevision/vidatres.png' },

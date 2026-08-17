@@ -194,19 +194,8 @@ export default function ShowcaseInteractive() {
         <g transform="translate(75, 235)">
           <circle r="36" fill="#0a1626" stroke="#3b82f6" strokeWidth="2" filter="url(#glow-blue)" />
           <circle r="31" fill="#0f172a" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="1" />
-          {/* Vector Vitacura Logo - Clean, centered, transparent & larger! */}
-          <g transform="translate(0, -4)">
-            {/* Left leg (White) */}
-            <line x1="-10" y1="-10" x2="0" y2="5" stroke="#ffffff" strokeWidth="5.5" strokeLinecap="round" />
-            {/* Right leg (White) */}
-            <line x1="0" y1="5" x2="10" y2="-10" stroke="#ffffff" strokeWidth="5.5" strokeLinecap="round" />
-            {/* Center-Top Dot (White) */}
-            <circle cx="0" cy="-6" r="3.2" fill="#ffffff" />
-          </g>
-          {/* Text "vitacura" inside the circle */}
-          <text x="0" y="19" fill="#ffffff" fontSize="8.5" fontWeight="800" fontFamily="sans-serif" textAnchor="middle" letterSpacing="0.05em">
-            vitacura
-          </text>
+          {/* Vector Vitacura Logo from external file */}
+          <image href="/logos_convenios_prevision/logo_vitacura_nuevo.svg" x="-22" y="-22" width="44" height="44" />
         </g>
         <text x="28" y="232" fill="rgba(255,255,255,0.75)" fontSize="10" fontWeight="700" textAnchor="end" letterSpacing="0.04em">
           MUNICIPALIDAD
