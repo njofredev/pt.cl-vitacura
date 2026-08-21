@@ -176,7 +176,7 @@ async function setup() {
         user_email VARCHAR(255),
         ip_address VARCHAR(100),
         details JSONB,
-        created_at TIMESTAMP DEFAULT NOW()
+        created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
 

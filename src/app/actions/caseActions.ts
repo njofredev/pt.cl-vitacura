@@ -5,7 +5,7 @@ import pool from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { validateRUT, cleanRUT } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
-import { sendAutomaticReferralEmail } from '@/lib/mail';
+import { sendAutomaticReferralEmail, sendSincronizadoNotificationEmail } from '@/lib/mail';
 import { headers } from 'next/headers';
 import { logAuditAction } from '@/app/actions/auditActions';
 import {
@@ -254,6 +254,41 @@ export async function registerPersonAndCaseAction(formData: FormData) {
   }
 }
 
+export async function notifySincronizadoStatusChange(caseId: string) {
+  try {
+    const res = await pool.query(`
+      SELECT 
+        p.rut,
+        p.first_names,
+        p.last_names,
+        c.medical_center,
+        c.agreement_type,
+        c.dental_diagnosis,
+        c.treatment_needed,
+        c.professional_name
+      FROM cases c
+      JOIN persons p ON c.person_id = p.id
+      WHERE c.id = $1
+    `, [caseId]);
+
+    if (res.rows.length > 0) {
+      const row = res.rows[0];
+      await sendSincronizadoNotificationEmail({
+        rut: row.rut,
+        firstNames: row.first_names,
+        lastNames: row.last_names,
+        medicalCenter: row.medical_center,
+        agreementType: row.agreement_type,
+        dentalDiagnosis: row.dental_diagnosis,
+        treatmentNeeded: row.treatment_needed,
+        professionalName: row.professional_name,
+      });
+    }
+  } catch (error) {
+    console.error(`[SMTP Error] Error al obtener detalles del caso para notificación de sincronizado:`, error);
+  }
+}
+
 export async function updateCaseStatusAction(caseId: string, status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado', observations: string) {
   const session = await getSession();
   
@@ -267,8 +302,9 @@ export async function updateCaseStatusAction(caseId: string, status: 'ingresado'
 
   try {
     // Obtener historial actual para rellenar estados si corresponde
-    const caseRes = await pool.query('SELECT status_history, created_at FROM cases WHERE id = $1', [caseId]);
+    const caseRes = await pool.query('SELECT status, status_history, created_at FROM cases WHERE id = $1', [caseId]);
     const c = caseRes.rows[0] || {};
+    const previousStatus = c.status;
     const currentHistory = c.status_history || {};
     const newHistory = { ...currentHistory };
     const nowStr = new Date().toISOString();
@@ -298,6 +334,13 @@ export async function updateCaseStatusAction(caseId: string, status: 'ingresado'
     `, [status, observations.trim(), session.id, caseId, JSON.stringify(newHistory)]);
 
     await logAuditAction('CASE_STATUS_UPDATED', { caseId, status, observations: observations.trim() });
+
+    // Enviar correo de notificación si pasa de 'ingresado' a 'sincronizado'
+    if (previousStatus === 'ingresado' && status === 'sincronizado') {
+      notifySincronizadoStatusChange(caseId).catch(err => 
+        console.error('Error enviando mail de sincronización:', err)
+      );
+    }
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/cases');
@@ -698,6 +741,13 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
       `, [newStatus, obs, c.id, JSON.stringify(newHistory)]);
 
       await logAuditAction('CASE_STATUS_UPDATED', { caseId: c.id, status: newStatus, observations: obs });
+
+      // Enviar correo de notificación si pasa de 'ingresado' a 'sincronizado'
+      if (c.status === 'ingresado' && newStatus === 'sincronizado') {
+        notifySincronizadoStatusChange(c.id).catch(err => 
+          console.error('Error enviando mail de sincronización automática:', err)
+        );
+      }
       
       revalidatePath('/dashboard');
       revalidatePath('/dashboard/cases');
