@@ -9,6 +9,7 @@ export async function sendAutomaticReferralEmail(caseData: {
   dentalDiagnosis: string;
   treatmentNeeded: string;
   professionalName: string;
+  attachmentPath?: string | null;
 }) {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 465);
@@ -79,6 +80,12 @@ export async function sendAutomaticReferralEmail(caseData: {
             <td style="padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #475569;">Profesional Derivador:</td>
             <td style="padding: 10px 8px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">${caseData.professionalName}</td>
           </tr>
+          ${caseData.attachmentPath ? `
+          <tr>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #475569;">Radiografía Adjunta:</td>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #f1f5f9; color: #3b82f6; font-weight: bold;">Sí (sincronizada: ${caseData.attachmentPath})</td>
+          </tr>
+          ` : ''}
         </table>
         
         <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; border-radius: 8px; font-size: 0.82rem; color: #166534; line-height: 1.4;">

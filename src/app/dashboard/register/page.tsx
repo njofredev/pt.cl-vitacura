@@ -52,6 +52,9 @@ export default function RegisterCasePage() {
     xrayCount: 0
   });
 
+  const [radiografiaFile, setRadiografiaFile] = useState<File | null>(null);
+  const [radiografiaError, setRadiografiaError] = useState<string | null>(null);
+
   // States for dynamic "Other" selects
   const [selectedNationality, setSelectedNationality] = useState('Chilena');
   const [customNationality, setCustomNationality] = useState('');
@@ -701,6 +704,8 @@ export default function RegisterCasePage() {
         setMobileInput('');
         setBirthDateInput('');
         setPickerDate('');
+        setRadiografiaFile(null);
+        setRadiografiaError(null);
 
         setTimeout(() => {
           setShowSummary(false);
@@ -1551,6 +1556,81 @@ export default function RegisterCasePage() {
                   </div>
 
                   <Odontogram initialType={odontogramType} onChange={setOdontogramData} />
+
+                  {/* File Upload for Radiography */}
+                  <div
+                    className="glass-panel"
+                    style={{
+                      marginTop: '20px',
+                      padding: '24px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      borderLeft: '4px solid #14b8a6',
+                      background: 'rgba(255,255,255,0.01)',
+                      borderColor: radiografiaError ? 'hsl(var(--danger-hsl))' : 'var(--glass-border)',
+                      boxShadow: radiografiaError ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none'
+                    }}
+                  >
+                    <label
+                      htmlFor="radiografia"
+                      style={{
+                        fontSize: '1.05rem',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: 'hsl(var(--accent-hsl))'
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+                      Adjuntar Radiografía / Examen Clínico (Opcional)
+                    </label>
+                    <span style={{ fontSize: '0.82rem', opacity: 0.8 }}>
+                      Seleccione una radiografía o documento de examen clínico en formato **JPG, PNG, GIF, WEBP, TIFF, BMP o PDF** (Tamaño máximo: **10MB**).
+                    </span>
+                    <input
+                      id="radiografia"
+                      name="radiografia"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      disabled={loading}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setRadiografiaFile(file);
+                        if (file) {
+                          const allowedTypes = [
+                            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                            'application/pdf', 'image/tiff', 'image/bmp'
+                          ];
+                          if (!allowedTypes.includes(file.type)) {
+                            setRadiografiaError('Formato no válido. Use imágenes o PDF.');
+                          } else if (file.size > 10 * 1024 * 1024) {
+                            setRadiografiaError('El archivo supera el límite de 10MB.');
+                          } else {
+                            setRadiografiaError(null);
+                          }
+                        } else {
+                          setRadiografiaError(null);
+                        }
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        border: '1.5px dashed var(--glass-border)',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'rgba(255,255,255,0.02)',
+                        color: 'inherit',
+                        cursor: 'pointer',
+                        fontSize: '0.88rem'
+                      }}
+                    />
+                    {radiografiaError && (
+                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--danger-hsl))', fontWeight: 600 }}>
+                        {radiografiaError}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1636,6 +1716,26 @@ export default function RegisterCasePage() {
                     Tipo de Convenio
                   </span>
                   <strong style={{ fontSize: '0.94rem', paddingLeft: '19px' }}>{selectedAgreementType === 'Otro' ? customAgreementType : selectedAgreementType}</strong>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    opacity: 0.6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '2px',
+                    color: 'var(--foreground-hsl)'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#14b8a6' }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+                    Radiografía Adjunta
+                  </span>
+                  <strong style={{ fontSize: '0.94rem', paddingLeft: '19px', color: radiografiaFile ? '#10b981' : 'inherit' }}>
+                    {radiografiaFile ? `Sí (${radiografiaFile.name})` : 'No adjuntada'}
+                  </strong>
                 </div>
                 <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <span style={{

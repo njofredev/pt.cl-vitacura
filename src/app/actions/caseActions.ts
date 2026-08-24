@@ -5,6 +5,8 @@ import pool from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { validateRUT, cleanRUT } from '@/lib/utils';
 import { revalidatePath } from 'next/cache';
+import fs from 'fs';
+import path from 'path';
 import { sendAutomaticReferralEmail, sendSincronizadoNotificationEmail } from '@/lib/mail';
 import { headers } from 'next/headers';
 import { logAuditAction } from '@/app/actions/auditActions';
@@ -190,16 +192,64 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         personId = personInsert.rows[0].id;
       }
 
-      // 2. Create the case linked to the person
+      // 2. Handle File upload if present (radiografia)
+      const file = formData.get('radiografia') as File | null;
+      let savedFileName: string | null = null;
+
+      if (file && file.size > 0) {
+        // Validate file type
+        const allowedTypes = [
+          'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+          'application/pdf', 'image/tiff', 'image/bmp'
+        ];
+        if (!allowedTypes.includes(file.type)) {
+          await client.query('ROLLBACK');
+          return { error: 'Formato de archivo no válido. Solo se permiten imágenes (JPG, PNG, GIF, WEBP, TIFF, BMP) y documentos PDF.' };
+        }
+
+        // Validate file size (max 10MB)
+        const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+        if (file.size > MAX_SIZE) {
+          await client.query('ROLLBACK');
+          return { error: 'El archivo excede el tamaño máximo permitido de 10MB.' };
+        }
+
+        // Ensure synchronization folder exists inside the container
+        const syncDir = '/app/dentalink_sync';
+        try {
+          if (!fs.existsSync(syncDir)) {
+            fs.mkdirSync(syncDir, { recursive: true });
+          }
+
+          // Generate clean file name: [RUT]_[FirstNames]_[LastNames]_[Timestamp]_radiografia.[ext]
+          const ext = path.extname(file.name) || '.jpg';
+          const formattedNames = `${firstNames.trim()}_${lastNames.trim()}`.replace(/[^a-zA-Z0-9]/g, '_');
+          const timestamp = new Date().toISOString().replace(/[-:T]/g, '').split('.')[0];
+          savedFileName = `${cleanedRUT}_${formattedNames}_${timestamp}_radiografia${ext}`;
+
+          const fullFilePath = path.join(syncDir, savedFileName);
+          const arrayBuffer = await file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+
+          fs.writeFileSync(fullFilePath, buffer);
+          console.log(`[File Upload] Archivo guardado exitosamente en: ${fullFilePath}`);
+        } catch (fileErr) {
+          console.error('[File Error] Error al guardar archivo físicamente:', fileErr);
+          await client.query('ROLLBACK');
+          return { error: 'Error del servidor al guardar el archivo adjunto. Verifique permisos de escritura en la carpeta de red.' };
+        }
+      }
+
+      // 3. Create the case linked to the person
       await client.query(`
         INSERT INTO cases (
           person_id, description, status, observations,
           medical_center, agreement_type, dental_diagnosis, treatment_needed,
           professional_name, professional_title, professional_position,
           professional_email, professional_phone, professional_website, professional_address,
-          registered_by, dental_count, xray_count, status_history
+          registered_by, dental_count, xray_count, status_history, attachment_path
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
       `, [
         personId, 
         description ? description.trim() : '', 
@@ -219,7 +269,8 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         session.id,
         dentalCount,
         xrayCount,
-        JSON.stringify({ ingresado: new Date().toISOString() })
+        JSON.stringify({ ingresado: new Date().toISOString() }),
+        savedFileName
       ]);
 
       await client.query('COMMIT');
@@ -233,7 +284,8 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         agreementType: agreementType?.trim() || 'Atención Dental Básica',
         dentalDiagnosis: dentalDiagnosis?.trim() || 'Sin patologías especificadas.',
         treatmentNeeded: treatmentNeeded?.trim() || 'No especificada.',
-        professionalName: professionalName?.trim() || session.name || 'Profesional Derivador'
+        professionalName: professionalName?.trim() || session.name || 'Profesional Derivador',
+        attachmentPath: savedFileName // Pass filename to show in email if desired
       }).catch(err => {
         console.error('Error al iniciar el envío automático de correo:', err);
       });

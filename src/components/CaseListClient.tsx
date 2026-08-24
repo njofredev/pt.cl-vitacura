@@ -39,6 +39,7 @@ interface CaseRecord {
   dental_count?: number;
   xray_count?: number;
   status_history?: Record<string, string>;
+  attachment_path?: string | null;
 }
 
 const formatDateTimeCompact = (dateInput: any) => {
@@ -1159,7 +1160,28 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       {c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}
                     </td>
                     <td style={{ fontWeight: 600 }}>
-                      {c.first_names} {c.last_names}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{c.first_names} {c.last_names}</span>
+                        {c.attachment_path && (
+                          <span
+                            title="Tiene radiografía / examen adjunto"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                              color: '#14b8a6',
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              gap: '2px'
+                            }}
+                          >
+                            📎 RX
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ whiteSpace: 'nowrap', opacity: 0.9 }}>{formatRUT(c.rut)}</td>
                     <td>{c.commune}</td>
@@ -1845,6 +1867,36 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       </div>
                     )}
                   </div>
+                  {selectedCase.attachment_path && (
+                    <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: '4px' }}>
+                      <a
+                        href={`/api/attachments/${selectedCase.attachment_path}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-secondary"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 16px',
+                          fontSize: '0.85rem',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(20, 184, 166, 0.3)',
+                          color: '#14b8a6',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textDecoration: 'none',
+                          backgroundColor: 'rgba(20, 184, 166, 0.05)'
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Descargar Radiografía / Adjunto
+                      </a>
+                      <span style={{ fontSize: '0.78rem', opacity: 0.6 }}>
+                        ({selectedCase.attachment_path})
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: '20px', marginTop: '12px', fontSize: '0.8rem', opacity: 0.5, paddingLeft: '4px' }}>
                     <span>Inscrito el: {formatDateTime(selectedCase.created_at)}</span>
                     <span>Registrado por: {selectedCase.registered_by_name || 'Admin Semilla'}</span>

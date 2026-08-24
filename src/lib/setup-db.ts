@@ -120,6 +120,7 @@ async function setup() {
         dental_count INT DEFAULT 0,
         xray_count INT DEFAULT 0,
         status_history JSONB DEFAULT '{}'::jsonb,
+        attachment_path VARCHAR(512),
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
