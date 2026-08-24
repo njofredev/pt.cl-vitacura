@@ -725,11 +725,8 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     const patAppts = patApptsRes.success && patApptsRes.appointments ? patApptsRes.appointments : [];
     const patEvs = patEvsRes.success && patEvsRes.evolutions ? patEvsRes.evolutions : [];
     
-    // Filter patient appointments and evolutions matching this treatment or general appointments (not linked to other treatments) that are not cancelled
-    const appts = patAppts.filter((appt: any) => 
-      (appt.id_tratamiento === matchingTreatment.id || !appt.id_tratamiento || appt.id_tratamiento === 0) && 
-      appt.estado_anulacion === 0
-    );
+    // Filter patient appointments and evolutions matching this treatment that are not cancelled
+    const appts = patAppts.filter((appt: any) => appt.id_tratamiento === matchingTreatment.id && appt.estado_anulacion === 0);
     const evs = patEvs.filter((ev: any) => ev.id_tratamiento === matchingTreatment.id);
     
     let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = c.status;

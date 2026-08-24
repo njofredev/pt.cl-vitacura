@@ -369,21 +369,12 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
 
           const patAppts = patApptsRes.success && patApptsRes.appointments ? patApptsRes.appointments : [];
           patAppts.forEach((appt: any) => {
-            if (appt.estado_anulacion === 0) {
-              const tId = appt.id_tratamiento;
-              if (tId) {
-                if (!appointmentsMap[tId]) {
-                  appointmentsMap[tId] = [];
-                }
-                appointmentsMap[tId].push(appt);
-              } else {
-                // Si es una cita general (sin tratamiento vinculado), la asociamos a todos los tratamientos activos
-                treatmentsList.forEach((t: any) => {
-                  if (appointmentsMap[t.id]) {
-                    appointmentsMap[t.id].push(appt);
-                  }
-                });
+            const tId = appt.id_tratamiento;
+            if (tId && appt.estado_anulacion === 0) {
+              if (!appointmentsMap[tId]) {
+                appointmentsMap[tId] = [];
               }
+              appointmentsMap[tId].push(appt);
             }
           });
 
@@ -785,17 +776,11 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
       let targetStatus: 'sincronizado' | 'agendado' = 'sincronizado';
       let targetObs = wizardCase.observations || 'Sincronizado automáticamente con Dentalink';
 
-      if (selectedTreatmentForServices && wizardPatientData) {
-        const apptsRes = await getDentalinkPatientAppointmentsAction(wizardPatientData.id);
-        if (apptsRes.success && apptsRes.appointments) {
-          const hasActiveAppt = apptsRes.appointments.some((appt: any) => 
-            (appt.id_tratamiento === selectedTreatmentForServices.id || !appt.id_tratamiento || appt.id_tratamiento === 0) &&
-            appt.estado_anulacion === 0
-          );
-          if (hasActiveAppt) {
-            targetStatus = 'agendado';
-            targetObs = 'Sincronizado y agendado automáticamente con Dentalink';
-          }
+      if (selectedTreatmentForServices) {
+        const apptsRes = await getDentalinkTreatmentAppointmentsAction(selectedTreatmentForServices.id);
+        if (apptsRes.success && apptsRes.appointments && apptsRes.appointments.length > 0) {
+          targetStatus = 'agendado';
+          targetObs = 'Sincronizado y agendado automáticamente con Dentalink';
         }
       }
 
