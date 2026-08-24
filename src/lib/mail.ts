@@ -11,6 +11,11 @@ export async function sendAutomaticReferralEmail(caseData: {
   professionalName: string;
   attachmentPath?: string | null;
 }) {
+  if (process.env.DISABLE_EMAIL_NOTIFICATIONS === 'true') {
+    console.log('[SMTP] Envío de correos desactivado por configuración (DISABLE_EMAIL_NOTIFICATIONS=true). Omitiendo.');
+    return;
+  }
+
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 465);
   const user = process.env.SMTP_USER;
@@ -113,6 +118,11 @@ export async function sendSincronizadoNotificationEmail(caseData: {
   treatmentNeeded: string;
   professionalName: string;
 }) {
+  if (process.env.DISABLE_EMAIL_NOTIFICATIONS === 'true') {
+    console.log('[SMTP] Notificación de sincronización desactivada por configuración (DISABLE_EMAIL_NOTIFICATIONS=true). Omitiendo.');
+    return;
+  }
+
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 465);
   const user = process.env.SMTP_USER;
