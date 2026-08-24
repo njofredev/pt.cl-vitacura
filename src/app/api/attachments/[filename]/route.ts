@@ -8,9 +8,14 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
-    // 1. Verify user session
+    // 1. Verify user session or API token
     const session = await getSession();
-    if (!session) {
+    const apiTokenHeader = request.headers.get('x-api-token');
+    const secureToken = process.env.INTERNAL_API_TOKEN || 'tabancura-default-secure-token-12345';
+    
+    const isAuthorized = session || (apiTokenHeader && apiTokenHeader === secureToken);
+    
+    if (!isAuthorized) {
       return new NextResponse('No autorizado', { status: 401 });
     }
 
