@@ -10,6 +10,7 @@ import path from 'path';
 import { sendAutomaticReferralEmail, sendSincronizadoNotificationEmail } from '@/lib/mail';
 import { headers } from 'next/headers';
 import { logAuditAction } from '@/app/actions/auditActions';
+import { logStatusHistoryRecordAction } from '@/app/actions/historyActions';
 import {
   checkDentalinkPatientAction,
   getDentalinkPatientTreatmentsAction,
@@ -240,8 +241,7 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         }
       }
 
-      // 3. Create the case linked to the person
-      await client.query(`
+      const createdCaseRes = await client.query(`
         INSERT INTO cases (
           person_id, description, status, observations,
           medical_center, agreement_type, dental_diagnosis, treatment_needed,
@@ -250,6 +250,7 @@ export async function registerPersonAndCaseAction(formData: FormData) {
           registered_by, dental_count, xray_count, status_history, attachment_path
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        RETURNING id
       `, [
         personId, 
         description ? description.trim() : '', 
@@ -273,7 +274,22 @@ export async function registerPersonAndCaseAction(formData: FormData) {
         savedFileName
       ]);
 
+      const newCaseId = createdCaseRes.rows[0]?.id;
+
       await client.query('COMMIT');
+
+      if (newCaseId) {
+        logStatusHistoryRecordAction({
+          caseId: newCaseId,
+          previousStatus: null,
+          newStatus: 'ingresado',
+          observations: 'Creación inicial del caso derivado',
+          userId: session.id,
+          userName: session.name,
+          userEmail: session.email,
+          metadata: { medicalCenter, agreementType }
+        }).catch(err => console.error('Error logging initial status history:', err));
+      }
       
       // Dispatch automatic SMTP email notification asynchronously (non-blocking)
       sendAutomaticReferralEmail({
@@ -386,6 +402,18 @@ export async function updateCaseStatusAction(caseId: string, status: 'ingresado'
     `, [status, observations.trim(), session.id, caseId, JSON.stringify(newHistory)]);
 
     await logAuditAction('CASE_STATUS_UPDATED', { caseId, status, observations: observations.trim() });
+
+    // Inmutable status history logging
+    logStatusHistoryRecordAction({
+      caseId,
+      previousStatus,
+      newStatus: status,
+      observations: observations.trim(),
+      userId: session.id,
+      userName: session.name,
+      userEmail: session.email,
+      metadata: { previousStatus, newStatus: status }
+    }).catch(err => console.error('Error logging status history record:', err));
 
     // Enviar correo de notificación si pasa de 'ingresado' a 'sincronizado'
     if (previousStatus === 'ingresado' && status === 'sincronizado') {
@@ -744,12 +772,19 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
       newStatus = 'finalizado';
       obs = 'Todas las prestaciones del plan de tratamiento han sido realizadas en Dentalink.';
     } else {
-      const hasTreatmentStarted = evs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
+      // Ignore purely administrative notes (like transferring doctor or plan) from considering treatment as clinically started
+      const clinicalEvs = evs.filter((ev: any) => {
+        const text = (ev.datos || '').toLowerCase();
+        const isTransferOrAdmin = text.includes('se transfiere') || text.includes('transferencia') || text.includes('reasign') || text.includes('cambio de profesional') || text.includes('cambio de doctor');
+        return !isTransferOrAdmin;
+      });
+      
+      const hasTreatmentStarted = clinicalEvs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
       
       if (hasTreatmentStarted) {
         newStatus = 'en_tratamiento';
-        obs = evs.length > 0 
-          ? 'Tratamiento iniciado (evoluciones registradas en Dentalink).'
+        obs = clinicalEvs.length > 0 
+          ? 'Tratamiento iniciado (evoluciones clínicas registradas en Dentalink).'
           : 'Tratamiento iniciado (cita atendida, en espera o atendiéndose en Dentalink).';
       } else if (appts.length > 0) {
         newStatus = 'agendado';
@@ -758,9 +793,20 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
         newStatus = 'sincronizado';
         obs = 'Sincronizado automáticamente con Dentalink';
       } else {
-        newStatus = 'ingresado';
-        obs = 'Tratamiento creado en Dentalink, pendiente de vincular prestaciones.';
+        // If treatment exists in Dentalink, set status to sincronizado
+        newStatus = 'sincronizado';
+        obs = 'Plan de tratamiento registrado en Dentalink.';
       }
+    }
+    
+    // Prevent automatic downgrade to 'ingresado' if the case was already synchronized or advanced
+    const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+    const currentIndex = STATUS_ORDER.indexOf(c.status);
+    const newIndex = STATUS_ORDER.indexOf(newStatus);
+    
+    // If auto-sync would regress a case to a lower status, preserve current status
+    if (newIndex < currentIndex && currentIndex > 0) {
+      newStatus = c.status;
     }
     
     if (c.status !== newStatus) {
@@ -772,7 +818,6 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
         newHistory['ingresado'] = c.created_at ? new Date(c.created_at).toISOString() : nowStr;
       }
 
-      const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
       const targetIndex = STATUS_ORDER.indexOf(newStatus);
       for (let i = 0; i <= targetIndex; i++) {
         const stateName = STATUS_ORDER[i];
@@ -793,6 +838,16 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
       `, [newStatus, obs, c.id, JSON.stringify(newHistory)]);
 
       await logAuditAction('CASE_STATUS_UPDATED', { caseId: c.id, status: newStatus, observations: obs });
+
+      // Inmutable status history logging
+      logStatusHistoryRecordAction({
+        caseId: c.id,
+        previousStatus: c.status,
+        newStatus: newStatus,
+        observations: obs,
+        userName: 'Sistema / Sincronización Automática Dentalink',
+        metadata: { automated: true, previousStatus: c.status, newStatus }
+      }).catch(err => console.error('Error logging auto sync status history:', err));
 
       // Enviar correo de notificación si pasa de 'ingresado' a 'sincronizado'
       if (c.status === 'ingresado' && newStatus === 'sincronizado') {

@@ -396,12 +396,18 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
               newStatus = 'finalizado';
               obs = 'Tratamiento finalizado y completado en Dentalink.';
             } else {
-              const hasTreatmentStarted = evs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
+              const clinicalEvs = evs.filter((ev: any) => {
+                const text = (ev.datos || '').toLowerCase();
+                const isTransferOrAdmin = text.includes('se transfiere') || text.includes('transferencia') || text.includes('reasign') || text.includes('cambio de profesional') || text.includes('cambio de doctor');
+                return !isTransferOrAdmin;
+              });
+              
+              const hasTreatmentStarted = clinicalEvs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
               
               if (hasTreatmentStarted) {
                 newStatus = 'en_tratamiento';
-                obs = evs.length > 0 
-                  ? 'Tratamiento iniciado (evoluciones registradas en Dentalink).'
+                obs = clinicalEvs.length > 0 
+                  ? 'Tratamiento iniciado (evoluciones clínicas registradas en Dentalink).'
                   : 'Tratamiento iniciado (cita atendida, en espera o atendiéndose en Dentalink).';
               } else if (appts.length > 0) {
                 newStatus = 'agendado';
@@ -410,9 +416,16 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                 newStatus = 'sincronizado';
                 obs = 'Sincronizado automáticamente con Dentalink';
               } else {
-                newStatus = 'ingresado';
-                obs = 'Tratamiento creado en Dentalink, pendiente de vincular prestaciones.';
+                newStatus = 'sincronizado';
+                obs = 'Plan de tratamiento registrado en Dentalink.';
               }
+            }
+            
+            const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+            const currentIndex = STATUS_ORDER.indexOf(c.status);
+            const newIndex = STATUS_ORDER.indexOf(newStatus);
+            if (newIndex < currentIndex && currentIndex > 0) {
+              newStatus = c.status;
             }
             
             if (c.status !== newStatus) {
@@ -728,12 +741,18 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
               newStatus = 'finalizado';
               obs = 'Tratamiento finalizado y completado en Dentalink.';
             } else {
-              const hasTreatmentStarted = evs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
+              const clinicalEvs = evs.filter((ev: any) => {
+                const text = (ev.datos || '').toLowerCase();
+                const isTransferOrAdmin = text.includes('se transfiere') || text.includes('transferencia') || text.includes('reasign') || text.includes('cambio de profesional') || text.includes('cambio de doctor');
+                return !isTransferOrAdmin;
+              });
+              
+              const hasTreatmentStarted = clinicalEvs.length > 0 || appts.some((appt: any) => [2, 5, 6].includes(appt.id_estado));
               
               if (hasTreatmentStarted) {
                 newStatus = 'en_tratamiento';
-                obs = evs.length > 0 
-                  ? 'Tratamiento iniciado (evoluciones registradas en Dentalink).'
+                obs = clinicalEvs.length > 0 
+                  ? 'Tratamiento iniciado (evoluciones clínicas registradas en Dentalink).'
                   : 'Tratamiento iniciado (cita atendida, en espera o atendiéndose en Dentalink).';
               } else if (appts.length > 0) {
                 newStatus = 'agendado';
@@ -742,9 +761,16 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                 newStatus = 'sincronizado';
                 obs = 'Sincronizado automáticamente con Dentalink';
               } else {
-                newStatus = 'ingresado';
-                obs = 'Tratamiento creado en Dentalink, pendiente de vincular prestaciones.';
+                newStatus = 'sincronizado';
+                obs = 'Plan de tratamiento registrado en Dentalink.';
               }
+            }
+            
+            const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+            const currentIndex = STATUS_ORDER.indexOf(wizardCase.status);
+            const newIndex = STATUS_ORDER.indexOf(newStatus);
+            if (newIndex < currentIndex && currentIndex > 0) {
+              newStatus = wizardCase.status;
             }
             
             if (wizardCase.status !== newStatus) {

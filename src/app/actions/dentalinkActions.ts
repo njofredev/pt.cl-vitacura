@@ -353,11 +353,7 @@ export async function addDentalinkPatientConvenioAction(idPaciente: number | str
 
 export async function getDentalinkPatientTreatmentsAction(idPaciente: number | string) {
   const session = await getSession();
-  if (!session) {
-    return { success: false, error: 'No autorizado' };
-  }
-
-  if (session.role !== 'admin' && session.role !== 'internal') {
+  if (session && session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -567,11 +563,7 @@ export async function getDentalinkPatientEvolutionsAction(idPaciente: number | s
 
 export async function getDentalinkTreatmentDetailsAction(idTratamiento: number | string) {
   const session = await getSession();
-  if (!session) {
-    return { success: false, error: 'No autorizado' };
-  }
-
-  if (session.role !== 'admin' && session.role !== 'internal') {
+  if (session && session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -611,11 +603,7 @@ export async function getDentalinkTreatmentDetailsAction(idTratamiento: number |
 
 export async function getDentalinkTreatmentEvolutionsAction(idTratamiento: number | string) {
   const session = await getSession();
-  if (!session) {
-    return { success: false, error: 'No autorizado' };
-  }
-
-  if (session.role !== 'admin' && session.role !== 'internal') {
+  if (session && session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
@@ -823,11 +811,7 @@ export async function getDentalinkTreatmentAppointmentsAction(idTratamiento: num
 
 export async function getDentalinkPatientAppointmentsAction(idPaciente: number | string) {
   const session = await getSession();
-  if (!session) {
-    return { success: false, error: 'No autorizado' };
-  }
-
-  if (session.role !== 'admin' && session.role !== 'internal') {
+  if (session && session.role !== 'admin' && session.role !== 'internal') {
     return { success: false, error: 'No autorizado para esta función' };
   }
 
