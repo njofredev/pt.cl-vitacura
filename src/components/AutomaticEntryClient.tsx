@@ -383,7 +383,16 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
 
           // Auto-transition status based on Dentalink activity
           const caseIdStr = c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '';
-          const matchingTreatment = treatmentsList.find((t: any) => caseIdStr ? new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()) : false);
+          let matchingTreatment = treatmentsList.find((t: any) => caseIdStr ? new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()) : false);
+          if (!matchingTreatment && treatmentsList.length === 1) {
+            matchingTreatment = treatmentsList[0];
+          } else if (!matchingTreatment) {
+            const derivTreatments = treatmentsList.filter((t: any) => t.nombre.toUpperCase().includes('DERIVACI'));
+            if (derivTreatments.length === 1) {
+              matchingTreatment = derivTreatments[0];
+            }
+          }
+
           if (matchingTreatment) {
             const evs = evolutionsMap[matchingTreatment.id] || [];
             const appts = appointmentsMap[matchingTreatment.id] || [];
@@ -430,7 +439,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             
             if (c.status !== newStatus) {
               try {
-                await updateCaseStatusAction(c.id, newStatus, obs);
+                await updateCaseStatusAction(c.id, newStatus, obs, matchingTreatment.id);
                 c.status = newStatus;
                 setCases(prev => prev.map(item => item.id === c.id ? { ...item, status: newStatus } : item));
                 setWizardCase({ ...c, status: newStatus });
@@ -521,7 +530,8 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
         const res = await updateCaseStatusAction(
           wizardCase.id,
           targetStatus,
-          targetObs
+          targetObs,
+          treatment.id
         );
         if (res.success) {
           setCases(prev => prev.map(c => c.id === wizardCase.id ? { ...c, status: targetStatus } : c));
@@ -728,7 +738,16 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
         // Auto-transition status based on Dentalink activity
         if (wizardCase) {
           const caseIdStr = wizardCase.yearly_correlative ? String(wizardCase.yearly_correlative).padStart(4, '0') : '';
-          const matchingTreatment = treatmentsList.find((t: any) => caseIdStr ? new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()) : false);
+          let matchingTreatment = treatmentsList.find((t: any) => caseIdStr ? new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()) : false);
+          if (!matchingTreatment && treatmentsList.length === 1) {
+            matchingTreatment = treatmentsList[0];
+          } else if (!matchingTreatment) {
+            const derivTreatments = treatmentsList.filter((t: any) => t.nombre.toUpperCase().includes('DERIVACI'));
+            if (derivTreatments.length === 1) {
+              matchingTreatment = derivTreatments[0];
+            }
+          }
+
           if (matchingTreatment) {
             const evs = evolutionsMap[matchingTreatment.id] || [];
             const appts = appointmentsMap[matchingTreatment.id] || [];
@@ -775,11 +794,11 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             
             if (wizardCase.status !== newStatus) {
               try {
-                await updateCaseStatusAction(wizardCase.id, newStatus, obs);
+                await updateCaseStatusAction(wizardCase.id, newStatus, obs, matchingTreatment.id);
                 setCases(prev => prev.map(item => item.id === wizardCase.id ? { ...item, status: newStatus } : item));
                 setWizardCase(prev => prev ? { ...prev, status: newStatus } : null);
               } catch (statusErr) {
-                console.error("Error auto-updating status in goToTreatmentsStep:", statusErr);
+                console.error("Error auto-updating status based on Dentalink activity:", statusErr);
               }
             }
           }

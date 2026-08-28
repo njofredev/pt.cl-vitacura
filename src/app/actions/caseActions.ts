@@ -357,7 +357,12 @@ export async function notifySincronizadoStatusChange(caseId: string) {
   }
 }
 
-export async function updateCaseStatusAction(caseId: string, status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado', observations: string) {
+export async function updateCaseStatusAction(
+  caseId: string, 
+  status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado', 
+  observations: string,
+  dentalinkTreatmentId?: number | null
+) {
   const session = await getSession();
   
   if (!session || (session.role !== 'admin' && session.role !== 'internal')) {
@@ -370,7 +375,7 @@ export async function updateCaseStatusAction(caseId: string, status: 'ingresado'
 
   try {
     // Obtener historial actual para rellenar estados si corresponde
-    const caseRes = await pool.query('SELECT status, status_history, created_at FROM cases WHERE id = $1', [caseId]);
+    const caseRes = await pool.query('SELECT status, status_history, created_at, dentalink_treatment_id FROM cases WHERE id = $1', [caseId]);
     const c = caseRes.rows[0] || {};
     const previousStatus = c.status;
     const currentHistory = c.status_history || {};
@@ -391,15 +396,18 @@ export async function updateCaseStatusAction(caseId: string, status: 'ingresado'
       }
     }
 
+    const tIdToSave = dentalinkTreatmentId !== undefined ? dentalinkTreatmentId : (c.dentalink_treatment_id || null);
+
     await pool.query(`
       UPDATE cases 
       SET status = $1, 
           observations = $2, 
           updated_by = $3, 
           updated_at = NOW(),
-          status_history = $5::jsonb
+          status_history = $5::jsonb,
+          dentalink_treatment_id = $6
       WHERE id = $4
-    `, [status, observations.trim(), session.id, caseId, JSON.stringify(newHistory)]);
+    `, [status, observations.trim(), session.id, caseId, JSON.stringify(newHistory), tIdToSave]);
 
     await logAuditAction('CASE_STATUS_UPDATED', { caseId, status, observations: observations.trim() });
 
@@ -672,9 +680,9 @@ export async function getPersonByRutAction(rutRaw: string) {
 
 export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: number | string) {
   try {
-    // 1. Get the case details (rut, status, created_at, dentalink_patient_id, status_history)
+    // 1. Get the case details (rut, status, created_at, dentalink_patient_id, status_history, dentalink_treatment_id)
     const caseRes = await pool.query(`
-      SELECT c.id, c.status, c.observations, c.status_history, p.rut, c.created_at, p.dentalink_patient_id
+      SELECT c.id, c.status, c.observations, c.status_history, c.dentalink_treatment_id, p.rut, c.created_at, p.dentalink_patient_id
       FROM cases c
       JOIN persons p ON c.person_id = p.id
       WHERE c.id = $1
@@ -733,6 +741,7 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
             observations = $2, 
             updated_by = NULL, 
             updated_at = NOW(),
+            dentalink_treatment_id = NULL,
             status_history = COALESCE(status_history, '{}'::jsonb) || jsonb_build_object($4::text, NOW())
         WHERE id = $3
       `, ['en_tratamiento', 'Tratamiento eliminado en Dentalink. Revertido automáticamente para re-sincronización.', c.id, 'en_tratamiento']);
@@ -744,10 +753,33 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
       return { success: true, statusChanged: true, newStatus: 'en_tratamiento' };
     }
     
-    // Find matching treatment by caseIdStr (matching caseIdStr only as a standalone number)
-    const matchingTreatment = treatmentsList.find((t: any) => new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()));
+    // Match treatment:
+    // 1. Direct ID match if case already has dentalink_treatment_id
+    // 2. Exact correlative number match (e.g. 0004)
+    // 3. Smart fallback: Single treatment with 'DERIVACI' in name or single treatment on patient
+    let matchingTreatment = null;
+    if (c.dentalink_treatment_id) {
+      matchingTreatment = treatmentsList.find((t: any) => Number(t.id) === Number(c.dentalink_treatment_id));
+    }
+    if (!matchingTreatment) {
+      matchingTreatment = treatmentsList.find((t: any) => new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()));
+    }
+    if (!matchingTreatment && treatmentsList.length === 1) {
+      matchingTreatment = treatmentsList[0];
+    } else if (!matchingTreatment) {
+      const derivTreatments = treatmentsList.filter((t: any) => t.nombre.toUpperCase().includes('DERIVACI'));
+      if (derivTreatments.length === 1) {
+        matchingTreatment = derivTreatments[0];
+      }
+    }
+
     if (!matchingTreatment) {
       return { success: true, statusChanged: false, message: 'No se encontró tratamiento correspondiente en Dentalink' };
+    }
+
+    // Persist dentalink_treatment_id if not yet saved or if changed
+    if (c.dentalink_treatment_id !== matchingTreatment.id) {
+      await pool.query('UPDATE cases SET dentalink_treatment_id = $1 WHERE id = $2', [matchingTreatment.id, c.id]);
     }
     
     const patAppts = patApptsRes.success && patApptsRes.appointments ? patApptsRes.appointments : [];
@@ -905,7 +937,7 @@ export async function getCaseDentalinkDetailsAction(caseId: string, yearlyCorrel
 
   try {
     const caseRes = await pool.query(`
-      SELECT c.id, p.rut, p.dentalink_patient_id
+      SELECT c.id, c.dentalink_treatment_id, p.rut, p.dentalink_patient_id
       FROM cases c
       JOIN persons p ON c.person_id = p.id
       WHERE c.id = $1
@@ -950,10 +982,28 @@ export async function getCaseDentalinkDetailsAction(caseId: string, yearlyCorrel
     }
 
     const treatmentsList = resTreatments.treatments || [];
-    const matchingTreatment = treatmentsList.find((t: any) => new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()));
+    let matchingTreatment = null;
+    if (c.dentalink_treatment_id) {
+      matchingTreatment = treatmentsList.find((t: any) => Number(t.id) === Number(c.dentalink_treatment_id));
+    }
+    if (!matchingTreatment) {
+      matchingTreatment = treatmentsList.find((t: any) => new RegExp(`(?<!\\d)${caseIdStr}(?!\\d)`).test(t.nombre.toUpperCase()));
+    }
+    if (!matchingTreatment && treatmentsList.length === 1) {
+      matchingTreatment = treatmentsList[0];
+    } else if (!matchingTreatment) {
+      const derivTreatments = treatmentsList.filter((t: any) => t.nombre.toUpperCase().includes('DERIVACI'));
+      if (derivTreatments.length === 1) {
+        matchingTreatment = derivTreatments[0];
+      }
+    }
     
     if (!matchingTreatment) {
       return { success: false, error: 'No se encontró tratamiento correspondiente en Dentalink' };
+    }
+
+    if (c.dentalink_treatment_id !== matchingTreatment.id) {
+      await pool.query('UPDATE cases SET dentalink_treatment_id = $1 WHERE id = $2', [matchingTreatment.id, c.id]);
     }
 
     const detailsRes = await getDentalinkTreatmentDetailsAction(matchingTreatment.id);

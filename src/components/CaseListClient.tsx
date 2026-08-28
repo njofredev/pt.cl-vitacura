@@ -12,7 +12,7 @@ import CustomSelect from '@/components/ui/CustomSelect';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import Odontogram from '@/components/Odontogram';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
-import { Activity, Zap, MessageSquare } from 'lucide-react';
+import { Activity, Zap, MessageSquare, Paperclip, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CaseRecord {
   id: string;
@@ -263,6 +263,19 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
     return matchesSearch && matchesStatus && matchesInstitution && matchesAgreement && matchesDate && matchesPrestacion;
   });
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 10;
+
+  // Reset to page 1 whenever any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, institutionFilter, agreementFilter, startDate, endDate, prestacionFilter]);
+
+  const totalPages = Math.ceil(filteredCases.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCases = filteredCases.slice(startIndex, startIndex + itemsPerPage);
 
   const uniqueInstitutions = Array.from(new Set(cases.map(c => c.medical_center).filter(Boolean))) as string[];
   const uniqueAgreements = Array.from(new Set(cases.map(c => c.agreement_type).filter(Boolean))) as string[];
@@ -1119,6 +1132,74 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
       {/* Main Glass Table Container */}
       <div className="glass-panel" style={{ padding: '24px', overflow: 'visible', minHeight: '380px' }}>
+        {/* Top Pagination & Quick Status Header Bar */}
+        {filteredCases.length > 0 && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px',
+            paddingBottom: '14px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.75 }}>
+              Mostrando <strong style={{ color: 'hsl(var(--foreground-hsl))' }}>{startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredCases.length)}</strong> de <strong style={{ color: 'hsl(var(--foreground-hsl))' }}>{filteredCases.length}</strong> casos
+            </span>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="btn btn-secondary"
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: '0.8rem',
+                    opacity: currentPage === 1 ? 0.45 : 1,
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Página anterior"
+                >
+                  <ChevronLeft size={14} /> Anterior
+                </button>
+                <span style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                  color: 'hsl(var(--foreground-hsl))',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="btn btn-secondary"
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: '0.8rem',
+                    opacity: currentPage === totalPages ? 0.45 : 1,
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Página siguiente"
+                >
+                  Siguiente <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {filteredCases.length === 0 ? (
           <div style={{ padding: '50px 20px', textAlign: 'center', opacity: 0.6 }}>
             No se encontraron casos registrados con los filtros seleccionados.
@@ -1154,7 +1235,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                 </tr>
               </thead>
               <tbody>
-                {filteredCases.map((c, idx) => (
+                {paginatedCases.map((c, idx) => (
                   <tr key={c.id}>
                     <td style={{ fontFamily: 'monospace', fontWeight: 600, opacity: 0.8 }}>
                       {c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}
@@ -1178,35 +1259,20 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                               gap: '2px'
                             }}
                           >
-                            📎 RX
+                            <Paperclip size={11} /> Adjunto
                           </span>
                         )}
                       </div>
                     </td>
-                    <td style={{ whiteSpace: 'nowrap', opacity: 0.9 }}>{formatRUT(c.rut)}</td>
-                    <td>{c.commune}</td>
-                    <td
-                      onMouseEnter={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setHoveredCase({
-                          case: c,
-                          rect: {
-                            top: rect.top,
-                            bottom: rect.bottom,
-                            left: rect.left,
-                            width: rect.width
-                          }
-                        });
-                      }}
-                      onMouseLeave={() => setHoveredCase(null)}
-                      style={{ cursor: 'help' }}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontWeight: 700, color: 'hsl(var(--accent-hsl))', fontSize: '0.88rem' }}>
-                          {c.agreement_type || 'Sin Convenio'}
+                    <td style={{ fontSize: '0.9rem', opacity: 0.85 }}>{formatRUT(c.rut)}</td>
+                    <td style={{ fontSize: '0.9rem', opacity: 0.85 }}>{c.commune || 'Vitacura'}</td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <span style={{ fontWeight: 700, color: '#38bdf8', fontSize: '0.85rem' }}>
+                          {c.agreement_type || 'CESFAM VITACURA: CESFAM VITACURA'}
                         </span>
                         {c.medical_center && (
-                          <span style={{ fontSize: '0.72rem', opacity: 0.7, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <span style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: 500 }}>
                             📍 {c.medical_center}
                           </span>
                         )}
@@ -1253,76 +1319,62 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
                         {/* Hover Tooltip Box */}
                         {(() => {
-                          const isLastRow = idx === filteredCases.length - 1;
+                          const isLastRow = idx === paginatedCases.length - 1;
                           const isFirstRow = idx === 0;
 
                           const tooltipStyle: React.CSSProperties = {
                             position: 'absolute',
-                            right: '110%',
-                            backgroundColor: '#111827',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            borderRadius: '8px',
-                            padding: '12px 16px',
-                            zIndex: 100,
-                            width: '270px',
-                            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
+                            right: '100%',
+                            top: isLastRow ? 'auto' : '50%',
+                            bottom: isLastRow ? '-10px' : 'auto',
+                            transform: isLastRow ? 'none' : 'translateY(-50%)',
+                            marginRight: '12px',
                             display: 'none',
                             flexDirection: 'column',
-                            gap: '6px',
+                            gap: '10px',
+                            backgroundColor: 'rgba(15, 23, 42, 0.98)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            padding: '14px 16px',
+                            borderRadius: '10px',
+                            boxShadow: '0 20px 30px -10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0,0,0,0.5)',
+                            zIndex: 9999,
+                            width: '270px',
+                            backdropFilter: 'blur(16px)',
                             pointerEvents: 'none',
-                            ...(isLastRow && !isFirstRow ? {
-                              bottom: '-8px',
-                              transform: 'none'
-                            } : isFirstRow ? {
-                              top: '-8px',
-                              transform: 'none'
-                            } : {
-                              top: '50%',
-                              transform: 'translateY(-50%)'
-                            })
+                            textAlign: 'left'
                           };
 
-                          const arrowStyle: React.CSSProperties = {
-                            position: 'absolute',
-                            left: '100%',
-                            width: '0',
-                            height: '0',
-                            borderTop: '6px solid transparent',
-                            borderBottom: '6px solid transparent',
-                            borderLeft: '6px solid #111827',
-                            ...(isLastRow && !isFirstRow ? {
-                              bottom: '12px',
-                              transform: 'none'
-                            } : isFirstRow ? {
-                              top: '12px',
-                              transform: 'none'
-                            } : {
-                              top: '50%',
-                              transform: 'translateY(-50%)'
-                            })
-                          };
+                          const statesConfig = [
+                            { key: 'ingresado', label: 'Ingresado', color: '#6b7280' },
+                            { key: 'sincronizado', label: 'Sincronizado', color: '#eab308' },
+                            { key: 'agendado', label: 'Agendado', color: '#3b82f6' },
+                            { key: 'en_tratamiento', label: 'En Tto', color: '#a855f7' },
+                            { key: 'finalizado', label: 'Finalizado', color: '#10b981' }
+                          ];
+
+                          const history = c.status_history || {};
 
                           return (
                             <div className="status-timeline-tooltip" style={tooltipStyle}>
-                              {/* Triangle Arrow */}
-                              <div style={arrowStyle} />
-
-                              <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', opacity: 0.8, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px', marginBottom: '4px', textAlign: 'left' }}>
-                                Hist. estado:
+                              <div style={{
+                                fontSize: '0.75rem',
+                                fontWeight: 800,
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                                paddingBottom: '6px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}>
+                                <span>LÍNEA DE TIEMPO DEL CASO</span>
+                                <span style={{ fontSize: '0.68rem', opacity: 0.5 }}>#{c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : ''}</span>
                               </div>
 
-                              {/* Timeline Items */}
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.72rem', textAlign: 'left' }}>
-                                {[
-                                  { key: 'ingresado', label: 'Ingresado', color: '#10b981' },
-                                  { key: 'sincronizado', label: 'Sincronizado', color: '#f59e0b' },
-                                  { key: 'agendado', label: 'Agendado', color: '#3b82f6' },
-                                  { key: 'en_tratamiento', label: 'En Tto', color: '#a855f7' },
-                                  { key: 'finalizado', label: 'Finalizado', color: '#10b981' }
-                                ].map((state) => {
-                                  const hasTimestamp = !!c.status_history?.[state.key];
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.72rem' }}>
+                                {statesConfig.map((state) => {
                                   const isCurrent = c.status === state.key;
-                                  const timestampValue = c.status_history?.[state.key];
+                                  const timestampValue = history[state.key];
+                                  const hasTimestamp = !!timestampValue;
 
                                   return (
                                     <div
@@ -1345,20 +1397,6 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                                         }}>
                                           ● {state.label}:
                                         </span>
-                                        {isCurrent && (
-                                          <span style={{
-                                            fontSize: '0.58rem',
-                                            color: '#fff',
-                                            backgroundColor: state.color,
-                                            padding: '1px 4px',
-                                            borderRadius: '3px',
-                                            fontWeight: 800,
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.5px'
-                                          }}>
-                                            Actual
-                                          </span>
-                                        )}
                                       </div>
                                       <span style={{
                                         color: hasTimestamp ? '#ffffff' : 'rgba(255,255,255,0.25)',
@@ -1411,6 +1449,56 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '16px 20px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                borderRadius: '0 0 var(--radius-md) var(--radius-md)'
+              }}>
+                <span style={{ fontSize: '0.82rem', opacity: 0.65 }}>
+                  Mostrando {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredCases.length)} de {filteredCases.length} casos
+                </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '6px 16px',
+                      fontSize: '0.82rem',
+                      opacity: currentPage === 1 ? 0.45 : 1,
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Anterior
+                  </button>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, padding: '0 10px', color: 'hsl(var(--foreground-hsl))' }}>
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '6px 16px',
+                      fontSize: '0.82rem',
+                      opacity: currentPage === totalPages ? 0.45 : 1,
+                      cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

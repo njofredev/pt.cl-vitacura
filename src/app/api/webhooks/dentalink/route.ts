@@ -8,9 +8,17 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log('[Dentalink Webhook] Received payload:', JSON.stringify(body, null, 2));
 
-    // Try to extract patient ID or RUT from various possible fields in Dentalink's payload structure
     let patientId: string | number | null = null;
     let rut: string | null = null;
+    let treatmentId: string | number | null = null;
+
+    if (body.id_tratamiento) {
+      treatmentId = body.id_tratamiento;
+    } else if (body.tratamiento && body.tratamiento.id) {
+      treatmentId = body.tratamiento.id;
+    } else if (body.cita && body.cita.id_tratamiento) {
+      treatmentId = body.cita.id_tratamiento;
+    }
 
     if (body.id_paciente) {
       patientId = body.id_paciente;
@@ -30,9 +38,25 @@ export async function POST(request: Request) {
       rut = body.paciente.rut;
     }
 
-    // Look up the active cases with this patient's ID or RUT
+    // Look up the active cases with this patient's ID, RUT or treatment ID
     let caseLookup = null;
     let resolvedRut = rut;
+
+    // 0. Try lookup by treatmentId first if present
+    if (treatmentId) {
+      const dbLookup = await pool.query(`
+        SELECT c.id, p.rut FROM cases c
+        JOIN persons p ON c.person_id = p.id
+        WHERE c.dentalink_treatment_id = $1 AND c.status IN ('ingresado', 'sincronizado', 'agendado', 'en_tratamiento')
+        ORDER BY c.created_at DESC
+        LIMIT 1
+      `, [treatmentId]);
+
+      if (dbLookup.rows.length > 0) {
+        caseLookup = dbLookup;
+        resolvedRut = dbLookup.rows[0].rut;
+      }
+    }
 
     // 1. Try lookup by patientId first if we have it
     if (patientId) {
