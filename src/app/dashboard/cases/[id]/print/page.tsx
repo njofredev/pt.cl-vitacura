@@ -44,5 +44,5 @@ export default async function PrintCasePage({ params }: { params: { id: string }
     return <div style={{ padding: '40px', textAlign: 'center', color: 'white', fontWeight: 600 }}>Error al cargar los datos del caso.</div>;
   }
 
-  return <PrintViewerClient caseData={caseData} />;
+  return <PrintViewerClient caseData={caseData} userRole={session.role} />;
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
-import { formatRUT, formatDate, formatDateTime } from '@/lib/utils';
+import { formatRUT, formatDate, formatDateTime, maskRUT, maskName, maskEmail, maskPhone, maskBirthDate } from '@/lib/utils';
 import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction, getCaseDentalinkDetailsAction } from '@/app/actions/caseActions';
 import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
 import { UserSession } from '@/lib/auth';
@@ -276,6 +276,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   const totalPages = Math.ceil(filteredCases.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCases = filteredCases.slice(startIndex, startIndex + itemsPerPage);
+
+  // Privacy protection flag for reader role (Ley 21.719)
+  const isReader = user.role === 'reader';
 
   const uniqueInstitutions = Array.from(new Set(cases.map(c => c.medical_center).filter(Boolean))) as string[];
   const uniqueAgreements = Array.from(new Set(cases.map(c => c.agreement_type).filter(Boolean))) as string[];
@@ -1242,7 +1245,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     </td>
                     <td style={{ fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{c.first_names} {c.last_names}</span>
+                        <span>
+                          {isReader ? maskName(`${c.first_names} ${c.last_names}`) : `${c.first_names} ${c.last_names}`}
+                        </span>
                         {c.attachment_path && (
                           <span
                             title="Tiene radiografía / examen adjunto"
@@ -1264,7 +1269,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         )}
                       </div>
                     </td>
-                    <td style={{ fontSize: '0.9rem', opacity: 0.85 }}>{formatRUT(c.rut)}</td>
+                    <td style={{ fontSize: '0.9rem', opacity: 0.85 }}>
+                      {isReader ? maskRUT(c.rut) : formatRUT(c.rut)}
+                    </td>
                     <td style={{ fontSize: '0.9rem', opacity: 0.85 }}>{c.commune || 'Vitacura'}</td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -1305,7 +1312,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                       </div>
                     </td>
                     <td style={{ fontSize: '0.85rem', opacity: 0.7 }}>{formatDate(c.created_at)}</td>
-                    <td style={{ fontSize: '0.85rem', opacity: 0.8 }}>{c.registered_by_name || 'Admin Semilla'}</td>
+                    <td style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                      {isReader ? maskName(c.registered_by_name || 'Admin Semilla') : (c.registered_by_name || 'Admin Semilla')}
+                    </td>
                     <td>
                       <div className="status-timeline-tooltip-container" style={{ position: 'relative', display: 'inline-block' }}>
                         <style>{`
@@ -1508,11 +1517,29 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
         <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title={`Ficha de Caso Social - ${selectedCase.first_names} ${selectedCase.last_names}`}
+          title={`Ficha de Caso Social - ${isReader ? maskName(`${selectedCase.first_names} ${selectedCase.last_names}`) : `${selectedCase.first_names} ${selectedCase.last_names}`}`}
           maxWidth="1200px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
+            {/* Banner informativo de anonimización Ley 21.719 para rol Lector */}
+            {isReader && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 16px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                color: '#38bdf8',
+                fontSize: '0.82rem',
+                fontWeight: 600
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                <span>Datos personales anonimizados en cumplimiento de la <strong>Ley 21.719 (Protección de Datos Personales)</strong> para perfil Lector.</span>
+              </div>
+            )}
 
             {isEditing ? (
               /* Editable details form for administrator role */
@@ -1633,7 +1660,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>RUT</span>
-                      <strong style={{ fontSize: '0.95rem' }}>{formatRUT(selectedCase.rut)}</strong>
+                      <strong style={{ fontSize: '0.95rem' }}>
+                        {isReader ? maskRUT(selectedCase.rut) : formatRUT(selectedCase.rut)}
+                      </strong>
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Nacionalidad</span>
@@ -1641,7 +1670,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Fecha de Nacimiento</span>
-                      <strong style={{ fontSize: '0.95rem' }}>{formatDate(selectedCase.birth_date)}</strong>
+                      <strong style={{ fontSize: '0.95rem' }}>
+                        {isReader ? maskBirthDate(selectedCase.birth_date) : formatDate(selectedCase.birth_date)}
+                      </strong>
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Comuna Residencia</span>
@@ -1649,11 +1680,15 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Celular Contacto</span>
-                      <strong style={{ fontSize: '0.95rem' }}>{selectedCase.mobile}</strong>
+                      <strong style={{ fontSize: '0.95rem' }}>
+                        {isReader ? maskPhone(selectedCase.mobile) : selectedCase.mobile}
+                      </strong>
                     </div>
                     <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                       <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Correo Electrónico</span>
-                      <strong style={{ fontSize: '0.95rem', wordBreak: 'break-all', display: 'block' }}>{selectedCase.email || '-'}</strong>
+                      <strong style={{ fontSize: '0.95rem', wordBreak: 'break-all', display: 'block' }}>
+                        {isReader ? maskEmail(selectedCase.email) : (selectedCase.email || '-')}
+                      </strong>
                     </div>
                   </div>
                 </div>
@@ -1733,7 +1768,9 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                             </div>
                             <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                               <span style={{ opacity: 0.5, display: 'block', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Profesional Derivador</span>
-                              <strong style={{ fontSize: '0.95rem', color: 'hsl(var(--primary-hsl))' }}>{selectedCase.professional_name || 'No especificado'}</strong>
+                              <strong style={{ fontSize: '0.95rem', color: 'hsl(var(--primary-hsl))' }}>
+                                {isReader ? maskName(selectedCase.professional_name || 'No especificado') : (selectedCase.professional_name || 'No especificado')}
+                              </strong>
                             </div>
                           </div>
 
@@ -1987,7 +2024,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   )}
                   <div style={{ display: 'flex', gap: '20px', marginTop: '12px', fontSize: '0.8rem', opacity: 0.5, paddingLeft: '4px' }}>
                     <span>Inscrito el: {formatDateTime(selectedCase.created_at)}</span>
-                    <span>Registrado por: {selectedCase.registered_by_name || 'Admin Semilla'}</span>
+                    <span>Registrado por: {isReader ? maskName(selectedCase.registered_by_name || 'Admin Semilla') : (selectedCase.registered_by_name || 'Admin Semilla')}</span>
                   </div>
                 </div>
               </div>

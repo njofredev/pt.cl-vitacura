@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { maskRUT, maskName, maskEmail } from '@/lib/utils';
 
 interface CaseData {
   id: string;
@@ -30,7 +31,9 @@ interface CaseData {
   created_at?: string | Date;
 }
 
-export default function PrintViewerClient({ caseData }: { caseData: CaseData }) {
+export default function PrintViewerClient({ caseData, userRole }: { caseData: CaseData; userRole?: string }) {
+  const isReader = userRole === 'reader';
+
   // Configuration States
   const [showLogoHeader, setShowLogoHeader] = useState(true);
   const [showSignature, setShowSignature] = useState(true);
@@ -311,7 +314,7 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
 
             <p style={{ marginBottom: '24px' }}>
               Junto con saludar y esperando que se encuentren bien, les enviamos el presente
-              documento oficial como derivación de <strong>{caseData.first_names} {caseData.last_names}</strong>, RUT: <strong>{caseData.rut}</strong>, quien es usuario registrado y activo de
+              documento oficial como derivación de <strong>{isReader ? maskName(`${caseData.first_names} ${caseData.last_names}`) : `${caseData.first_names} ${caseData.last_names}`}</strong>, RUT: <strong>{isReader ? maskRUT(caseData.rut) : caseData.rut}</strong>, quien es usuario registrado y activo de
               nuestra Institución de Salud, para acogerse al Convenio Subvencionado Sin Costo de {caseData.agreement_type || 'Atención Odontológica Especializada'}.
             </p>
 
@@ -384,11 +387,15 @@ export default function PrintViewerClient({ caseData }: { caseData: CaseData }) 
               </div>
 
               <div style={{ fontSize: '0.88rem', lineHeight: 1.45, color: '#333' }}>
-                <p style={{ margin: 0, fontWeight: 700, color: '#000' }}>{caseData.professional_name || 'Dr. Profesional'}</p>
+                <p style={{ margin: 0, fontWeight: 700, color: '#000' }}>
+                  {isReader ? maskName(caseData.professional_name || 'Dr. Profesional') : (caseData.professional_name || 'Dr. Profesional')}
+                </p>
                 <p style={{ margin: 0, color: '#444' }}>{caseData.professional_title || 'Cirujano Dentista'}</p>
                 <p style={{ margin: 0, color: '#444' }}>{caseData.professional_position || 'Programa Odontológico'}</p>
                 <p style={{ margin: 0, color: '#444' }}>{caseData.medical_center || 'CESFAM'}</p>
-                <p style={{ margin: 0, textDecoration: 'underline', color: 'hsl(var(--primary-hsl))' }}>{caseData.professional_email || 'correo@institucion.cl'}</p>
+                <p style={{ margin: 0, textDecoration: 'underline', color: 'hsl(var(--primary-hsl))' }}>
+                  {isReader ? maskEmail(caseData.professional_email || 'correo@institucion.cl') : (caseData.professional_email || 'correo@institucion.cl')}
+                </p>
                 <p style={{ margin: 0, color: '#666', fontSize: '0.82rem' }}>{caseData.professional_address || 'Dirección registrada'}</p>
               </div>
             </div>

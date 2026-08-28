@@ -117,3 +117,71 @@ export function formatDateTime(date: string | Date | null | undefined): string {
   
   return `${day}/${month}/${year} a las ${hours}:${minutes}`;
 }
+
+/**
+ * Ley 21.719 - Protección de Datos Personales
+ * Anonymization helpers for Reader / Lector role
+ */
+
+export function maskRUT(rut: string | null | undefined): string {
+  if (!rut) return '-';
+  const cleaned = cleanRUT(rut);
+  if (cleaned.length < 2) return '**.***.***-*';
+  const dv = cleaned.slice(-1);
+  const numbers = cleaned.slice(0, -1);
+  
+  // Mask initial numbers with asterisks, keep last 3 digits and DV: e.g. **.***.966-9
+  let maskedNumbers = numbers;
+  if (numbers.length > 3) {
+    const visiblePart = numbers.slice(-3);
+    const hiddenLength = numbers.length - 3;
+    maskedNumbers = '*'.repeat(hiddenLength) + visiblePart;
+  } else {
+    maskedNumbers = '*'.repeat(numbers.length);
+  }
+
+  let formatted = '';
+  for (let i = maskedNumbers.length - 1, j = 0; i >= 0; i--, j++) {
+    if (j > 0 && j % 3 === 0) {
+      formatted = '.' + formatted;
+    }
+    formatted = maskedNumbers.charAt(i) + formatted;
+  }
+
+  return `${formatted}-${dv}`;
+}
+
+export function maskName(fullName: string | null | undefined): string {
+  if (!fullName) return '-';
+  const parts = fullName.trim().split(/\s+/);
+  return parts
+    .map(p => {
+      if (p.length <= 2) return p.charAt(0) + '*';
+      return p.charAt(0) + '*'.repeat(p.length - 1);
+    })
+    .join(' ');
+}
+
+export function maskEmail(email: string | null | undefined): string {
+  if (!email || !email.includes('@')) return '-';
+  const [user, domain] = email.split('@');
+  if (user.length <= 2) {
+    return `${user.charAt(0)}*@${domain}`;
+  }
+  return `${user.charAt(0)}${'*'.repeat(Math.min(user.length - 2, 4))}${user.slice(-1)}@${domain}`;
+}
+
+export function maskPhone(phone: string | null | undefined): string {
+  if (!phone) return '-';
+  const clean = phone.replace(/[^0-9+]/g, '');
+  if (clean.length <= 4) return '****';
+  const lastFour = clean.slice(-4);
+  return clean.slice(0, clean.startsWith('+56') ? 4 : 2) + ' **** ' + lastFour;
+}
+
+export function maskBirthDate(date: string | Date | null | undefined): string {
+  if (!date) return '-';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  return `**/**/${d.getUTCFullYear()}`;
+}

@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth';
 import pool from '@/lib/db';
 import Link from 'next/link';
-import { formatDate } from '@/lib/utils';
+import { formatDate, maskName } from '@/lib/utils';
 import { redirect } from 'next/navigation';
 import TrendChartClient from '@/components/TrendChartClient';
 import DashboardMetricsClient from '@/components/DashboardMetricsClient';
@@ -582,6 +582,8 @@ export default async function DashboardPage() {
                             <Link href={`/dashboard/ingreso-automatico?search=${c.rut}`} style={{ color: '#10b981', textDecoration: 'none' }}>
                               {c.first_names} {c.last_names}
                             </Link>
+                          ) : user.role === 'reader' ? (
+                            maskName(`${c.first_names} ${c.last_names}`)
                           ) : (
                             `${c.first_names} ${c.last_names}`
                           )}
@@ -590,7 +592,7 @@ export default async function DashboardPage() {
                           {formatDate(c.created_at)}
                         </td>
                         <td style={{ fontSize: '0.85rem', opacity: 0.8, fontWeight: 500 }}>
-                          {c.registered_by_name || 'Admin Semilla'}
+                          {user.role === 'reader' ? maskName(c.registered_by_name || 'Admin Semilla') : (c.registered_by_name || 'Admin Semilla')}
                         </td>
                         <td style={{
                           maxWidth: '220px',
