@@ -391,26 +391,26 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
       const csvRows = [
         headers.join(';'),
         ...filteredCases.map(c => {
-          const bdStr = c.birth_date ? new Date(c.birth_date).toLocaleDateString('es-CL') : '';
+          const bdStr = c.birth_date ? (isReader ? maskBirthDate(c.birth_date) : new Date(c.birth_date).toLocaleDateString('es-CL')) : '';
           const caStr = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CL') : '';
 
           return [
             c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '',
-            c.rut,
-            c.first_names || '',
-            c.last_names || '',
+            isReader ? maskRUT(c.rut) : c.rut,
+            isReader ? maskName(c.first_names || '') : (c.first_names || ''),
+            isReader ? maskName(c.last_names || '') : (c.last_names || ''),
             c.nationality || '',
             bdStr,
             c.commune || '',
-            c.email || '',
-            c.mobile || '',
+            isReader ? maskEmail(c.email) : (c.email || ''),
+            isReader ? maskPhone(c.mobile) : (c.mobile || ''),
             c.medical_center || '',
             c.agreement_type || '',
             (c.dental_diagnosis || '').replace(/[\n\r;]/g, ' '),
             (c.treatment_needed || '').replace(/[\n\r;]/g, ' '),
             c.dental_count || 0,
             c.xray_count || 0,
-            c.registered_by_name || '',
+            isReader ? maskName(c.registered_by_name || '') : (c.registered_by_name || ''),
             c.status || '',
             (c.observations || '').replace(/[\n\r;]/g, ' '),
             caStr,
@@ -461,26 +461,26 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
       `;
 
       const rows = filteredCases.map(c => {
-        const bdStr = c.birth_date ? new Date(c.birth_date).toLocaleDateString('es-CL') : '';
+        const bdStr = c.birth_date ? (isReader ? maskBirthDate(c.birth_date) : new Date(c.birth_date).toLocaleDateString('es-CL')) : '';
         const caStr = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CL') : '';
         return `
           <tr>
             <td>${c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : ''}</td>
-            <td>${c.rut}</td>
-            <td>${c.first_names || ''}</td>
-            <td>${c.last_names || ''}</td>
+            <td>${isReader ? maskRUT(c.rut) : c.rut}</td>
+            <td>${isReader ? maskName(c.first_names || '') : (c.first_names || '')}</td>
+            <td>${isReader ? maskName(c.last_names || '') : (c.last_names || '')}</td>
             <td>${c.nationality || ''}</td>
             <td>${bdStr}</td>
             <td>${c.commune || ''}</td>
-            <td>${c.email || ''}</td>
-            <td>${c.mobile || ''}</td>
+            <td>${isReader ? maskEmail(c.email) : (c.email || '')}</td>
+            <td>${isReader ? maskPhone(c.mobile) : (c.mobile || '')}</td>
             <td>${c.medical_center || ''}</td>
             <td>${c.agreement_type || ''}</td>
             <td>${c.dental_diagnosis || ''}</td>
             <td>${c.treatment_needed || ''}</td>
             <td>${c.dental_count || 0}</td>
             <td>${c.xray_count || 0}</td>
-            <td>${c.registered_by_name || ''}</td>
+            <td>${isReader ? maskName(c.registered_by_name || '') : (c.registered_by_name || '')}</td>
             <td>${c.status || ''}</td>
             <td>${c.observations || ''}</td>
             <td>${caStr}</td>
@@ -525,7 +525,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
     try {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
-        const bdFormatted = (d: any) => d ? new Date(d).toLocaleDateString('es-CL') : '-';
+        const bdFormatted = (d: any) => d ? (isReader ? maskBirthDate(d) : new Date(d).toLocaleDateString('es-CL')) : '-';
         printWindow.document.write(`
           <html>
             <head>
@@ -683,10 +683,16 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                 </div>
               </div>
 
+              ${isReader ? `
+                <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 10px 14px; border-radius: 6px; font-size: 10px; margin-bottom: 15px; font-weight: 600;">
+                  🛡️ Datos personales protegidos y anonimizados según la Ley 21.719 para perfil Lector.
+                </div>
+              ` : ''}
+
               <div class="filters-summary">
                 <div class="filters-title">Filtros Activos en este Reporte</div>
                 <div class="filters-grid">
-                  <div><strong>Rango Fechas:</strong> ${startDate ? bdFormatted(startDate) : 'Inicio'} al ${endDate ? bdFormatted(endDate) : 'Fin'}</div>
+                  <div><strong>Rango Fechas:</strong> ${startDate ? (new Date(startDate)).toLocaleDateString('es-CL') : 'Inicio'} al ${endDate ? (new Date(endDate)).toLocaleDateString('es-CL') : 'Fin'}</div>
                   <div><strong>Estado:</strong> ${statusFilter === 'todos' ? 'Todos' : statusFilter}</div>
                   <div><strong>Centro Médico:</strong> ${institutionFilter === 'todos' ? 'Todos' : institutionFilter}</div>
                   <div><strong>Convenio:</strong> ${agreementFilter === 'todos' ? 'Todos' : agreementFilter}</div>
@@ -714,10 +720,10 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                     <tr>
                       <td class="bold">${c.yearly_correlative ? String(c.yearly_correlative).padStart(4, '0') : '-'}</td>
                       <td>
-                        <span class="bold">${c.first_names} ${c.last_names}</span>
-                        ${c.mobile ? `<br><span style="font-size: 8px; opacity: 0.85;">📞 ${c.mobile}</span>` : ''}
+                        <span class="bold">${isReader ? maskName(`${c.first_names} ${c.last_names}`) : `${c.first_names} ${c.last_names}`}</span>
+                        ${c.mobile ? `<br><span style="font-size: 8px; opacity: 0.85;">📞 ${isReader ? maskPhone(c.mobile) : c.mobile}</span>` : ''}
                       </td>
-                      <td style="white-space: nowrap;">${c.rut}</td>
+                      <td style="white-space: nowrap;">${isReader ? maskRUT(c.rut) : c.rut}</td>
                       <td>${c.commune || '-'}</td>
                       <td>
                         <span class="bold" style="color: #10b981;">${c.agreement_type || 'Sin Convenio'}</span>
@@ -729,8 +735,8 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                           [🦷 ${c.dental_count || 0} prest. dentales / ⚡ ${c.xray_count || 0} rayos X]
                         </div>
                       </td>
-                      <td>${bdFormatted(c.created_at)}</td>
-                      <td>${c.registered_by_name || 'Admin Semilla'}</td>
+                      <td>${new Date(c.created_at).toLocaleDateString('es-CL')}</td>
+                      <td>${isReader ? maskName(c.registered_by_name || 'Admin Semilla') : (c.registered_by_name || 'Admin Semilla')}</td>
                       <td>
                         <span class="badge badge-${c.status}">
                           ${c.status === 'en_tratamiento' ? 'En tratamiento' : c.status}

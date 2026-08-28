@@ -130,11 +130,11 @@ export function maskRUT(rut: string | null | undefined): string {
   const dv = cleaned.slice(-1);
   const numbers = cleaned.slice(0, -1);
   
-  // Mask initial numbers with asterisks, keep last 3 digits and DV: e.g. **.***.966-9
+  // High privacy mask: Hide almost all numbers, keeping only the very last digit before DV (e.g. **.***.*66-9 or **.***.**6-9)
   let maskedNumbers = numbers;
-  if (numbers.length > 3) {
-    const visiblePart = numbers.slice(-3);
-    const hiddenLength = numbers.length - 3;
+  if (numbers.length > 2) {
+    const visiblePart = numbers.slice(-2);
+    const hiddenLength = numbers.length - 2;
     maskedNumbers = '*'.repeat(hiddenLength) + visiblePart;
   } else {
     maskedNumbers = '*'.repeat(numbers.length);
@@ -156,8 +156,9 @@ export function maskName(fullName: string | null | undefined): string {
   const parts = fullName.trim().split(/\s+/);
   return parts
     .map(p => {
-      if (p.length <= 2) return p.charAt(0) + '*';
-      return p.charAt(0) + '*'.repeat(p.length - 1);
+      if (p.length <= 1) return '*';
+      if (p.length === 2) return p.charAt(0) + '*';
+      return p.charAt(0) + '*'.repeat(Math.min(p.length - 1, 4));
     })
     .join(' ');
 }
@@ -166,22 +167,23 @@ export function maskEmail(email: string | null | undefined): string {
   if (!email || !email.includes('@')) return '-';
   const [user, domain] = email.split('@');
   if (user.length <= 2) {
-    return `${user.charAt(0)}*@${domain}`;
+    return `***@${domain}`;
   }
-  return `${user.charAt(0)}${'*'.repeat(Math.min(user.length - 2, 4))}${user.slice(-1)}@${domain}`;
+  return `${user.charAt(0)}*****@${domain}`;
 }
 
 export function maskPhone(phone: string | null | undefined): string {
   if (!phone) return '-';
   const clean = phone.replace(/[^0-9+]/g, '');
   if (clean.length <= 4) return '****';
-  const lastFour = clean.slice(-4);
-  return clean.slice(0, clean.startsWith('+56') ? 4 : 2) + ' **** ' + lastFour;
+  const lastTwo = clean.slice(-2);
+  const prefix = clean.startsWith('+56') ? '+56 9' : clean.slice(0, 2);
+  return `${prefix} **** **${lastTwo}`;
 }
 
 export function maskBirthDate(date: string | Date | null | undefined): string {
   if (!date) return '-';
   const d = new Date(date);
   if (isNaN(d.getTime())) return '-';
-  return `**/**/${d.getUTCFullYear()}`;
+  return `**/**/****`;
 }
