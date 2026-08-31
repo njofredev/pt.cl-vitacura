@@ -1429,7 +1429,7 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit_professional_email">Correo de Contacto</label>
-                  <input className="form-input" type="email" id="edit_professional_email" name="professional_email" placeholder="Ej: jcasals@vitacura.cl" value={editProfEmail} onChange={(e) => setEditProfEmail(e.target.value)} disabled={loading} />
+                  <input className="form-input" type="email" id="edit_professional_email" name="professional_email" placeholder="Ej: doctor@institucion.cl" value={editProfEmail} onChange={(e) => setEditProfEmail(e.target.value)} disabled={loading} />
                 </div>
 
                 <div className="form-group">
