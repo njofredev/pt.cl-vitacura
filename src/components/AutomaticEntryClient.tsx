@@ -248,6 +248,28 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     return parsedServices;
   };
 
+  const buildTreatmentComment = (c: CaseRecord): string => {
+    const parts: string[] = [];
+
+    // 1. Derivador
+    if (c.professional_name) {
+      parts.push(`Derivado por: ${c.professional_name}${c.professional_email ? ` (${c.professional_email})` : ''}`);
+    }
+
+    // 2. Prestaciones Requeridas / Odontograma (Pieza + Prestación)
+    if (c.treatment_needed && !c.treatment_needed.includes('Sin prestaciones asignadas')) {
+      const formattedTreatments = c.treatment_needed.split('\n').filter(Boolean).map(line => `• ${line}`).join('\n');
+      parts.push(`Prestaciones solicitadas:\n${formattedTreatments}`);
+    }
+
+    // 3. Observaciones Generales del profesional
+    if (c.description && c.description.trim() && !c.description.includes('Derivación ingresada mediante odontograma')) {
+      parts.push(`Observaciones clínicas:\n${c.description.trim()}`);
+    }
+
+    return parts.join('\n\n');
+  };
+
   const startWizard = (c: CaseRecord) => {
     setWizardCase(c);
     setWizardStep(1);
@@ -269,7 +291,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setNewTreatmentConvenioId(mappedConvenioId);
     setNewTreatmentSucursalId(2);
     setNewTreatmentDentistaId('');
-    setNewTreatmentComentario(c.professional_name ? `Derivado por: ${c.professional_name}${c.professional_email ? ` (${c.professional_email})` : ''}` : '');
+    setNewTreatmentComentario(buildTreatmentComment(c));
     setNewTreatmentFinalizado(0);
     setSelectedTreatmentForServices(null);
     setPendingServices([]);
@@ -301,7 +323,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
     setNewTreatmentConvenioId(0);
     setNewTreatmentSucursalId(2);
     setNewTreatmentDentistaId('');
-    setNewTreatmentComentario(c.professional_name ? `Derivado por: ${c.professional_name}${c.professional_email ? ` (${c.professional_email})` : ''}` : '');
+    setNewTreatmentComentario(buildTreatmentComment(c));
     setNewTreatmentFinalizado(0);
     setSelectedTreatmentForServices(null);
     setPendingServices([]);
@@ -1887,6 +1909,31 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
                             ))
                           )}
                         </select>
+                      </div>
+
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label className="form-label" htmlFor="new_treatment_comentario">
+                          Comentarios para el paciente / Odontólogo (Visible en Dentalink)
+                        </label>
+                        <textarea
+                          id="new_treatment_comentario"
+                          className="form-input"
+                          rows={4}
+                          value={newTreatmentComentario}
+                          onChange={e => setNewTreatmentComentario(e.target.value)}
+                          placeholder="Observaciones clínicas, piezas y prestaciones solicitadas..."
+                          style={{
+                            backgroundColor: 'rgba(0,0,0,0.2)',
+                            color: 'inherit',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '10px 12px',
+                            width: '100%',
+                            fontSize: '0.85rem',
+                            lineHeight: 1.5,
+                            resize: 'vertical'
+                          }}
+                        />
                       </div>
                     </div>
 
