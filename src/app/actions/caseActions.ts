@@ -904,14 +904,16 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
   }
 }
 
-export async function syncAllActiveCasesAction() {
+export async function syncAllActiveCasesAction(batchLimit = 6) {
   try {
     // Select cases that are in active workflow statuses but not 'finalizado' or 'ingresado'
-    // agendado, sincronizado, en_tratamiento.
+    // Order by updated_at ASC to prioritize least-recently synced cases (Round-Robin Batching)
     const res = await pool.query(`
       SELECT id FROM cases 
       WHERE status IN ('sincronizado', 'agendado', 'en_tratamiento')
-    `);
+      ORDER BY updated_at ASC NULLS FIRST
+      LIMIT $1
+    `, [batchLimit]);
     
     const casesToSync = res.rows;
     let updatedCount = 0;
@@ -920,9 +922,12 @@ export async function syncAllActiveCasesAction() {
       const syncResult = await syncCaseStatusAction(item.id);
       if (syncResult.success && syncResult.statusChanged) {
         updatedCount++;
+      } else {
+        // Touch updated_at to advance the rotation queue even if status didn't change
+        await pool.query('UPDATE cases SET updated_at = NOW() WHERE id = $1', [item.id]);
       }
-      // Brief pause to avoid hitting API rate limits too quickly
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 250ms pause to ensure safe throughput under Dentalink rate limits
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
     
     return { success: true, totalChecked: casesToSync.length, totalUpdated: updatedCount };
