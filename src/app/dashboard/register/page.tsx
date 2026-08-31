@@ -78,6 +78,7 @@ export default function RegisterCasePage() {
   const [medicalCenterError, setMedicalCenterError] = useState<string | null>(null);
   const [agreementTypeError, setAgreementTypeError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [odontogramError, setOdontogramError] = useState<string | null>(null);
   const [isCancelHovered, setIsCancelHovered] = useState(false);
 
   // Structural type for validation error center
@@ -539,6 +540,7 @@ export default function RegisterCasePage() {
     setError(null);
     setMedicalCenterError(null);
     setAgreementTypeError(null);
+    setOdontogramError(null);
 
     // Keep active step 1 errors if somehow they exist
     const errorsList: ValidationErrorItem[] = [...validationErrors.filter(e => e.step === 1)];
@@ -583,10 +585,23 @@ export default function RegisterCasePage() {
       });
     }
 
+    // Require at least one treatment in odontogram
+    const hasTreatments = odontogramData.selectedTreatmentIds && odontogramData.selectedTreatmentIds.split(',').filter(Boolean).length > 0;
+    if (!hasTreatments && (odontogramData.dentalCount === 0 && odontogramData.xrayCount === 0)) {
+      setOdontogramError('Debe seleccionar al menos una prestación o tratamiento en el odontograma interactivo para continuar.');
+      errorsList.push({
+        field: 'odontogram',
+        step: 2,
+        label: 'Odontograma Clínico',
+        message: 'Debe seleccionar al menos una prestación.',
+        elementId: 'odontogram_container'
+      });
+    }
+
     setValidationErrors(errorsList);
 
     if (errorsList.length > 0) {
-      setError('Por favor corrija los datos obligatorios o incorrectos en el formulario.');
+      setError('Por favor corrija los datos obligatorios o seleccione las prestaciones requeridas en el odontograma.');
       const step2Errs = errorsList.filter(e => e.step === 2);
       if (step2Errs.length > 0) {
         triggerErrorJump(step2Errs[0].elementId, 2);
@@ -650,6 +665,18 @@ export default function RegisterCasePage() {
     }
     if (selectedAgreementType === 'Otro' && !customAgreementType.trim()) {
       setError('Por favor especifique el tipo de convenio.');
+      return;
+    }
+
+    // Require at least one treatment in odontogram
+    const hasTreatments = odontogramData.selectedTreatmentIds && odontogramData.selectedTreatmentIds.split(',').filter(Boolean).length > 0;
+    if (!hasTreatments && (odontogramData.dentalCount === 0 && odontogramData.xrayCount === 0)) {
+      setError('Debe seleccionar al menos una prestación o tratamiento en el odontograma interactivo para inscribir el caso.');
+      setOdontogramError('Debe seleccionar al menos una prestación o tratamiento en el odontograma.');
+      setStep(2);
+      setTimeout(() => {
+        triggerErrorJump('odontogram_container', 2);
+      }, 100);
       return;
     }
 
@@ -1530,7 +1557,7 @@ export default function RegisterCasePage() {
                 </p>
 
                 {/* Interactive Odontogram Integration */}
-                <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div id="odontogram_container" style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <h3 style={{
                       fontSize: '1.15rem',
@@ -1550,7 +1577,33 @@ export default function RegisterCasePage() {
                     </span>
                   </div>
 
-                  <Odontogram initialType={odontogramType} onChange={setOdontogramData} />
+                  {odontogramError && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                      color: '#ef4444',
+                      fontSize: '0.88rem',
+                      fontWeight: 600
+                    }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                      {odontogramError}
+                    </div>
+                  )}
+
+                  <Odontogram 
+                    initialType={odontogramType} 
+                    onChange={(data) => {
+                      setOdontogramData(data);
+                      if (data.selectedTreatmentIds && data.selectedTreatmentIds.split(',').filter(Boolean).length > 0) {
+                        clearFieldError('odontogram', setOdontogramError);
+                      }
+                    }} 
+                  />
                 </div>
               </div>
             </div>

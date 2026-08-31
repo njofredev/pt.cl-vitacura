@@ -65,16 +65,19 @@ export async function registerPersonAndCaseAction(formData: FormData) {
     return { error: 'El RUT ingresado no es válido' };
   }
 
+  // Validate at least one treatment in Odontogram
+  const selectedTreatmentIdsStr = formData.get('selected_treatment_ids') as string || '';
+  const treatmentIds = selectedTreatmentIdsStr.split(',').filter(Boolean).map(Number);
+  if (treatmentIds.length === 0) {
+    return { error: 'Debe seleccionar al menos una prestación o tratamiento en el odontograma interactivo.' };
+  }
+
   try {
     // Start transaction
     const client = await pool.connect();
     
     try {
       await client.query('BEGIN');
-
-      // Calculate dental and xray counts from selected treatment ids
-      const selectedTreatmentIdsStr = formData.get('selected_treatment_ids') as string || '';
-      const treatmentIds = selectedTreatmentIdsStr.split(',').filter(Boolean).map(Number);
       
       let dentalCount = 0;
       let xrayCount = 0;
