@@ -18,7 +18,8 @@ import {
   getDentalinkTreatmentAppointmentsAction,
   getDentalinkPatientAppointmentsAction,
   getDentalinkPatientEvolutionsAction,
-  getDentalinkTreatmentDetailsAction
+  getDentalinkTreatmentDetailsAction,
+  getDentalinkPatientFilesAction
 } from '@/app/actions/dentalinkActions';
 
 // Memory-based rate limiting map to prevent brute-forcing
@@ -1029,6 +1030,167 @@ export async function getCaseDentalinkDetailsAction(caseId: string, yearlyCorrel
     return { success: false, error: err.message || 'Error del servidor' };
   }
 }
+
+export async function getCaseDentalinkFilesAction(caseId: string) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: 'No autorizado' };
+    }
+
+    const caseRes = await pool.query(`
+      SELECT c.id, c.status, c.created_at, c.registered_by, p.rut, p.dentalink_patient_id
+      FROM cases c
+      JOIN persons p ON c.person_id = p.id
+      WHERE c.id = $1
+    `, [caseId]);
+
+    if (caseRes.rows.length === 0) {
+      return { success: false, error: 'Caso no encontrado' };
+    }
+
+    const c = caseRes.rows[0];
+
+    // Restricción: un usuario externo solo puede consultar archivos de sus propios casos registrados
+    if (session.role === 'external' && c.registered_by !== session.id) {
+      return { success: false, error: 'No autorizado para ver archivos de este caso' };
+    }
+
+    let patientId = c.dentalink_patient_id;
+
+    if (!patientId) {
+      const resExist = await checkDentalinkPatientAction(c.rut);
+      if (resExist.success && resExist.exists) {
+        patientId = resExist.patient.id;
+        await pool.query('UPDATE persons SET dentalink_patient_id = $1 WHERE rut = $2', [patientId, c.rut]);
+      }
+    }
+
+    if (!patientId) {
+      return { success: false, error: 'Paciente no encontrado en Dentalink' };
+    }
+
+    const filesRes = await getDentalinkPatientFilesAction(patientId);
+    if (!filesRes.success) {
+      return { success: false, error: filesRes.error || 'Error al consultar archivos en Dentalink' };
+    }
+
+    // Regla de filtrado:
+    // 1. Si el archivo menciona explícitamente "derivacion" / "derivaciones" en título, nombre u observaciones.
+    // 2. O bien, si fue subido a partir de la fecha de creación del caso social (con margen de 24 horas antes).
+    const rawFiles = filesRes.files || [];
+    const caseDate = c.created_at ? new Date(c.created_at) : null;
+    const thresholdTime = caseDate ? caseDate.getTime() - (24 * 60 * 60 * 1000) : 0;
+
+    const filteredFiles = rawFiles.filter((f: any) => {
+      const name = String(f.nombre || '').toLowerCase();
+      const title = String(f.titulo || '').toLowerCase();
+      const obs = String(f.observaciones || '').toLowerCase();
+
+      // ¿Contiene derivación / derivaciones?
+      const hasDerivWord = name.includes('derivaci') || title.includes('derivaci') || obs.includes('derivaci');
+      if (hasDerivWord) return true;
+
+      // Si no tiene la palabra clave, verificar si la fecha del archivo es contemporánea o posterior al caso
+      if (f.fecha_creacion && thresholdTime > 0) {
+        const fileTime = new Date(f.fecha_creacion).getTime();
+        if (!isNaN(fileTime) && fileTime >= thresholdTime) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    return {
+      success: true,
+      files: filteredFiles
+    };
+  } catch (err: any) {
+    console.error('Error in getCaseDentalinkFilesAction:', err);
+    return { success: false, error: err.message || 'Error de servidor' };
+  }
+}
+
+export async function getCaseDentalinkEvolutionsAction(caseId: string) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: 'No autorizado' };
+    }
+
+    const caseRes = await pool.query(`
+      SELECT c.id, c.status, c.created_at, c.registered_by, c.dentalink_treatment_id, p.rut, p.dentalink_patient_id
+      FROM cases c
+      JOIN persons p ON c.person_id = p.id
+      WHERE c.id = $1
+    `, [caseId]);
+
+    if (caseRes.rows.length === 0) {
+      return { success: false, error: 'Caso no encontrado' };
+    }
+
+    const c = caseRes.rows[0];
+
+    // Restricción: un usuario externo solo puede ver casos propios
+    if (session.role === 'external' && c.registered_by !== session.id) {
+      return { success: false, error: 'No autorizado para ver este caso' };
+    }
+
+    let patientId = c.dentalink_patient_id;
+
+    if (!patientId) {
+      const resExist = await checkDentalinkPatientAction(c.rut);
+      if (resExist.success && resExist.exists) {
+        patientId = resExist.patient.id;
+        await pool.query('UPDATE persons SET dentalink_patient_id = $1 WHERE rut = $2', [patientId, c.rut]);
+      }
+    }
+
+    if (!patientId) {
+      return { success: false, error: 'Paciente no encontrado en Dentalink' };
+    }
+
+    const evRes = await getDentalinkPatientEvolutionsAction(patientId);
+    if (!evRes.success) {
+      return { success: false, error: evRes.error || 'Error al consultar evoluciones en Dentalink' };
+    }
+
+    const rawEvolutions = evRes.evolutions || [];
+    const caseDate = c.created_at ? new Date(c.created_at) : null;
+    const thresholdTime = caseDate ? caseDate.getTime() - (24 * 60 * 60 * 1000) : 0;
+
+    // Filtrar las evoluciones pertenecientes al tratamiento de derivación o posteriores a la fecha del caso
+    const filteredEvolutions = rawEvolutions.filter((ev: any) => {
+      // 1. Si coincide exactamente con el ID de tratamiento de la derivación
+      if (c.dentalink_treatment_id && Number(ev.id_tratamiento) === Number(c.dentalink_treatment_id)) {
+        return true;
+      }
+      // 2. O si el nombre del tratamiento menciona "derivaci"
+      const tName = String(ev.nombre_tratamiento || '').toLowerCase();
+      if (tName.includes('derivaci')) {
+        return true;
+      }
+      // 3. O si la fecha de registro es posterior a la creación de la derivación
+      if (ev.fecha_registro && thresholdTime > 0) {
+        const evTime = new Date(ev.fecha_registro).getTime();
+        if (!isNaN(evTime) && evTime >= thresholdTime) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    return {
+      success: true,
+      evolutions: filteredEvolutions
+    };
+  } catch (err: any) {
+    console.error('Error in getCaseDentalinkEvolutionsAction:', err);
+    return { success: false, error: err.message || 'Error de servidor' };
+  }
+}
+
 
 
 

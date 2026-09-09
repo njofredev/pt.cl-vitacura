@@ -29,9 +29,24 @@ interface CaseData {
   xray_count?: number;
   yearly_correlative?: number | string;
   created_at?: string | Date;
+  status?: string;
+  observations?: string | null;
+  evaluator_name?: string | null;
 }
 
-export default function PrintViewerClient({ caseData, userRole }: { caseData: CaseData; userRole?: string }) {
+interface PrintViewerClientProps {
+  caseData: CaseData;
+  userRole?: string;
+  dentalinkFiles?: any[];
+  dentalinkEvolutions?: any[];
+}
+
+export default function PrintViewerClient({
+  caseData,
+  userRole,
+  dentalinkFiles = [],
+  dentalinkEvolutions = []
+}: PrintViewerClientProps) {
   const isReader = userRole === 'reader';
 
   // Configuration States
@@ -345,7 +360,83 @@ export default function PrintViewerClient({ caseData, userRole }: { caseData: Ca
               </p>
             </div>
 
-            <div style={{ marginBottom: '40px', color: '#0f172a' }}>
+            {/* Sección de Evaluación y Convenio Policlínico Tabancura */}
+            {caseData.observations && (
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                padding: '14px 18px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <p style={{ margin: '0 0 6px 0', fontWeight: 700, color: '#0f172a', fontSize: '0.88rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  EVALUACIÓN Y RESOLUCIÓN INTERNA (POLICLÍNICO TABANCURA):
+                </p>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: '#334155', whiteSpace: 'pre-wrap' }}>
+                  {caseData.observations}
+                </p>
+                {caseData.evaluator_name && (
+                  <p style={{ margin: '8px 0 0 0', fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic' }}>
+                    Evaluado por: {caseData.evaluator_name}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Sección de Evolución Clínica Realizada (Dentalink) */}
+            {dentalinkEvolutions && dentalinkEvolutions.length > 0 && (
+              <div style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                padding: '14px 18px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#166534', fontSize: '0.88rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  EVOLUCIÓN CLÍNICA Y ATENCIÓN REALIZADA (DENTALINK):
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {dentalinkEvolutions.map((ev: any, idx: number) => {
+                    const cleanDatos = (ev.datos || '').replace(/<\/?[^>]+(>|$)/g, '\n').trim();
+                    return (
+                      <div key={idx} style={{ borderLeft: '3px solid #16a34a', paddingLeft: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#15803d', fontWeight: 700 }}>
+                          <span>{ev.nombre_dentista || ev.nombre_usuario || 'Atención Odontológica'}</span>
+                          <span>{ev.fecha_registro || ev.fecha || ''}</span>
+                        </div>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#1f2937', whiteSpace: 'pre-wrap' }}>
+                          {cleanDatos || 'Prestación completada.'}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Sección de Documentos y Archivos Asociados */}
+            {dentalinkFiles && dentalinkFiles.length > 0 && (
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                padding: '12px 18px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <p style={{ margin: '0 0 6px 0', fontWeight: 700, color: '#334155', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  DOCUMENTOS Y ANTECEDENTES ADJUNTOS EN FICHA ({dentalinkFiles.length}):
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.82rem', color: '#475569' }}>
+                  {dentalinkFiles.map((file: any, idx: number) => (
+                    <li key={idx}>
+                      <strong>{file.titulo && file.titulo !== 'Sin titulo' ? file.titulo : file.nombre}</strong> - Subido el {file.fecha_creacion ? file.fecha_creacion.split(' ')[0] : 'Fecha registrada'}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div style={{ marginBottom: '30px', color: '#0f172a' }}>
               <strong>Procedimiento Solicitado / Indicaciones específicas:</strong> <span style={{ whiteSpace: 'pre-wrap', display: 'inline-block', verticalAlign: 'top' }}>{caseData.treatment_needed || 'Evaluación y tratamiento según diagnóstico.'}</span>
             </div>
           </div>

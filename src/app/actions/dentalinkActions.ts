@@ -523,10 +523,6 @@ export async function getDentalinkPatientEvolutionsAction(idPaciente: number | s
     return { success: false, error: 'No autorizado' };
   }
 
-  if (session.role !== 'admin' && session.role !== 'internal') {
-    return { success: false, error: 'No autorizado para esta función' };
-  }
-
   const apiToken = process.env.DENTALINK_API_TOKEN || '';
   if (!apiToken) {
     return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
@@ -848,6 +844,51 @@ export async function getDentalinkPatientAppointmentsAction(idPaciente: number |
     return { success: false, error: error.message || 'Error de red' };
   }
 }
+
+export async function getDentalinkPatientFilesAction(idPaciente: number | string) {
+  const session = await getSession();
+  if (session && session.role !== 'admin' && session.role !== 'internal' && session.role !== 'reader') {
+    return { success: false, error: 'No autorizado para esta función' };
+  }
+
+  const apiToken = process.env.DENTALINK_API_TOKEN || '';
+  if (!apiToken) {
+    return { success: false, error: 'Token de Dentalink no configurado en el servidor' };
+  }
+
+  const formattedToken = apiToken.trim().startsWith('Token ') ? apiToken.trim() : `Token ${apiToken.trim()}`;
+  const url = `https://api.dentalink.healthatom.com/api/v1/pacientes/${idPaciente}/archivos`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': formattedToken,
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      // 404 en Dentalink para este endpoint significa comúnmente que el paciente no tiene archivos adjuntos
+      if (response.status === 404) {
+        return { success: true, files: [] };
+      }
+      const errorText = await response.text();
+      return { success: false, error: `Error del servidor Dentalink: ${response.statusText}`, details: errorText };
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      files: result.data || []
+    };
+  } catch (error: any) {
+    console.error('Error fetching Dentalink patient files:', error);
+    return { success: false, error: error.message || 'Error de red' };
+  }
+}
+
 
 
 
