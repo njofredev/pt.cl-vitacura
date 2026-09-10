@@ -557,7 +557,7 @@ export default function LoginPage() {
                 borderRadius: '12px',
                 marginTop: '10px'
               }}>
-                v1.0
+                v1.0.1
               </span>
             </div>
           </form>

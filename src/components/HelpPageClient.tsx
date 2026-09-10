@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import PageHeader from '@/components/ui/PageHeader';
 
 interface FAQItem {
   question: string;
@@ -77,47 +78,10 @@ export default function HelpPageClient({ userRole }: HelpPageClientProps) {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
       
       {/* Title banner */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '30px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
-          borderLeft: '4px solid #10b981',
-          borderRadius: 'var(--radius-md)',
-          width: '100%',
-          flexWrap: 'wrap',
-          gap: '20px'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#10b981',
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            flexShrink: 0
-          }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-              Centro de Ayuda y Guía de Uso
-            </h2>
-            <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
-              Encuentre tutoriales, documentación de módulos y respuestas a preguntas frecuentes sobre la plataforma.
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Centro de Ayuda y Guía de Uso"
+        description="Encuentre tutoriales, documentación de módulos y respuestas a preguntas frecuentes sobre la plataforma."
+      />
 
       {/* Grid: Role Guide Cards (Filtered by User Role) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>

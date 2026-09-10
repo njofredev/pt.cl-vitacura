@@ -8,6 +8,7 @@ import { getConveniosByMedicalCenterAction, syncDentalinkConveniosAction, getAll
 import { getInstitutionsAction, createInstitutionAction, updateInstitutionAction, deleteInstitutionAction } from '@/app/actions/institutionActions';
 import { getDentalinkConvenioDetailsAction } from '@/app/actions/dentalinkActions';
 import { Users, Building, RefreshCw, Info } from 'lucide-react';
+import PageHeader from '@/components/ui/PageHeader';
 
 interface User {
   id: string;
@@ -651,79 +652,40 @@ export default function UserListClient({ initialUsers, currentUserId, initialIns
       )}
 
       {/* Top Title Bar with Dynamic Content */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '24px 30px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
-          borderLeft: '4px solid #10b981',
-          borderRadius: 'var(--radius-md)',
-          flexWrap: 'wrap',
-          gap: '20px',
-          width: '100%'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#10b981',
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            flexShrink: 0
-          }}>
-            {activeTab === 'users' ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-              {activeTab === 'users' ? 'Gestión de Usuarios' : 'Gestión de Instituciones'}
-            </h2>
-            <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
-              {activeTab === 'users' 
-                ? 'Registra y administra las cuentas de administrativos internos y profesionales.' 
-                : 'Administra las instituciones afiliadas y define sus cuotas generales de atención.'}
-            </p>
-          </div>
-        </div>
-        {activeTab === 'users' ? (
-          <button onClick={() => setIsModalOpen(true)} className="btn-primary-pill" style={{ gap: '8px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Nuevo Funcionario
-          </button>
-        ) : (
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
-              onClick={handleSyncConvenios} 
-              className="btn btn-secondary" 
-              style={{ 
-                gap: '8px', 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                padding: '10px 18px', 
-                borderRadius: '24px', 
-                fontSize: '0.88rem', 
-                fontWeight: 650 
-              }}
-              disabled={syncing}
-            >
-              <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
-              {syncing ? 'Sincronizando...' : 'Sincronizar con Dentalink'}
+      <PageHeader
+        title={activeTab === 'users' ? 'Gestión de Usuarios' : 'Gestión de Instituciones'}
+        description={activeTab === 'users' 
+          ? 'Registra y administra las cuentas de administrativos internos y profesionales.' 
+          : 'Administra las instituciones afiliadas y define sus cuotas generales de atención.'}
+        action={
+          activeTab === 'users' ? (
+            <button onClick={() => setIsModalOpen(true)} className="btn-primary-pill" style={{ gap: '8px' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Nuevo Funcionario
             </button>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={handleSyncConvenios} 
+                className="btn btn-secondary" 
+                style={{ 
+                  gap: '8px', 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  padding: '10px 18px', 
+                  borderRadius: '24px', 
+                  fontSize: '0.88rem', 
+                  fontWeight: 650 
+                }}
+                disabled={syncing}
+              >
+                <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                {syncing ? 'Sincronizando...' : 'Sincronizar con Dentalink'}
+              </button>
+            </div>
+          )
+        }
+      />
 
       {/* Tab Switcher */}
       <div className="tab-switcher-container">

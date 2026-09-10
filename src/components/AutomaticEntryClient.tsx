@@ -6,6 +6,7 @@ import { getOdontogramPrestacionesAction, getAllArancelItemsAction } from '@/app
 import { updateCaseStatusAction, syncCaseStatusAction } from '@/app/actions/caseActions';
 import { formatRUT, formatDate } from '@/lib/utils';
 import Modal from '@/components/ui/Modal';
+import PageHeader from '@/components/ui/PageHeader';
 import { 
   Search, 
   RefreshCw, 
@@ -1053,50 +1054,16 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '30px', paddingBottom: '40px' }}>
       
-      {/* Header Panel */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '30px 40px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(20, 184, 166, 0.02) 100%), var(--glass-bg)',
-          flexWrap: 'wrap',
-          gap: '20px',
-          borderLeft: '4px solid #10b981',
-          width: '100%'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#10b981',
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.2)'
-          }}>
-            <UserCheck size={28} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-              Ingreso Automático: Validación Dentalink
-            </h2>
-            <p style={{ opacity: 0.6, margin: 0, fontWeight: 500, fontSize: '0.95rem' }}>
-              Consulte en tiempo real si el RUT de los pacientes ingresados existe en el sistema Dentalink.
-            </p>
-          </div>
-        </div>
-
-        <Link href="/dashboard" className="btn-secondary-pill">
-          <ArrowLeft size={16} /> Volver al Panel de Control
-        </Link>
-      </div>
+      {/* Top Title Bar with Dentalink Actions */}
+      <PageHeader
+        title="Ingreso Automático: Validación Dentalink"
+        description="Consulte en tiempo real si el RUT de los pacientes ingresados existe en el sistema Dentalink."
+        action={
+          <Link href="/dashboard" className="btn-secondary-pill">
+            <ArrowLeft size={16} /> Volver al Panel de Control
+          </Link>
+        }
+      />
 
       {/* Filter and Bulk Actions Control Panel */}
       <div 

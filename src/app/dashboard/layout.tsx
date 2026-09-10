@@ -5,6 +5,9 @@ import SyncTrigger from '@/components/SyncTrigger';
 import { redirect } from 'next/navigation';
 import React from 'react';
 
+import { NavigationPreloadProvider } from '@/context/NavigationPreloadContext';
+import DashboardMainContent from '@/components/DashboardMainContent';
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -17,22 +20,19 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div style={{ minHeight: '100vh', position: 'relative' }}>
-      {/* Background case status synchronizer (now managed reactively in CaseListClient) */}
+    <NavigationPreloadProvider>
+      <div style={{ minHeight: '100vh', position: 'relative' }}>
+        {/* Session Inactivity Timeout Handler */}
+        <SessionTimeout />
 
-      {/* Session Inactivity Timeout Handler */}
-      <SessionTimeout />
+        {/* Sidebar Navigation */}
+        <Sidebar user={user} />
 
-      {/* Sidebar Navigation */}
-      <Sidebar user={user} />
-
-      {/* Main Content Area */}
-      <div className="main-content" style={{
-        padding: '30px',
-        boxSizing: 'border-box'
-      }}>
-        {children}
+        {/* Main Content Area with instant Container Pre-load Skeleton */}
+        <DashboardMainContent>
+          {children}
+        </DashboardMainContent>
       </div>
-    </div>
+    </NavigationPreloadProvider>
   );
 }

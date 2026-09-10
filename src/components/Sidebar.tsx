@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { handleLogout } from '@/app/actions/authActions';
 import { UserSession } from '@/lib/auth';
+import { useNavigationPreload } from '@/context/NavigationPreloadContext';
 
 interface SidebarProps {
   user: UserSession;
@@ -12,6 +13,7 @@ interface SidebarProps {
 
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const { startPreloadNavigation, isNavigating, targetPath } = useNavigationPreload();
   const [isOpen, setIsOpen] = useState(true);
 
   // Detect screen size to close sidebar on mobile by default
@@ -330,27 +332,29 @@ export default function Sidebar({ user }: SidebarProps) {
           )}
 
           {/* Navigation Links */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
             {filteredMenu.map((item) => {
-              const isActive = pathname === item.path;
+              const isCurrent = pathname === item.path;
+              const isTargeted = isNavigating && targetPath === item.path;
+              const isActive = isTargeted || (!isNavigating && isCurrent);
+
               return (
                 <Link 
                   key={item.path} 
                   href={item.path}
+                  onClick={(e) => {
+                    if (pathname !== item.path) {
+                      e.preventDefault();
+                      startPreloadNavigation(item.path);
+                    }
+                  }}
+                  className={`sidebar-nav-link ${isActive ? 'active' : ''}`}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '14px',
-                    padding: '12px 16px',
-                    borderRadius: '9999px',
                     color: isActive ? '#ffffff' : 'hsl(var(--foreground-hsl))',
                     backgroundColor: isActive ? '#10b981' : 'transparent',
-                    textDecoration: 'none',
                     fontWeight: isActive ? 700 : 500,
-                    fontSize: '0.95rem',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isActive ? '0 4px 15px rgba(16, 185, 129, 0.3)' : 'none',
-                    opacity: isActive ? 1 : 0.8
+                    boxShadow: isActive ? '0 4px 18px rgba(16, 185, 129, 0.35)' : 'none',
+                    opacity: isActive ? 1 : 0.82
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -361,11 +365,16 @@ export default function Sidebar({ user }: SidebarProps) {
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.opacity = '0.8';
+                      e.currentTarget.style.opacity = '0.82';
                     }
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div 
+                    className="sidebar-nav-icon"
+                    style={{
+                      color: isActive ? '#ffffff' : 'inherit'
+                    }}
+                  >
                     {item.icon}
                   </div>
                   {isOpen && <span>{item.name}</span>}
@@ -500,6 +509,7 @@ export default function Sidebar({ user }: SidebarProps) {
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
+            className="kowalski-spring-trigger"
             style={{
               width: '100%',
               display: 'flex',
@@ -512,18 +522,15 @@ export default function Sidebar({ user }: SidebarProps) {
               border: '1px solid var(--glass-border)',
               color: 'hsl(var(--foreground-hsl))',
               cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               boxSizing: 'border-box'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
               e.currentTarget.style.borderColor = 'var(--glass-border)';
-              e.currentTarget.style.transform = 'none';
             }}
             title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
           >
@@ -533,7 +540,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: theme === 'dark' ? 'hsl(var(--accent-hsl))' : 'hsl(var(--primary-hsl))',
-                transition: 'transform 0.5s ease',
+                transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 transform: theme === 'dark' ? 'rotate(0deg)' : 'rotate(360deg)',
                 flexShrink: 0
               }}>
@@ -582,7 +589,7 @@ export default function Sidebar({ user }: SidebarProps) {
                   position: 'absolute',
                   top: '2px',
                   left: theme === 'dark' ? '20px' : '2px',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
                 }} />
               </div>
             )}
@@ -605,29 +612,60 @@ export default function Sidebar({ user }: SidebarProps) {
               color: 'hsl(var(--danger-hsl))',
               border: '1px solid transparent',
               backgroundColor: 'transparent',
-              transition: 'all 0.2s ease'
+              transition: 'all 200ms ease-out',
+              cursor: 'pointer'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
               e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.15)';
+              e.currentTarget.style.transform = 'translateX(4px)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
               e.currentTarget.style.borderColor = 'transparent';
+              e.currentTarget.style.transform = 'none';
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 200ms ease-out' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </div>
             {isOpen && <span>Cerrar Sesión</span>}
           </button>
         </div>
       </aside>
 
-      {/* CSS injected to handle responsiveness and collapse margins */}
+      {/* CSS injected to handle responsiveness, collapse margins & Emil Kowalski micro-interactions */}
       <style jsx global>{`
         .main-content {
           margin-left: ${isOpen ? '310px' : '110px'};
           transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
+        /* Floating Popovers & Tooltips: 8px micro-slide + 150ms fade-in + blur */
+        .sidebar-popover,
+        [data-popover="sidebar"] {
+          animation: kowalskiSlideInLeft 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+          backdrop-filter: blur(16px) !important;
+          -webkit-backdrop-filter: blur(16px) !important;
+        }
+
+        /* Micro-interactions: Active scale on physical clicks */
+        .sidebar-nav-link:active,
+        .btn-secondary:active,
+        .kowalski-spring-trigger:active {
+          transform: scale(0.97) !important;
+        }
+
+        /* Instant crisp white text & icon on active nav items without black flash */
+        .sidebar-nav-link.active,
+        .sidebar-nav-link.active span,
+        .sidebar-nav-link.active svg,
+        .sidebar-nav-link.active .sidebar-nav-icon {
+          color: #ffffff !important;
+          stroke: #ffffff !important;
+          transition: color 0s linear, stroke 0s linear !important;
+        }
+
         @media (max-width: 768px) {
           .mobile-nav-toggle {
             display: inline-flex !important;

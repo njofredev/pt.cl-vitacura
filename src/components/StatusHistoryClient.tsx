@@ -5,6 +5,7 @@ import { getStatusHistoryLogsAction, StatusHistoryRecord, restoreCaseStatusFromH
 import Modal from '@/components/ui/Modal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import Loader from '@/components/ui/Loader';
+import PageHeader from '@/components/ui/PageHeader';
 import { formatRUT } from '@/lib/utils';
 import { 
   History, 
@@ -183,17 +184,10 @@ export default function StatusHistoryClient({ userRole }: { userRole?: string })
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Header section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-            <History size={26} color="var(--primary)" />
-            Histórico y Respaldo de Estados
-          </h1>
-          <p style={{ margin: '6px 0 0 0', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            Registro inmutable y cronológico de todas las transiciones de estado de pacientes derivadas a Policlínico Tabancura.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <PageHeader
+        title="Histórico y Respaldo de Estados"
+        description="Registro inmutable y cronológico de todas las transiciones de estado de pacientes derivadas a Policlínico Tabancura."
+        action={
           <button 
             onClick={fetchLogs} 
             className="btn-secondary" 
@@ -203,8 +197,8 @@ export default function StatusHistoryClient({ userRole }: { userRole?: string })
             <RefreshCcw size={15} className={loading ? 'animate-spin' : ''} />
             Actualizar
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Filter and search card */}
       <div className="glass-card" style={{ padding: '16px 20px' }}>

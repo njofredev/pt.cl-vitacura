@@ -12,6 +12,7 @@ import CustomSelect from '@/components/ui/CustomSelect';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import Odontogram from '@/components/Odontogram';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
+import PageHeader from '@/components/ui/PageHeader';
 import { Activity, Zap, MessageSquare, Paperclip, ChevronLeft, ChevronRight, FileText, Download, ExternalLink, Stethoscope, ClipboardCheck } from 'lucide-react';
 
 interface CaseRecord {
@@ -959,88 +960,52 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-      {/* Page Title with Action Button on the same row inside the container */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '24px 30px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
-          borderLeft: '4px solid #10b981',
-          borderRadius: 'var(--radius-md)',
-          flexWrap: 'wrap',
-          gap: '20px',
-          width: '100%'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#10b981',
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            flexShrink: 0
-          }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M9 9h6" /><path d="M9 13h6" /><path d="M9 17h6" /></svg>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-              Bandeja de Casos Sociales
-            </h2>
-            <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
-              {user.role === 'external'
-                ? 'Monitoree el estado de revisión de los casos que ha inscrito.'
-                : 'Filtre, evalúe y asigne estados de convenios a los casos postulantes.'}
-            </p>
-          </div>
-        </div>
+      {/* Top Header Card */}
+      <PageHeader
+        title="Bandeja de Casos Sociales"
+        description={user.role === 'external'
+          ? 'Monitoree el estado de revisión de los casos que ha inscrito.'
+          : 'Filtre, evalúe y asigne estados de convenios a los casos postulantes.'}
+        action={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            {(user.role === 'admin' || user.role === 'reader') && (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleExportPDF}
+                  className="btn-export btn-export-pdf"
+                  title="Generar reporte PDF optimizado para impresión"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                  Exportar PDF
+                </button>
+                <button
+                  onClick={handleExportExcel}
+                  className="btn-export btn-export-excel"
+                  title="Exportar a Excel (.xls)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /></svg>
+                  Exportar Excel
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  className="btn-export btn-export-csv"
+                  title="Exportar a CSV"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                  Exportar CSV
+                </button>
+              </div>
+            )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {(user.role === 'admin' || user.role === 'reader') && (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={handleExportPDF}
-                className="btn-export btn-export-pdf"
-                title="Generar reporte PDF optimizado para impresión"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
-                Exportar PDF
-              </button>
-              <button
-                onClick={handleExportExcel}
-                className="btn-export btn-export-excel"
-                title="Exportar a Excel (.xls)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /></svg>
-                Exportar Excel
-              </button>
-              <button
-                onClick={handleExportCSV}
-                className="btn-export btn-export-csv"
-                title="Exportar a CSV"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                Exportar CSV
-              </button>
-            </div>
-          )}
-
-          {user.role !== 'internal' && user.role !== 'reader' && (
-            <Link href="/dashboard/register" className="btn-primary-pill" style={{ gap: '8px' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              Nueva Derivación
-            </Link>
-          )}
-        </div>
-      </div>
+            {user.role !== 'internal' && user.role !== 'reader' && (
+              <Link href="/dashboard/register" className="btn-primary-pill" style={{ gap: '8px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Nueva Derivación
+              </Link>
+            )}
+          </div>
+        }
+      />
 
       {/* Filter panel */}
       <div

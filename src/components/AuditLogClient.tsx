@@ -5,6 +5,7 @@ import { getAuditLogsAction, AuditLog } from '@/app/actions/auditActions';
 import Modal from '@/components/ui/Modal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import Loader from '@/components/ui/Loader';
+import PageHeader from '@/components/ui/PageHeader';
 import { 
   Activity, 
   Search, 
@@ -127,57 +128,21 @@ export default function AuditLogClient() {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Title Panel */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '24px 30px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
-          borderLeft: '4px solid #3b82f6',
-          borderRadius: 'var(--radius-md)',
-          flexWrap: 'wrap',
-          gap: '20px',
-          width: '100%'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#3b82f6',
-            boxShadow: '0 0 20px rgba(59, 130, 246, 0.15)',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            flexShrink: 0
-          }}>
-            <Activity size={26} strokeWidth={2.5} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-              Auditoría del Sistema
-            </h2>
-            <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
-              Historial general de cambios, inicios de sesión y sincronizaciones. Panel exclusivo para administradores.
-            </p>
-          </div>
-        </div>
-        
-        <button 
-          onClick={fetchLogs} 
-          className="btn-secondary"
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontSize: '0.9rem' }}
-          disabled={loading}
-        >
-          <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
-          Actualizar
-        </button>
-      </div>
+      <PageHeader
+        title="Auditoría del Sistema"
+        description="Historial general de cambios, inicios de sesión y sincronizaciones. Panel exclusivo para administradores."
+        action={
+          <button 
+            onClick={fetchLogs} 
+            className="btn-secondary" 
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
+            disabled={loading}
+          >
+            <RefreshCcw size={15} className={loading ? 'animate-spin' : ''} />
+            Actualizar
+          </button>
+        }
+      />
 
       {/* Filter and Search Box */}
       <div className="glass-panel" style={{ padding: '20px 24px' }}>

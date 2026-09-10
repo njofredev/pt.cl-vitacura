@@ -2,6 +2,7 @@ import React from 'react';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import ArancelManager from '@/components/ArancelManager';
+import PageHeader from '@/components/ui/PageHeader';
 import { Sparkles, ShieldCheck } from 'lucide-react';
 
 export const metadata = {
@@ -47,43 +48,11 @@ export default async function ArancelesPage() {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-      {/* Title Header with Glowing Lucide Shield Icon */}
-      <div
-        className="glass-panel"
-        style={{
-          padding: '24px 30px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '20px',
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(20, 184, 166, 0.01) 100%), var(--glass-bg)',
-          borderLeft: '4px solid #10b981',
-          borderRadius: 'var(--radius-md)'
-        }}
-      >
-        <div style={{
-          width: '56px',
-          height: '56px',
-          borderRadius: '50%',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#10b981',
-          boxShadow: '0 0 20px rgba(16, 185, 129, 0.15)',
-          border: '1px solid rgba(16, 185, 129, 0.2)',
-          flexShrink: 0
-        }}>
-          <ShieldCheck size={26} style={{ strokeWidth: 2.2 }} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-            Aranceles
-          </h2>
-          <p style={{ opacity: 0.7, margin: 0, fontSize: '0.9rem' }}>
-            Seleccione qué prestaciones dentales de la plataforma Dentalink se mostrarán en el odontograma interactivo.
-          </p>
-        </div>
-      </div>
+      {/* Title Header */}
+      <PageHeader
+        title="Aranceles"
+        description="Seleccione qué prestaciones dentales de la plataforma Dentalink se mostrarán en el odontograma interactivo."
+      />
 
       {/* Main interactive ArancelManager */}
       <ArancelManager />
