@@ -3,7 +3,6 @@ import pool from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 import PrintViewerClient from '@/components/PrintViewerClient';
-import { getCaseDentalinkFilesAction, getCaseDentalinkEvolutionsAction } from '@/app/actions/caseActions';
 
 export default async function PrintCasePage({ params }: { params: { id: string } }) {
   const session = await getSession();
@@ -15,8 +14,6 @@ export default async function PrintCasePage({ params }: { params: { id: string }
   const { id } = await params;
 
   let caseData;
-  let dentalinkFiles: any[] = [];
-  let dentalinkEvolutions: any[] = [];
 
   try {
     const res = await pool.query(`
@@ -43,19 +40,6 @@ export default async function PrintCasePage({ params }: { params: { id: string }
     if (session.role === 'external' && caseData.registered_by !== session.id) {
       return <div style={{ padding: '40px', textAlign: 'center', color: 'white', fontWeight: 600 }}>No autorizado para ver este caso</div>;
     }
-
-    if (caseData.status === 'finalizado') {
-      const [filesRes, evRes] = await Promise.all([
-        getCaseDentalinkFilesAction(caseData.id),
-        getCaseDentalinkEvolutionsAction(caseData.id)
-      ]);
-      if (filesRes.success && filesRes.files) {
-        dentalinkFiles = filesRes.files;
-      }
-      if (evRes.success && evRes.evolutions) {
-        dentalinkEvolutions = evRes.evolutions;
-      }
-    }
   } catch (error) {
     console.error('Error fetching case:', error);
     return <div style={{ padding: '40px', textAlign: 'center', color: 'white', fontWeight: 600 }}>Error al cargar los datos del caso.</div>;
@@ -65,8 +49,6 @@ export default async function PrintCasePage({ params }: { params: { id: string }
     <PrintViewerClient 
       caseData={caseData} 
       userRole={session.role} 
-      dentalinkFiles={dentalinkFiles} 
-      dentalinkEvolutions={dentalinkEvolutions} 
     />
   );
 }

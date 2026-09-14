@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { formatRUT, formatDate, formatDateTime, maskRUT, maskName, maskEmail, maskPhone, maskBirthDate } from '@/lib/utils';
-import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction, getCaseDentalinkDetailsAction, getCaseDentalinkFilesAction, getCaseDentalinkEvolutionsAction } from '@/app/actions/caseActions';
+import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction, getCaseDentalinkDetailsAction } from '@/app/actions/caseActions';
 import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
 import { UserSession } from '@/lib/auth';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import Odontogram from '@/components/Odontogram';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 import PageHeader from '@/components/ui/PageHeader';
-import { Activity, Zap, MessageSquare, Paperclip, ChevronLeft, ChevronRight, FileText, Download, ExternalLink, Stethoscope, ClipboardCheck } from 'lucide-react';
+import { Activity, Zap, MessageSquare, Paperclip, ChevronLeft, ChevronRight, FileText, Download, ExternalLink } from 'lucide-react';
 
 interface CaseRecord {
   id: string;
@@ -135,16 +135,10 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
   const [dentalinkDetails, setDentalinkDetails] = useState<any[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  const [dentalinkFiles, setDentalinkFiles] = useState<any[]>([]);
-  const [loadingFiles, setLoadingFiles] = useState(false);
-  const [dentalinkEvolutions, setDentalinkEvolutions] = useState<any[]>([]);
-  const [loadingEvolutions, setLoadingEvolutions] = useState(false);
 
   useEffect(() => {
     if (!selectedCase) {
       setDentalinkDetails([]);
-      setDentalinkFiles([]);
-      setDentalinkEvolutions([]);
       return;
     }
 
@@ -165,47 +159,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
       .finally(() => {
         setLoadingDetails(false);
       });
-
-    // Cargar archivos y evoluciones de la ficha de Dentalink cuando el caso está finalizado
-    if (selectedCase.status === 'finalizado') {
-      setLoadingFiles(true);
-      getCaseDentalinkFilesAction(selectedCase.id)
-        .then(res => {
-          if (res.success && res.files) {
-            setDentalinkFiles(res.files);
-          } else {
-            setDentalinkFiles([]);
-          }
-        })
-        .catch(err => {
-          console.error('Error fetching dentalink files in client:', err);
-          setDentalinkFiles([]);
-        })
-        .finally(() => {
-          setLoadingFiles(false);
-        });
-
-      setLoadingEvolutions(true);
-      getCaseDentalinkEvolutionsAction(selectedCase.id)
-        .then(res => {
-          if (res.success && res.evolutions) {
-            setDentalinkEvolutions(res.evolutions);
-          } else {
-            setDentalinkEvolutions([]);
-          }
-        })
-        .catch(err => {
-          console.error('Error fetching dentalink evolutions in client:', err);
-          setDentalinkEvolutions([]);
-        })
-        .finally(() => {
-          setLoadingEvolutions(false);
-        });
-    } else {
-      setDentalinkFiles([]);
-      setDentalinkEvolutions([]);
-    }
-  }, [selectedCase?.id, selectedCase?.status]);
+  }, [selectedCase?.id]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [evalStatus, setEvalStatus] = useState<'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado'>('ingresado');
@@ -2047,273 +2001,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
               </div>
             )}
 
-            {/* Bloque de Archivos Clínicos Finalizados en Dentalink */}
-            {selectedCase.status === 'finalizado' && (
-              <div style={{ 
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(20, 184, 166, 0.02) 100%)', 
-                border: '1px solid rgba(16, 185, 129, 0.25)', 
-                borderRadius: 'var(--radius-md)', 
-                padding: '18px 20px',
-                position: 'relative'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                  <h4 style={{ 
-                    fontSize: '0.9rem', 
-                    fontWeight: 800, 
-                    color: '#10b981', 
-                    margin: 0,
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.08em', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px' 
-                  }}>
-                    <FileText size={18} />
-                    Archivos y Documentos en Dentalink (Caso Finalizado)
-                  </h4>
-                  {dentalinkFiles.length > 0 && (
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      fontWeight: 700, 
-                      padding: '2px 8px', 
-                      borderRadius: '9999px', 
-                      backgroundColor: 'rgba(16, 185, 129, 0.15)', 
-                      color: '#10b981' 
-                    }}>
-                      {dentalinkFiles.length} archivo{dentalinkFiles.length > 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
 
-                {loadingFiles ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', opacity: 0.7, fontSize: '0.85rem' }}>
-                    <div className="spinner-border spinner-border-sm" role="status" style={{ width: '14px', height: '14px', border: '2px solid rgba(16, 185, 129, 0.3)', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                    <span>Consultando archivos del paciente en Dentalink...</span>
-                  </div>
-                ) : dentalinkFiles.length === 0 ? (
-                  <div style={{ 
-                    padding: '14px', 
-                    borderRadius: '8px', 
-                    backgroundColor: 'rgba(255, 255, 255, 0.02)', 
-                    border: '1px dashed var(--glass-border)',
-                    fontSize: '0.85rem',
-                    opacity: 0.65,
-                    fontStyle: 'italic'
-                  }}>
-                    No se encontraron archivos o documentos adjuntos en la ficha de Dentalink para este paciente.
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-                    {dentalinkFiles.map((file: any) => {
-                      const ext = file.nombre ? file.nombre.split('.').pop()?.toLowerCase() : '';
-                      const isPdf = ext === 'pdf';
-                      const isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
-                      const fileUrl = file.urls?.original || file.urls?.med || '#';
-                      const fileThumb = file.urls?.tmb || file.urls?.med;
-
-                      return (
-                        <div 
-                          key={file.id} 
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '10px 14px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            borderRadius: '8px',
-                            transition: 'all 0.2s ease',
-                          }}
-                        >
-                          {isImg && fileThumb ? (
-                            <img 
-                              src={fileThumb} 
-                              alt={file.nombre} 
-                              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}
-                            />
-                          ) : (
-                            <div style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '6px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: isPdf ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                              color: isPdf ? '#ef4444' : '#3b82f6',
-                              fontWeight: 800,
-                              fontSize: '0.72rem',
-                              textTransform: 'uppercase'
-                            }}>
-                              {ext || 'FILE'}
-                            </div>
-                          )}
-
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ 
-                              fontSize: '0.84rem', 
-                              fontWeight: 600, 
-                              whiteSpace: 'nowrap', 
-                              overflow: 'hidden', 
-                              textOverflow: 'ellipsis' 
-                            }}>
-                              {file.titulo && file.titulo !== 'Sin titulo' ? file.titulo : file.nombre}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', opacity: 0.5 }}>
-                              {file.fecha_creacion ? file.fecha_creacion.split(' ')[0] : ''}
-                            </div>
-                          </div>
-
-                          <a
-                            href={fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Ver / Descargar archivo"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '6px',
-                              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                              color: '#10b981',
-                              border: '1px solid rgba(16, 185, 129, 0.3)',
-                              cursor: 'pointer',
-                              textDecoration: 'none'
-                            }}
-                          >
-                            <ExternalLink size={15} />
-                          </a>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <div style={{ marginTop: '10px', fontSize: '0.72rem', opacity: 0.5, fontStyle: 'italic' }}>
-                  * Mostrando archivos asociados a la derivación (filtrados por fecha de derivación o palabra clave). Enlaces seguros con vigencia de 1 hora.
-                </div>
-              </div>
-            )}
-
-            {/* Bloque de Evolución Clínica de Dentalink */}
-            {selectedCase.status === 'finalizado' && (
-              <div style={{ 
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(168, 85, 247, 0.02) 100%)', 
-                border: '1px solid rgba(99, 102, 241, 0.25)', 
-                borderRadius: 'var(--radius-md)', 
-                padding: '18px 20px',
-                position: 'relative'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                  <h4 style={{ 
-                    fontSize: '0.9rem', 
-                    fontWeight: 800, 
-                    color: '#818cf8', 
-                    margin: 0,
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.08em', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px' 
-                  }}>
-                    <Stethoscope size={18} />
-                    Evolución Clínica y Comentarios Médicos (Dentalink)
-                  </h4>
-                  {dentalinkEvolutions.length > 0 && (
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      fontWeight: 700, 
-                      padding: '2px 8px', 
-                      borderRadius: '9999px', 
-                      backgroundColor: 'rgba(99, 102, 241, 0.15)', 
-                      color: '#a5b4fc' 
-                    }}>
-                      {dentalinkEvolutions.length} registro{dentalinkEvolutions.length > 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-
-                {loadingEvolutions ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', opacity: 0.7, fontSize: '0.85rem' }}>
-                    <div className="spinner-border spinner-border-sm" role="status" style={{ width: '14px', height: '14px', border: '2px solid rgba(99, 102, 241, 0.3)', borderTopColor: '#818cf8', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                    <span>Cargando evolución médica desde Dentalink...</span>
-                  </div>
-                ) : dentalinkEvolutions.length === 0 ? (
-                  <div style={{ 
-                    padding: '14px', 
-                    borderRadius: '8px', 
-                    backgroundColor: 'rgba(255, 255, 255, 0.02)', 
-                    border: '1px dashed var(--glass-border)',
-                    fontSize: '0.85rem',
-                    opacity: 0.65,
-                    fontStyle: 'italic'
-                  }}>
-                    No se registraron comentarios de evolución médica en Dentalink para este tratamiento.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {dentalinkEvolutions.map((ev: any) => {
-                      // Formatear o limpiar posibles tags HTML en los datos
-                      const rawDatos = ev.datos || '';
-                      const cleanDatos = rawDatos.replace(/<\/?[^>]+(>|$)/g, '\n').trim();
-
-                      return (
-                        <div 
-                          key={ev.id} 
-                          style={{
-                            padding: '14px 16px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '8px'
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ 
-                                fontWeight: 700, 
-                                fontSize: '0.85rem', 
-                                color: '#a5b4fc',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}>
-                                <ClipboardCheck size={15} />
-                                {ev.nombre_dentista || ev.nombre_usuario || 'Profesional Clínico'}
-                              </span>
-                              {ev.nombre_tratamiento && (
-                                <span style={{ fontSize: '0.75rem', opacity: 0.6, padding: '2px 6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
-                                  {ev.nombre_tratamiento}
-                                </span>
-                              )}
-                            </div>
-                            <span style={{ fontSize: '0.75rem', opacity: 0.5, fontFamily: 'monospace' }}>
-                              {ev.fecha_registro || ev.fecha || ''}
-                            </span>
-                          </div>
-
-                          <div style={{ 
-                            fontSize: '0.88rem', 
-                            lineHeight: '1.5', 
-                            opacity: 0.95, 
-                            whiteSpace: 'pre-wrap', 
-                            backgroundColor: 'rgba(0, 0, 0, 0.15)', 
-                            padding: '10px 12px', 
-                            borderRadius: '6px',
-                            borderLeft: '3px solid #818cf8'
-                          }}>
-                            {cleanDatos || 'Sin comentarios adicionales.'}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Review and observations block */}
             <div>

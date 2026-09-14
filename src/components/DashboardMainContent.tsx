@@ -3,6 +3,7 @@
 import React from 'react';
 import { useNavigationPreload } from '@/context/NavigationPreloadContext';
 import PreloadSkeleton from '@/components/PreloadSkeleton';
+import PrivacyNoticeBanner from '@/components/PrivacyNoticeBanner';
 
 export default function DashboardMainContent({ children }: { children: React.ReactNode }) {
   const { isNavigating, targetPath } = useNavigationPreload();
@@ -17,6 +18,9 @@ export default function DashboardMainContent({ children }: { children: React.Rea
         position: 'relative'
       }}
     >
+      {/* Sticky Bar de aviso de cumplimiento de Ley de Protección de Datos */}
+      <PrivacyNoticeBanner />
+
       {isNavigating && targetPath ? (
         <PreloadSkeleton path={targetPath} />
       ) : (
@@ -25,3 +29,4 @@ export default function DashboardMainContent({ children }: { children: React.Rea
     </div>
   );
 }
+
