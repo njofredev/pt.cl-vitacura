@@ -32,6 +32,10 @@ interface CaseData {
   status?: string;
   observations?: string | null;
   evaluator_name?: string | null;
+  epicrisis_diagnosis?: string | null;
+  epicrisis_indications?: string | null;
+  epicrisis_by_name?: string | null;
+  epicrisis_at?: string | Date | null;
 }
 
 interface PrintViewerClientProps {
@@ -384,6 +388,56 @@ export default function PrintViewerClient({
             <div style={{ marginBottom: '30px', color: '#0f172a' }}>
               <strong>Procedimiento Solicitado / Indicaciones específicas:</strong> <span style={{ whiteSpace: 'pre-wrap', display: 'inline-block', verticalAlign: 'top' }}>{caseData.treatment_needed || 'Evaluación y tratamiento según diagnóstico.'}</span>
             </div>
+
+            {/* Epicrisis Odontológica de Alta (Si ha sido emitida) */}
+            {caseData.epicrisis_diagnosis && (
+              <div style={{
+                margin: '24px 0',
+                padding: '16px 20px',
+                border: '1.5px solid #0d9488',
+                borderRadius: '8px',
+                backgroundColor: '#f0fdfa',
+                color: '#0f172a'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottom: '1px solid rgba(13, 148, 136, 0.3)',
+                  paddingBottom: '8px',
+                  marginBottom: '12px'
+                }}>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f766e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Epicrisis Clínica Odontológica / Alta Médica
+                  </strong>
+                  {caseData.epicrisis_at && (
+                    <span style={{ fontSize: '0.78rem', color: '#0f766e', fontWeight: 600 }}>
+                      Fecha de Alta: {new Date(caseData.epicrisis_at).toLocaleDateString('es-CL')}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: '10px' }}>
+                  <strong style={{ fontSize: '0.85rem', color: '#134e4a' }}>Diagnóstico de Alta / Tratamiento Efectuado:</strong>
+                  <div style={{ fontSize: '0.9rem', marginTop: '4px', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                    {caseData.epicrisis_diagnosis}
+                  </div>
+                </div>
+
+                {caseData.epicrisis_indications && (
+                  <div style={{ marginBottom: '10px' }}>
+                    <strong style={{ fontSize: '0.85rem', color: '#134e4a' }}>Indicaciones y Cuidados de Alta:</strong>
+                    <div style={{ fontSize: '0.9rem', marginTop: '4px', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                      {caseData.epicrisis_indications}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ fontSize: '0.8rem', color: '#0f766e', marginTop: '10px', paddingTop: '6px', borderTop: '1px dashed rgba(13, 148, 136, 0.3)' }}>
+                  <strong>Profesional Responsable de Alta:</strong> {caseData.epicrisis_by_name || 'Dr. Antonio Alvear Muñoz'}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Signature and Professional stamps */}

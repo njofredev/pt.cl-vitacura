@@ -22,10 +22,12 @@ export default async function PrintCasePage({ params }: { params: { id: string }
           c.*, 
           p.rut, p.first_names, p.last_names, p.nationality, p.birth_date, p.commune, p.email as person_email, p.mobile,
           u.name as registered_by_name,
+          COALESCE(u_epi.name, 'Dr. Antonio Alvear Muñoz') as epicrisis_by_name,
           ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM c.created_at) ORDER BY c.created_at ASC) as yearly_correlative
         FROM cases c
         JOIN persons p ON c.person_id = p.id
         LEFT JOIN users u ON c.registered_by = u.id
+        LEFT JOIN users u_epi ON c.epicrisis_by = u_epi.id
       )
       SELECT * FROM global_cases
       WHERE id = $1

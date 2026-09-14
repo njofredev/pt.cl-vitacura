@@ -606,7 +606,7 @@ export default async function DashboardPage() {
                         </td>
                         <td>
                           <span className={`badge badge-${c.status}`} style={{ fontWeight: 800, fontSize: '0.68rem', letterSpacing: '0.04em' }}>
-                            {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                            {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'epicrisis_pendiente' ? 'Epicrisis Pendiente' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                           </span>
                         </td>
                         {user.role === 'internal' && (

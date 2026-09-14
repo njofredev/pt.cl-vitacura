@@ -363,7 +363,7 @@ export async function notifySincronizadoStatusChange(caseId: string) {
 
 export async function updateCaseStatusAction(
   caseId: string, 
-  status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado', 
+  status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'epicrisis_pendiente' | 'finalizado' | 'sincronizado', 
   observations: string,
   dentalinkTreatmentId?: number | null
 ) {
@@ -390,7 +390,7 @@ export async function updateCaseStatusAction(
       newHistory['ingresado'] = c.created_at ? new Date(c.created_at).toISOString() : nowStr;
     }
 
-    const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+    const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'epicrisis_pendiente', 'finalizado'];
     const targetIndex = STATUS_ORDER.indexOf(status);
     for (let i = 0; i <= targetIndex; i++) {
       const stateName = STATUS_ORDER[i];
@@ -793,7 +793,7 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     const appts = patAppts.filter((appt: any) => appt.id_tratamiento === matchingTreatment.id && appt.estado_anulacion === 0);
     const evs = patEvs.filter((ev: any) => ev.id_tratamiento === matchingTreatment.id);
     
-    let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = c.status;
+    let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'epicrisis_pendiente' | 'finalizado' = c.status;
     let obs = c.observations || '';
     
     // Fetch details of the matching treatment to verify if all prestaciones are completed
@@ -801,12 +801,16 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     const details = detailsRes.success && detailsRes.details ? detailsRes.details : [];
     const allDetailsCompleted = details.length > 0 && details.every((detail: any) => Number(detail.realizado) === 1);
     
-    if (matchingTreatment.finalizado === 1) {
-      newStatus = 'finalizado';
-      obs = 'Tratamiento finalizado y completado en Dentalink.';
-    } else if (allDetailsCompleted) {
-      newStatus = 'finalizado';
-      obs = 'Todas las prestaciones del plan de tratamiento han sido realizadas en Dentalink.';
+    if (matchingTreatment.finalizado === 1 || allDetailsCompleted) {
+      if (c.status === 'finalizado') {
+        newStatus = 'finalizado';
+        obs = c.observations || 'Tratamiento completado y con epicrisis emitida.';
+      } else {
+        newStatus = 'epicrisis_pendiente';
+        obs = matchingTreatment.finalizado === 1 
+          ? 'Tratamiento completado en Dentalink. Pendiente redacción y emisión de Epicrisis Clínica.'
+          : 'Todas las prestaciones realizadas en Dentalink. Pendiente redacción y emisión de Epicrisis Clínica.';
+      }
     } else {
       // Ignore purely administrative notes (like transferring doctor or plan) from considering treatment as clinically started
       const clinicalEvs = evs.filter((ev: any) => {
@@ -836,7 +840,7 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     }
     
     // Prevent automatic downgrade to 'ingresado' if the case was already synchronized or advanced
-    const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+    const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'epicrisis_pendiente', 'finalizado'];
     const currentIndex = STATUS_ORDER.indexOf(c.status);
     const newIndex = STATUS_ORDER.indexOf(newStatus);
     
@@ -1190,6 +1194,97 @@ export async function getCaseDentalinkEvolutionsAction(caseId: string) {
     return { success: false, error: err.message || 'Error de servidor' };
   }
 }
+
+export async function saveEpicrisisAction(
+  caseId: string,
+  diagnosis: string,
+  indications: string,
+  professionalName?: string
+) {
+  const session = await getSession();
+  if (!session || (session.role !== 'admin' && session.role !== 'internal')) {
+    return { error: 'No autorizado para emitir la epicrisis clínica' };
+  }
+
+  if (!caseId || !diagnosis.trim()) {
+    return { error: 'El diagnóstico de alta de la epicrisis es obligatorio' };
+  }
+
+  try {
+    const caseRes = await pool.query('SELECT status, status_history, created_at, dentalink_treatment_id FROM cases WHERE id = $1', [caseId]);
+    if (caseRes.rows.length === 0) {
+      return { error: 'Caso no encontrado' };
+    }
+
+    const c = caseRes.rows[0];
+    const previousStatus = c.status;
+    const currentHistory = c.status_history || {};
+    const newHistory = { ...currentHistory };
+    const nowStr = new Date().toISOString();
+
+    const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'epicrisis_pendiente', 'finalizado'];
+    const targetIndex = STATUS_ORDER.indexOf('finalizado');
+    for (let i = 0; i <= targetIndex; i++) {
+      const stateName = STATUS_ORDER[i];
+      if (!newHistory[stateName]) {
+        const backfillTime = new Date(Date.now() - (targetIndex - i) * 1000).toISOString();
+        newHistory[stateName] = backfillTime;
+      }
+    }
+
+    // Identificar ID del profesional emisor
+    // Si se especifica o si es Alvear, buscar o usar sesión actual
+    let emitterUserId = session.id;
+    if (professionalName && professionalName.toLowerCase().includes('alvear')) {
+      const alvearUserRes = await pool.query("SELECT id FROM users WHERE email = 'aalvear@policlinicotabancura.cl' OR name ILIKE '%Alvear%' LIMIT 1");
+      if (alvearUserRes.rows.length > 0) {
+        emitterUserId = alvearUserRes.rows[0].id;
+      }
+    }
+
+    const obs = 'Tratamiento concluido y Epicrisis Clínica emitida exitosamente.';
+
+    await pool.query(`
+      UPDATE cases
+      SET status = 'finalizado',
+          observations = $1,
+          epicrisis_diagnosis = $2,
+          epicrisis_indications = $3,
+          epicrisis_by = $4,
+          epicrisis_at = NOW(),
+          updated_by = $5,
+          updated_at = NOW(),
+          status_history = $6::jsonb
+      WHERE id = $7
+    `, [obs, diagnosis.trim(), (indications || '').trim(), emitterUserId, session.id, JSON.stringify(newHistory), caseId]);
+
+    await logAuditAction('CASE_STATUS_UPDATED', { 
+      caseId, 
+      status: 'finalizado', 
+      observations: obs, 
+      epicrisisEmitter: professionalName || session.name 
+    });
+
+    logStatusHistoryRecordAction({
+      caseId,
+      previousStatus,
+      newStatus: 'finalizado',
+      observations: obs,
+      userId: session.id,
+      userName: session.name,
+      userEmail: session.email,
+      metadata: { previousStatus, newStatus: 'finalizado', action: 'EPICRISIS_SAVED' }
+    }).catch(err => console.error('Error logging status history record for epicrisis:', err));
+
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/cases');
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error saving epicrisis:', err);
+    return { error: err.message || 'Error al guardar la epicrisis' };
+  }
+}
+
 
 
 

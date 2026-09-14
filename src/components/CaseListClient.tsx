@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { formatRUT, formatDate, formatDateTime, maskRUT, maskName, maskEmail, maskPhone, maskBirthDate } from '@/lib/utils';
-import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction, getCaseDentalinkDetailsAction } from '@/app/actions/caseActions';
+import { updateCaseStatusAction, deleteCaseAction, updateCaseDetailsAction, getCaseDentalinkDetailsAction, saveEpicrisisAction } from '@/app/actions/caseActions';
 import { getConveniosByMedicalCenterAction } from '@/app/actions/convenioActions';
 import { UserSession } from '@/lib/auth';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import Odontogram from '@/components/Odontogram';
 import { getOdontogramPrestacionesAction } from '@/app/actions/arancelActions';
 import PageHeader from '@/components/ui/PageHeader';
-import { Activity, Zap, MessageSquare, Paperclip, ChevronLeft, ChevronRight, FileText, Download, ExternalLink } from 'lucide-react';
+import { Activity, Zap, MessageSquare, Paperclip, ChevronLeft, ChevronRight, FileText, Download, ExternalLink, FileCheck, Award, Stethoscope } from 'lucide-react';
 
 interface CaseRecord {
   id: string;
@@ -31,7 +31,7 @@ interface CaseRecord {
   dental_diagnosis: string | null;
   treatment_needed: string | null;
   professional_name: string | null;
-  status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado';
+  status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'epicrisis_pendiente' | 'finalizado' | 'sincronizado';
   observations: string | null;
   created_at: Date | string;
   registered_by_name: string | null;
@@ -41,6 +41,10 @@ interface CaseRecord {
   xray_count?: number;
   status_history?: Record<string, string>;
   attachment_path?: string | null;
+  epicrisis_diagnosis?: string | null;
+  epicrisis_indications?: string | null;
+  epicrisis_by_name?: string | null;
+  epicrisis_at?: Date | string | null;
 }
 
 const formatDateTimeCompact = (dateInput: any) => {
@@ -162,11 +166,18 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
   }, [selectedCase?.id]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [evalStatus, setEvalStatus] = useState<'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado'>('ingresado');
+  const [evalStatus, setEvalStatus] = useState<'ingresado' | 'agendado' | 'en_tratamiento' | 'epicrisis_pendiente' | 'finalizado' | 'sincronizado'>('ingresado');
   const [evalObs, setEvalObs] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Epicrisis states
+  const [epicrisisDiagnosis, setEpicrisisDiagnosis] = useState('');
+  const [epicrisisIndications, setEpicrisisIndications] = useState('');
+  const [epicrisisEmitter, setEpicrisisEmitter] = useState('Dr. Antonio Alvear Muñoz');
+  const [isSavingEpicrisis, setIsSavingEpicrisis] = useState(false);
+  const [epicrisisSuccess, setEpicrisisSuccess] = useState<string | null>(null);
   const [prestacionesList, setPrestacionesList] = useState<{ id_prestacion: number; name: string }[]>([]);
 
   useEffect(() => {
@@ -305,6 +316,12 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
     setEditDentalDiagnosis(c.dental_diagnosis || '');
     setEditTreatmentNeeded(c.treatment_needed || '');
     setEditProfessionalName(c.professional_name || '');
+
+    // Initialize epicrisis fields
+    setEpicrisisDiagnosis(c.epicrisis_diagnosis || '');
+    setEpicrisisIndications(c.epicrisis_indications || '');
+    setEpicrisisEmitter(c.epicrisis_by_name || 'Dr. Antonio Alvear Muñoz');
+    setEpicrisisSuccess(null);
 
     const knownCenters = ['CESFAM Vitacura', 'CESFAM Lo Barnechea', 'Consultorio Dr. Aníbal Ariztía', 'Policlinico Tabancura'];
     if (c.medical_center && knownCenters.includes(c.medical_center)) {
@@ -911,6 +928,51 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
     }
   }
 
+  async function handleSaveEpicrisis(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedCase) return;
+
+    setIsSavingEpicrisis(true);
+    setError(null);
+    setEpicrisisSuccess(null);
+
+    try {
+      const result = await saveEpicrisisAction(
+        selectedCase.id,
+        epicrisisDiagnosis,
+        epicrisisIndications,
+        epicrisisEmitter
+      );
+
+      if (result.success) {
+        setEpicrisisSuccess('¡Epicrisis médica emitida y caso finalizado con éxito!');
+
+        const updated: CaseRecord = {
+          ...selectedCase,
+          status: 'finalizado',
+          observations: 'Tratamiento concluido y Epicrisis Clínica emitida exitosamente.',
+          epicrisis_diagnosis: epicrisisDiagnosis,
+          epicrisis_indications: epicrisisIndications,
+          epicrisis_by_name: epicrisisEmitter,
+          epicrisis_at: new Date().toISOString()
+        };
+
+        setCases(cases.map(c => c.id === selectedCase.id ? updated : c));
+        setSelectedCase(updated);
+
+        setTimeout(() => {
+          setEpicrisisSuccess(null);
+        }, 3000);
+      } else {
+        setError(result.error || 'Error al guardar la epicrisis');
+      }
+    } catch (err: any) {
+      setError('Error en el servidor al emitir la epicrisis clínica.');
+    } finally {
+      setIsSavingEpicrisis(false);
+    }
+  }
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
@@ -1004,6 +1066,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   { value: 'sincronizado', label: 'Sincronizados' },
                   { value: 'agendado', label: 'Agendados' },
                   { value: 'en_tratamiento', label: 'En Tratamiento' },
+                  { value: 'epicrisis_pendiente', label: 'Epicrisis Pendiente' },
                   { value: 'finalizado', label: 'Finalizados' }
                 ]}
               />
@@ -1294,7 +1357,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                           }
                         `}</style>
                         <span className={`badge badge-${c.status}`} style={{ cursor: 'help', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700 }}>
-                          {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                          {c.status === 'en_tratamiento' ? 'En tratamiento' : c.status === 'sincronizado' ? 'Sincronizado' : c.status === 'epicrisis_pendiente' ? 'Epicrisis Pendiente' : c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                         </span>
 
                         {/* Hover Tooltip Box */}
@@ -1329,6 +1392,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                             { key: 'sincronizado', label: 'Sincronizado', color: '#eab308' },
                             { key: 'agendado', label: 'Agendado', color: '#3b82f6' },
                             { key: 'en_tratamiento', label: 'En Tto', color: '#a855f7' },
+                            { key: 'epicrisis_pendiente', label: 'Epicrisis', color: '#6366f1' },
                             { key: 'finalizado', label: 'Finalizado', color: '#10b981' }
                           ];
 
@@ -2003,6 +2067,204 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
 
 
 
+            {/* Epicrisis Odontológica / Médica Block */}
+            {(selectedCase.status === 'epicrisis_pendiente' || selectedCase.status === 'finalizado' || selectedCase.epicrisis_diagnosis) && (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid rgba(245, 158, 11, 0.2)', paddingBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#f59e0b'
+                    }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#f59e0b', letterSpacing: '0.02em' }}>
+                        Epicrisis Clínica Odontológica / Alta Médica
+                      </h4>
+                      <p style={{ margin: 0, fontSize: '0.78rem', opacity: 0.7 }}>
+                        Documento oficial emitido conforme a la Ley de Derechos y Deberes del Paciente
+                      </p>
+                    </div>
+                  </div>
+                  {selectedCase.epicrisis_at && (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: '#10b981',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      padding: '4px 10px',
+                      borderRadius: '20px'
+                    }}>
+                      ✓ Emitida el {new Date(selectedCase.epicrisis_at).toLocaleDateString('es-CL')}
+                    </span>
+                  )}
+                </div>
+
+                {epicrisisSuccess && (
+                  <div style={{
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    color: '#10b981',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    marginBottom: '16px'
+                  }}>
+                    {epicrisisSuccess}
+                  </div>
+                )}
+
+                {/* Read-Only Mode: When user is external/reader OR case is already finalized and user isn't actively editing */}
+                {user.role === 'external' || user.role === 'reader' || (selectedCase.status === 'finalizado' && selectedCase.epicrisis_diagnosis) ? (
+                  selectedCase.epicrisis_diagnosis ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--glass-border)', padding: '14px 16px', borderRadius: '8px' }}>
+                        <strong style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', color: '#f59e0b', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                          Diagnóstico de Alta / Tratamiento Efectuado
+                        </strong>
+                        <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                          {selectedCase.epicrisis_diagnosis}
+                        </p>
+                      </div>
+
+                      {selectedCase.epicrisis_indications && (
+                        <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--glass-border)', padding: '14px 16px', borderRadius: '8px' }}>
+                          <strong style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', color: '#6366f1', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                            Indicaciones y Cuidados Posteriores
+                          </strong>
+                          <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                            {selectedCase.epicrisis_indications}
+                          </p>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', paddingTop: '10px', borderTop: '1px dashed var(--glass-border)', fontSize: '0.8rem', opacity: 0.8 }}>
+                        <span><strong>Profesional Responsable:</strong> {selectedCase.epicrisis_by_name || 'Dr. Antonio Alvear Muñoz'}</span>
+                        <a
+                          href={`/dashboard/cases/${selectedCase.id}/print`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            color: '#f59e0b',
+                            fontWeight: 700,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          Imprimir Certificado / Ficha
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '16px', textAlign: 'center', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '8px', border: '1px dashed rgba(245, 158, 11, 0.3)', fontSize: '0.85rem', color: '#f59e0b' }}>
+                      El caso se encuentra en revisión médica para la redacción y emisión de su Epicrisis Clínica por el equipo odontológico.
+                    </div>
+                  )
+                ) : (
+                  /* Clinical Staff / Admin Editor Form */
+                  <form onSubmit={handleSaveEpicrisis} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="epicrisis_diag" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f59e0b' }}>
+                        Diagnóstico de Alta / Resumen de Tratamiento Odontológico Realizado *
+                      </label>
+                      <textarea
+                        id="epicrisis_diag"
+                        className="form-textarea"
+                        rows={3}
+                        required
+                        value={epicrisisDiagnosis}
+                        onChange={(e) => setEpicrisisDiagnosis(e.target.value)}
+                        placeholder="Ej: Se realiza tratamiento restaurador en piezas 1.4 y 1.5 con resina compuesta. Profilaxis y destartraje supra e infragingival completados sin incidentes. Alta integral odontológica otorgada."
+                        disabled={isSavingEpicrisis}
+                        style={{ border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '8px', resize: 'vertical' }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="epicrisis_ind" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#6366f1' }}>
+                        Indicaciones Post-Alta, Cuidados y Derivaciones
+                      </label>
+                      <textarea
+                        id="epicrisis_ind"
+                        className="form-textarea"
+                        rows={2}
+                        value={epicrisisIndications}
+                        onChange={(e) => setEpicrisisIndications(e.target.value)}
+                        placeholder="Ej: Higiene bucal 3 veces al día con pasta fluorada de 1450 ppm. Uso diario de seda dental. Control preventivo en 6 meses en CESFAM de origen."
+                        disabled={isSavingEpicrisis}
+                        style={{ border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '8px', resize: 'vertical' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', alignItems: 'flex-end' }}>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="epicrisis_emitter" style={{ fontSize: '0.82rem', fontWeight: 700, opacity: 0.8 }}>
+                          Profesional Emisor Responsable
+                        </label>
+                        <CustomSelect
+                          value={epicrisisEmitter}
+                          onChange={(val) => setEpicrisisEmitter(val)}
+                          options={[
+                            { value: 'Dr. Antonio Alvear Muñoz', label: 'Dr. Antonio Alvear Muñoz (Director Clínico)' },
+                            { value: user.name, label: `${user.name} (Usuario Actual)` }
+                          ]}
+                          disabled={isSavingEpicrisis}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          type="submit"
+                          disabled={isSavingEpicrisis || !epicrisisDiagnosis.trim()}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 20px',
+                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#ffffff',
+                            fontWeight: 800,
+                            fontSize: '0.88rem',
+                            cursor: (isSavingEpicrisis || !epicrisisDiagnosis.trim()) ? 'not-allowed' : 'pointer',
+                            opacity: (isSavingEpicrisis || !epicrisisDiagnosis.trim()) ? 0.6 : 1,
+                            boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)'
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                          {isSavingEpicrisis ? 'Guardando...' : (selectedCase.epicrisis_at ? 'Actualizar Epicrisis' : 'Emitir Epicrisis y Finalizar Caso')}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
             {/* Review and observations block */}
             <div>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.8, color: 'hsl(var(--accent-hsl))', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2016,7 +2278,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)' }}>
                     <span style={{ fontSize: '0.9rem', opacity: 0.7, fontWeight: 600 }}>Estado actual:</span>
                     <span className={`badge badge-${selectedCase.status}`} style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
-                      {selectedCase.status === 'en_tratamiento' ? 'En tratamiento' : selectedCase.status === 'sincronizado' ? 'Sincronizado' : selectedCase.status.charAt(0).toUpperCase() + selectedCase.status.slice(1)}
+                      {selectedCase.status === 'en_tratamiento' ? 'En tratamiento' : selectedCase.status === 'epicrisis_pendiente' ? 'Epicrisis Pendiente' : selectedCase.status === 'sincronizado' ? 'Sincronizado' : selectedCase.status.charAt(0).toUpperCase() + selectedCase.status.slice(1)}
                     </span>
                   </div>
                   {selectedCase.observations ? (
@@ -2054,6 +2316,7 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         { value: 'sincronizado', label: 'Sincronizado' },
                         { value: 'agendado', label: 'Agendado' },
                         { value: 'en_tratamiento', label: 'En Tratamiento' },
+                        { value: 'epicrisis_pendiente', label: 'Epicrisis Pendiente' },
                         { value: 'finalizado', label: 'Finalizado' }
                       ]}
                       disabled={loading}

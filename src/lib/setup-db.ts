@@ -113,7 +113,7 @@ async function setup() {
         professional_phone VARCHAR(255),
         professional_website VARCHAR(255),
         professional_address VARCHAR(255),
-        status VARCHAR(20) DEFAULT 'ingresado' CHECK (status IN ('ingresado', 'agendado', 'en_tratamiento', 'finalizado', 'sincronizado')),
+        status VARCHAR(30) DEFAULT 'ingresado' CHECK (status IN ('ingresado', 'agendado', 'en_tratamiento', 'epicrisis_pendiente', 'finalizado', 'sincronizado')),
         observations TEXT,
         registered_by UUID REFERENCES users(id) ON DELETE SET NULL,
         updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -122,6 +122,10 @@ async function setup() {
         status_history JSONB DEFAULT '{}'::jsonb,
         attachment_path VARCHAR(512),
         dentalink_treatment_id INT,
+        epicrisis_diagnosis TEXT,
+        epicrisis_indications TEXT,
+        epicrisis_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        epicrisis_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );

@@ -360,6 +360,11 @@ button:active, .btn:active {
   color: #a855f7;
 }
 
+.badge-epicrisis_pendiente {
+  background-color: rgba(99, 102, 241, 0.18);
+  color: #6366f1;
+}
+
 .badge-rechazado {
   background-color: rgba(239, 68, 68, 0.15);
   color: hsl(var(--danger-hsl));

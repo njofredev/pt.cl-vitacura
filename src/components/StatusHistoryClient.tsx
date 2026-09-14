@@ -45,6 +45,7 @@ export default function StatusHistoryClient({ userRole }: { userRole?: string })
     { value: 'sincronizado', label: 'Sincronizado' },
     { value: 'agendado', label: 'Agendado' },
     { value: 'en_tratamiento', label: 'En Tratamiento' },
+    { value: 'epicrisis_pendiente', label: 'Epicrisis Pendiente' },
     { value: 'finalizado', label: 'Finalizado' },
   ];
 
@@ -162,6 +163,15 @@ export default function StatusHistoryClient({ userRole }: { userRole?: string })
             fontSize: '0.75rem', fontWeight: 700, backgroundColor: 'rgba(124, 58, 237, 0.12)', color: '#7c3aed', border: '1px solid rgba(124, 58, 237, 0.3)'
           }}>
             EN TRATAMIENTO
+          </span>
+        );
+      case 'epicrisis_pendiente':
+        return (
+          <span style={{ 
+            display: 'inline-flex', alignItems: 'center', padding: '3px 8px', borderRadius: '6px',
+            fontSize: '0.75rem', fontWeight: 700, backgroundColor: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)'
+          }}>
+            EPICRISIS PENDIENTE
           </span>
         );
       case 'finalizado':

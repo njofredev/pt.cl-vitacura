@@ -37,7 +37,7 @@ interface CaseRecord {
   treatment_needed: string | null;
   professional_name: string | null;
   professional_email?: string | null;
-  status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'finalizado' | 'sincronizado';
+  status: 'ingresado' | 'agendado' | 'en_tratamiento' | 'epicrisis_pendiente' | 'finalizado' | 'sincronizado';
   observations?: string | null;
   created_at: Date | string;
   registered_by_name: string | null;
@@ -421,12 +421,17 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             const appts = appointmentsMap[matchingTreatment.id] || [];
             
             const details = detailsMap[matchingTreatment.id] || [];
-            let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = c.status;
+            let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'epicrisis_pendiente' | 'finalizado' = c.status;
             let obs = c.observations || '';
             
             if (matchingTreatment.finalizado === 1) {
-              newStatus = 'finalizado';
-              obs = 'Tratamiento finalizado y completado en Dentalink.';
+              // If already finalizado, preserve it. Otherwise, route to epicrisis_pendiente for medical discharge report
+              if (c.status === 'finalizado') {
+                newStatus = 'finalizado';
+              } else {
+                newStatus = 'epicrisis_pendiente';
+                obs = 'Tratamiento completado en Dentalink. Pendiente redacción y emisión de Epicrisis Clínica.';
+              }
             } else {
               const clinicalEvs = evs.filter((ev: any) => {
                 const text = (ev.datos || '').toLowerCase();
@@ -453,7 +458,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
               }
             }
             
-            const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+            const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'epicrisis_pendiente', 'finalizado'];
             const currentIndex = STATUS_ORDER.indexOf(c.status);
             const newIndex = STATUS_ORDER.indexOf(newStatus);
             if (newIndex < currentIndex && currentIndex > 0) {
@@ -776,12 +781,16 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             const appts = appointmentsMap[matchingTreatment.id] || [];
             
             const details = detailsMap[matchingTreatment.id] || [];
-            let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'finalizado' = wizardCase.status;
+            let newStatus: 'ingresado' | 'sincronizado' | 'agendado' | 'en_tratamiento' | 'epicrisis_pendiente' | 'finalizado' = wizardCase.status;
             let obs = wizardCase.observations || '';
             
             if (matchingTreatment.finalizado === 1) {
-              newStatus = 'finalizado';
-              obs = 'Tratamiento finalizado y completado en Dentalink.';
+              if (wizardCase.status === 'finalizado') {
+                newStatus = 'finalizado';
+              } else {
+                newStatus = 'epicrisis_pendiente';
+                obs = 'Tratamiento completado en Dentalink. Pendiente redacción y emisión de Epicrisis Clínica.';
+              }
             } else {
               const clinicalEvs = evs.filter((ev: any) => {
                 const text = (ev.datos || '').toLowerCase();
@@ -808,7 +817,7 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
               }
             }
             
-            const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'finalizado'];
+            const STATUS_ORDER = ['ingresado', 'sincronizado', 'agendado', 'en_tratamiento', 'epicrisis_pendiente', 'finalizado'];
             const currentIndex = STATUS_ORDER.indexOf(wizardCase.status);
             const newIndex = STATUS_ORDER.indexOf(newStatus);
             if (newIndex < currentIndex && currentIndex > 0) {
