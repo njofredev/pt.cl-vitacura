@@ -701,13 +701,13 @@ export default function Sidebar({ user }: SidebarProps) {
         }
         maxWidth="680px"
       >
-        <div style={{ maxHeight: '72vh', overflowY: 'auto', paddingRight: '4px' }}>
+        <div style={{ maxHeight: '74vh', overflowY: 'auto', paddingRight: '6px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {RELEASE_HISTORY.map((rel) => (
             <div 
               key={rel.version}
               style={{
                 backgroundColor: 'hsl(var(--card-hsl))',
-                border: '1.5px dashed var(--glass-border)',
+                border: rel.isCurrent ? '2px dashed #22c55e' : '1.5px dashed var(--glass-border)',
                 borderRadius: '12px',
                 padding: '24px 28px',
                 display: 'flex',
@@ -719,7 +719,14 @@ export default function Sidebar({ user }: SidebarProps) {
               {/* Document Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)', paddingBottom: '14px' }}>
                 <div>
-                  <strong style={{ fontSize: '0.85rem', display: 'block', letterSpacing: '0.04em', fontWeight: 800 }}>POLICLÍNICO TABANCURA</strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <strong style={{ fontSize: '0.85rem', letterSpacing: '0.04em', fontWeight: 800 }}>POLICLÍNICO TABANCURA</strong>
+                    {rel.isCurrent && (
+                      <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#22c55e', background: 'rgba(34, 197, 94, 0.12)', padding: '1px 6px', borderRadius: '4px' }}>
+                        VERSIÓN ACTUAL
+                      </span>
+                    )}
+                  </div>
                   <span style={{ fontSize: '0.74rem', opacity: 0.75, display: 'block', fontWeight: 500 }}>{rel.department}</span>
                   <span style={{ fontSize: '0.72rem', opacity: 0.65, display: 'block' }}>{rel.area}</span>
                 </div>
@@ -744,7 +751,7 @@ export default function Sidebar({ user }: SidebarProps) {
                     fontSize: '0.85rem',
                     padding: '2px 10px',
                     borderRadius: '6px',
-                    boxShadow: '0 2px 8px rgba(34, 197, 94, 0.3)'
+                    boxShadow: rel.isCurrent ? '0 2px 8px rgba(34, 197, 94, 0.3)' : 'none'
                   }}>
                     {rel.version}
                   </span>
@@ -811,7 +818,9 @@ export default function Sidebar({ user }: SidebarProps) {
                       {rel.contactEmail || 'njofre@policlinicotabancura.cl'}
                     </a>
                   </div>
-                  <span style={{ opacity: 0.45, fontWeight: 700, fontFamily: 'monospace' }}>2/2</span>
+                  <span style={{ opacity: 0.45, fontWeight: 700, fontFamily: 'monospace' }}>
+                    {rel.pageNumber || '1/1'}
+                  </span>
                 </div>
               </div>
 
