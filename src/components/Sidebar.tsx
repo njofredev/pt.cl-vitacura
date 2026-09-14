@@ -713,36 +713,54 @@ export default function Sidebar({ user }: SidebarProps) {
             title="Versión más reciente"
             style={{
               position: 'absolute',
-              left: '-14px',
+              left: '0px',
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 10,
-              width: '40px',
-              height: '40px',
+              zIndex: 20,
+              width: '44px',
+              height: '44px',
               borderRadius: '50%',
-              backgroundColor: 'hsl(var(--card-hsl))',
-              border: '1.5px solid var(--glass-border)',
-              color: currentVersionIndex === 0 ? 'rgba(255, 255, 255, 0.2)' : 'hsl(var(--foreground-hsl))',
+              backgroundColor: currentVersionIndex === 0 ? 'rgba(0, 0, 0, 0.2)' : '#1e293b',
+              border: currentVersionIndex === 0 ? '1px solid rgba(255, 255, 255, 0.1)' : '2px solid #22c55e',
               cursor: currentVersionIndex === 0 ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+              boxShadow: '0 6px 18px rgba(0, 0, 0, 0.35)',
               transition: 'all 0.2s ease',
-              opacity: currentVersionIndex === 0 ? 0.35 : 1
+              opacity: currentVersionIndex === 0 ? 0.3 : 1
             }}
             onMouseEnter={(e) => {
               if (currentVersionIndex > 0) {
-                e.currentTarget.style.borderColor = '#22c55e';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                e.currentTarget.style.backgroundColor = '#22c55e';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.12)';
+                const svg = e.currentTarget.querySelector('svg');
+                if (svg) svg.style.stroke = '#ffffff';
               }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--glass-border)';
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              if (currentVersionIndex > 0) {
+                e.currentTarget.style.backgroundColor = '#1e293b';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                const svg = e.currentTarget.querySelector('svg');
+                if (svg) svg.style.stroke = '#22c55e';
+              }
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke={currentVersionIndex === 0 ? '#64748b' : '#22c55e'} 
+              strokeWidth="3" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              style={{ transition: 'stroke 0.2s ease' }}
+            >
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
           </button>
 
           {/* Botón de Navegación Derecha */}
@@ -753,43 +771,61 @@ export default function Sidebar({ user }: SidebarProps) {
             title="Versión anterior"
             style={{
               position: 'absolute',
-              right: '-14px',
+              right: '0px',
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 10,
-              width: '40px',
-              height: '40px',
+              zIndex: 20,
+              width: '44px',
+              height: '44px',
               borderRadius: '50%',
-              backgroundColor: 'hsl(var(--card-hsl))',
-              border: '1.5px solid var(--glass-border)',
-              color: currentVersionIndex === RELEASE_HISTORY.length - 1 ? 'rgba(255, 255, 255, 0.2)' : 'hsl(var(--foreground-hsl))',
+              backgroundColor: currentVersionIndex === RELEASE_HISTORY.length - 1 ? 'rgba(0, 0, 0, 0.2)' : '#1e293b',
+              border: currentVersionIndex === RELEASE_HISTORY.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : '2px solid #22c55e',
               cursor: currentVersionIndex === RELEASE_HISTORY.length - 1 ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+              boxShadow: '0 6px 18px rgba(0, 0, 0, 0.35)',
               transition: 'all 0.2s ease',
-              opacity: currentVersionIndex === RELEASE_HISTORY.length - 1 ? 0.35 : 1
+              opacity: currentVersionIndex === RELEASE_HISTORY.length - 1 ? 0.3 : 1
             }}
             onMouseEnter={(e) => {
               if (currentVersionIndex < RELEASE_HISTORY.length - 1) {
-                e.currentTarget.style.borderColor = '#22c55e';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                e.currentTarget.style.backgroundColor = '#22c55e';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.12)';
+                const svg = e.currentTarget.querySelector('svg');
+                if (svg) svg.style.stroke = '#ffffff';
               }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--glass-border)';
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              if (currentVersionIndex < RELEASE_HISTORY.length - 1) {
+                e.currentTarget.style.backgroundColor = '#1e293b';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                const svg = e.currentTarget.querySelector('svg');
+                if (svg) svg.style.stroke = '#22c55e';
+              }
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke={currentVersionIndex === RELEASE_HISTORY.length - 1 ? '#64748b' : '#22c55e'} 
+              strokeWidth="3" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              style={{ transition: 'stroke 0.2s ease' }}
+            >
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
           </button>
 
           {/* Hoja de Versión Activa */}
           {(() => {
             const rel = RELEASE_HISTORY[currentVersionIndex] || RELEASE_HISTORY[0];
             return (
-              <div style={{ width: '100%', padding: '0 16px' }}>
+              <div style={{ width: '100%', padding: '0 32px' }}>
                 <div 
                   key={rel.version}
                   className="animate-fade-in"
