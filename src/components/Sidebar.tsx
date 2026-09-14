@@ -323,32 +323,31 @@ export default function Sidebar({ user }: SidebarProps) {
                     }}
                     title="Ver notas de la versión actual"
                     style={{
-                      background: 'rgba(20, 184, 166, 0.12)',
-                      border: '1px solid rgba(20, 184, 166, 0.35)',
-                      color: 'hsl(var(--accent-hsl))',
-                      borderRadius: '12px',
-                      fontSize: '0.58rem',
+                      background: 'rgba(34, 197, 94, 0.15)',
+                      border: '1px solid rgba(34, 197, 94, 0.4)',
+                      color: '#22c55e',
+                      borderRadius: '6px',
+                      fontSize: '0.62rem',
                       fontWeight: 800,
                       padding: '1px 6px',
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '3px',
+                      gap: '4px',
                       transition: 'all 0.15s ease',
                       outline: 'none',
                       lineHeight: '1.2'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(20, 184, 166, 0.25)';
+                      e.currentTarget.style.background = 'rgba(34, 197, 94, 0.3)';
                       e.currentTarget.style.transform = 'scale(1.05)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(20, 184, 166, 0.12)';
+                      e.currentTarget.style.background = 'rgba(34, 197, 94, 0.15)';
                       e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >
                     <span>{CURRENT_VERSION}</span>
-                    <span style={{ opacity: 0.7, fontSize: '0.5rem' }}>ℹ</span>
                   </button>
                 </div>
               </div>
@@ -681,144 +680,150 @@ export default function Sidebar({ user }: SidebarProps) {
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              width: '32px',
-              height: '32px',
+              width: '34px',
+              height: '34px',
               borderRadius: '8px',
-              background: 'rgba(20, 184, 166, 0.15)',
+              background: 'rgba(34, 197, 94, 0.15)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'hsl(var(--accent-hsl))'
+              color: '#22c55e'
             }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             </div>
             <div>
-              <span style={{ fontSize: '1.05rem', fontWeight: 800 }}>Notas de la Versión del Software</span>
+              <span style={{ fontSize: '1.05rem', fontWeight: 800 }}>Notas de Versión del Sistema</span>
               <span style={{ display: 'block', fontSize: '0.72rem', opacity: 0.6, fontWeight: 500 }}>
-                Policlínico Tabancura • Sistema de Derivación Digital
+                Policlínico Tabancura • Derivaciones Digitales
               </span>
             </div>
           </div>
         }
         maxWidth="680px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '4px' }}>
-          
-          {RELEASE_HISTORY.map((rel, idx) => (
-            <div
+        <div style={{ maxHeight: '72vh', overflowY: 'auto', paddingRight: '4px' }}>
+          {RELEASE_HISTORY.map((rel) => (
+            <div 
               key={rel.version}
               style={{
-                background: rel.isLatest 
-                  ? 'linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%)' 
-                  : 'rgba(255, 255, 255, 0.02)',
-                border: rel.isLatest 
-                  ? '1px solid rgba(20, 184, 166, 0.3)' 
-                  : '1px solid var(--glass-border)',
+                backgroundColor: 'hsl(var(--card-hsl))',
+                border: '1.5px dashed var(--glass-border)',
                 borderRadius: '12px',
-                padding: '20px',
+                padding: '24px 28px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '14px'
+                gap: '20px',
+                position: 'relative'
               }}
             >
-              {/* Header version card */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {/* Document Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)', paddingBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img 
+                    src="/logo.png" 
+                    alt="Policlínico Tabancura" 
+                    style={{ width: '38px', height: '38px', objectFit: 'contain' }} 
+                  />
+                  <div>
+                    <strong style={{ fontSize: '0.82rem', display: 'block', letterSpacing: '0.02em' }}>POLICLÍNICO TABANCURA</strong>
+                    <span style={{ fontSize: '0.72rem', opacity: 0.7, display: 'block' }}>{rel.department}</span>
+                    <span style={{ fontSize: '0.7rem', opacity: 0.6, display: 'block' }}>{rel.area}</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, opacity: 0.75, fontFamily: 'monospace' }}>
+                  {rel.bienio}
+                </div>
+              </div>
+
+              {/* Title and version badge banner */}
+              <div>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, opacity: 0.7, textTransform: 'lowercase', letterSpacing: '0.04em' }}>
+                  notas de versión
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '2px', flexWrap: 'wrap' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
+                    Derivaciones Digitales
+                  </h2>
                   <span style={{
-                    fontSize: '1.15rem',
+                    backgroundColor: rel.badgeColor || '#22c55e',
+                    color: '#ffffff',
                     fontWeight: 900,
-                    fontFamily: 'monospace',
-                    color: rel.isLatest ? 'hsl(var(--accent-hsl))' : 'inherit'
+                    fontSize: '0.85rem',
+                    padding: '2px 10px',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 8px rgba(34, 197, 94, 0.3)'
                   }}>
                     {rel.version}
                   </span>
-                  {rel.isLatest && (
-                    <span style={{
-                      fontSize: '0.68rem',
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      backgroundColor: 'rgba(20, 184, 166, 0.2)',
-                      color: 'hsl(var(--accent-hsl))',
-                      padding: '2px 8px',
-                      borderRadius: '999px',
-                      border: '1px solid rgba(20, 184, 166, 0.4)'
-                    }}>
-                      Versión Actual
-                    </span>
-                  )}
-                  {rel.codename && (
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8 }}>
-                      • {rel.codename}
-                    </span>
-                  )}
                 </div>
-                <span style={{ fontSize: '0.78rem', opacity: 0.55, fontWeight: 500 }}>
-                  {rel.date}
-                </span>
               </div>
 
-              {/* Highlights */}
-              {rel.highlights && rel.highlights.length > 0 && (
-                <div style={{
-                  background: 'rgba(0, 0, 0, 0.15)',
-                  borderRadius: '8px',
-                  padding: '12px 14px',
-                  border: '1px solid rgba(255, 255, 255, 0.04)'
-                }}>
-                  <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.7, display: 'block', marginBottom: '6px' }}>
-                    Aspectos Destacados
-                  </strong>
-                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.86rem', lineHeight: '1.5', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {rel.highlights.map((h, i) => (
-                      <li key={i}>{h}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Document Body Sections */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                {rel.sections.map((sec, sIdx) => (
+                  <div key={sIdx} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.92rem', fontWeight: 800, color: 'hsl(var(--foreground-hsl))' }}>
+                      <span>{sec.icon}</span>
+                      <span>{sec.category}</span>
+                    </div>
 
-              {/* Detailed Categories */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {rel.sections.map((sec, secIdx) => (
-                  <div key={secIdx}>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      color: sec.category === 'Nuevas Funcionalidades' ? '#10b981' : sec.category === 'Seguridad & Privacidad' ? '#f59e0b' : sec.category === 'Mejoras Clínicas & Legales' ? '#6366f1' : '#38bdf8',
+                    <ul style={{
+                      margin: 0,
+                      paddingLeft: '22px',
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      marginBottom: '6px'
+                      flexDirection: 'column',
+                      gap: '8px',
+                      fontSize: '0.86rem',
+                      lineHeight: '1.5'
                     }}>
-                      <span style={{ fontSize: '0.8rem' }}>•</span>
-                      {sec.category}
-                    </span>
-                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.84rem', lineHeight: '1.5', opacity: 0.9, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {sec.items.map((item, itemIdx) => (
-                        <li key={itemIdx}>{item}</li>
+                      {sec.items.map((item, itmIdx) => (
+                        <li key={itmIdx} style={{ opacity: 0.9 }}>
+                          {item.title && (
+                            <strong style={{ color: 'hsl(var(--foreground-hsl))', fontWeight: 700 }}>
+                              {item.title}{' '}
+                            </strong>
+                          )}
+                          <span>{item.description}</span>
+                        </li>
                       ))}
                     </ul>
                   </div>
                 ))}
               </div>
 
+              {/* Document Footer: Próximamente & Sugerencias */}
+              <div style={{
+                marginTop: '10px',
+                paddingTop: '14px',
+                borderTop: '1px solid var(--glass-border)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                fontSize: '0.78rem'
+              }}>
+                {rel.proximamente && (
+                  <div>
+                    <strong style={{ opacity: 0.85 }}>Próximamente (v.1.1):</strong>{' '}
+                    <span style={{ opacity: 0.7 }}>{rel.proximamente}</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                  <div>
+                    <span style={{ opacity: 0.85, fontWeight: 700 }}>Deja tu sugerencia:</span>{' '}
+                    <a 
+                      href={`mailto:${rel.contactEmail || 'njofre@policlinicotabancura.cl'}`} 
+                      style={{ color: 'hsl(var(--accent-hsl))', textDecoration: 'none', fontWeight: 600 }}
+                    >
+                      {rel.contactEmail || 'njofre@policlinicotabancura.cl'}
+                    </a>
+                  </div>
+                  <span style={{ opacity: 0.45, fontWeight: 700, fontFamily: 'monospace' }}>2/2</span>
+                </div>
+              </div>
+
             </div>
           ))}
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--glass-border)', fontSize: '0.75rem', opacity: 0.6 }}>
-            <span>© 2026 Policlínico Tabancura. Todos los derechos reservados.</span>
-            <button
-              type="button"
-              onClick={() => setIsVersionModalOpen(false)}
-              className="btn-secondary"
-              style={{ padding: '6px 16px', fontSize: '0.8rem' }}
-            >
-              Entendido
-            </button>
-          </div>
-
         </div>
       </Modal>
 

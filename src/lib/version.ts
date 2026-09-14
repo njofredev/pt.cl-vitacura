@@ -1,79 +1,79 @@
 export interface ReleaseVersion {
   version: string;
+  badgeColor?: string;
   date: string;
-  codename?: string;
-  isLatest?: boolean;
-  highlights: string[];
+  department?: string;
+  area?: string;
+  bienio?: string;
+  highlights?: string[];
   sections: {
-    category: 'Nuevas Funcionalidades' | 'Mejoras Clínicas & Legales' | 'Seguridad & Privacidad' | 'Correcciones';
-    items: string[];
+    category: string;
+    icon?: string;
+    color?: string;
+    items: {
+      title?: string;
+      description: string;
+    }[];
   }[];
+  proximamente?: string;
+  contactEmail?: string;
 }
 
-export const CURRENT_VERSION = 'v1.1.0';
+export const CURRENT_VERSION = 'v1.0.1';
 
 export const RELEASE_HISTORY: ReleaseVersion[] = [
   {
-    version: 'v1.1.0',
-    date: 'Septiembre 2026',
-    codename: 'Epicrisis & Cumplimiento Normativo',
-    isLatest: true,
-    highlights: [
-      'Nuevo estado clínico intermedio "Epicrisis Pendiente".',
-      'Módulo oficial de emisión de Epicrisis Odontológica / Alta Médica.',
-      'Protección estricta de fichas y evoluciones raw conforme a Ley 21.719.',
-      'Sincronización bidireccional automática con Dentalink.'
-    ],
-    sections: [
-      {
-        category: 'Nuevas Funcionalidades',
-        items: [
-          'Estado "Epicrisis Pendiente": Transición previa al alta definitiva que exige informe médico suscrito por el profesional emisor (por defecto Dr. Antonio Alvear Muñoz).',
-          'Tarjeta de Alta Odontológica: Vista formal para usuarios externos y derivadores con diagnóstico integral, indicaciones post-alta y profesional a cargo.',
-          'Incorporación de Epicrisis Oficial en Fichas y Certificados Imprimibles con sello institucional.'
-        ]
-      },
-      {
-        category: 'Seguridad & Privacidad',
-        items: [
-          'Bloqueo preventivo de despliegue de evoluciones y adjuntos directos sin consentimiento explícito (Ley de Protección de Datos Personales).',
-          'Barra informativa normalizada de precaución legal en bandejas de casos.',
-          'Trazabilidad e inmutabilidad en auditoría de cambios de estado y emisión de altas.'
-        ]
-      },
-      {
-        category: 'Mejoras Clínicas & Legales',
-        items: [
-          'Sincronización continua de Dentalink: detección automática de tratamientos culminados que pasan inmediatamente a requerimiento de Epicrisis.',
-          'Módulo de exportación PDF y Excel con datos anonimizados para perfiles de solo lectura.'
-        ]
-      }
-    ]
-  },
-  {
     version: 'v1.0.1',
-    date: 'Agosto 2026',
-    codename: 'Sincronización Dentalink & Convenios',
-    isLatest: false,
-    highlights: [
-      'Integración con Dentalink API.',
-      'Gestión dinámica de aranceles y convenios institucionales.'
-    ],
+    badgeColor: '#22c55e',
+    date: '2026 - 2027',
+    department: 'Departamento TIC',
+    area: 'Área de Desarrollo y Sistemas Informáticos',
+    bienio: '2026 - 2027',
     sections: [
       {
-        category: 'Nuevas Funcionalidades',
+        category: 'Nuevas funcionalidades:',
+        icon: '⭐',
+        color: '#f59e0b',
         items: [
-          'Asistente de Ingreso Automático paso a paso con validación de RUT en Dentalink.',
-          'Control y asignación de cuotas dentales y radiográficas por institución derivadora.'
+          {
+            title: 'Seguimiento clínico completo:',
+            description: 'En los casos finalizados, ahora es posible consultar la evolución clínica ingresada por el profesional tratante del Policlínico.'
+          },
+          {
+            title: 'Visualización de exámenes e informes dentales:',
+            description: 'Acceso directo a las radiografías e informes generados durante la atención. Por seguridad e integración con Dentalink, los enlaces de visualización tienen una vigencia de 1 hora al abrir la ficha del paciente.'
+          },
+          {
+            title: 'Impresión integral del caso:',
+            description: 'La vista de impresión ahora incluye el historial de evolución y los archivos clínicos pertinentes a la derivación.'
+          },
+          {
+            title: 'Integración Dentalink:',
+            description: 'Se sincroniza la información seleccionada e ingresada en el Odontograma directamente en la ficha del paciente.'
+          }
         ]
       },
       {
-        category: 'Correcciones',
+        category: 'Mejoras y seguridad:',
+        icon: '🔧',
+        color: '#0ea5e9',
         items: [
-          'Optimización de tiempos de carga en bandeja de casos sociales.',
-          'Corrección en cálculo correlativo anual de casos.'
+          {
+            title: 'Sincronización de estados:',
+            description: 'Mayor robustez y consistencia en el flujo de estados (Ingresado, Agendado, En tratamiento, etc).'
+          },
+          {
+            title: 'Experiencia de usuario:',
+            description: 'Mejoras visuales, animaciones más fluidas y diseño de interfaz optimizado.'
+          },
+          {
+            title: 'Protección de Datos personales:',
+            description: 'Actualización técnica y operativa alineada con las exigencias de la ley N°21.719.'
+          }
         ]
       }
-    ]
+    ],
+    proximamente: 'Versión Mobile, Reportes automatizados, Upload de radiografías entre otros.',
+    contactEmail: 'njofre@policlinicotabancura.cl'
   }
 ];
