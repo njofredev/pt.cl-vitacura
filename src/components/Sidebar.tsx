@@ -718,17 +718,10 @@ export default function Sidebar({ user }: SidebarProps) {
             >
               {/* Document Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)', paddingBottom: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <img 
-                    src="/logo.png" 
-                    alt="Policlínico Tabancura" 
-                    style={{ width: '38px', height: '38px', objectFit: 'contain' }} 
-                  />
-                  <div>
-                    <strong style={{ fontSize: '0.82rem', display: 'block', letterSpacing: '0.02em' }}>POLICLÍNICO TABANCURA</strong>
-                    <span style={{ fontSize: '0.72rem', opacity: 0.7, display: 'block' }}>{rel.department}</span>
-                    <span style={{ fontSize: '0.7rem', opacity: 0.6, display: 'block' }}>{rel.area}</span>
-                  </div>
+                <div>
+                  <strong style={{ fontSize: '0.85rem', display: 'block', letterSpacing: '0.04em', fontWeight: 800 }}>POLICLÍNICO TABANCURA</strong>
+                  <span style={{ fontSize: '0.74rem', opacity: 0.75, display: 'block', fontWeight: 500 }}>{rel.department}</span>
+                  <span style={{ fontSize: '0.72rem', opacity: 0.65, display: 'block' }}>{rel.area}</span>
                 </div>
                 <div style={{ fontSize: '0.78rem', fontWeight: 700, opacity: 0.75, fontFamily: 'monospace' }}>
                   {rel.bienio}
