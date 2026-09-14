@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 import { handleLogout } from '@/app/actions/authActions';
 import { UserSession } from '@/lib/auth';
 import { useNavigationPreload } from '@/context/NavigationPreloadContext';
+import { CURRENT_VERSION, RELEASE_HISTORY } from '@/lib/version';
+import Modal from '@/components/ui/Modal';
 
 interface SidebarProps {
   user: UserSession;
@@ -15,6 +17,7 @@ export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const { startPreloadNavigation, isNavigating, targetPath } = useNavigationPreload();
   const [isOpen, setIsOpen] = useState(true);
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
 
   // Detect screen size to close sidebar on mobile by default
   useEffect(() => {
@@ -301,16 +304,53 @@ export default function Sidebar({ user }: SidebarProps) {
                 }}>
                   Policlínico Tabancura
                 </span>
-                <span style={{ 
-                  fontSize: '0.62rem', 
-                  fontWeight: 800, 
-                  textTransform: 'uppercase',
-                  color: 'hsl(var(--accent-hsl))',
-                  letterSpacing: '0.08em',
-                  opacity: 0.95
-                }}>
-                  DERIVACIÓN DIGITAL
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '1px' }}>
+                  <span style={{ 
+                    fontSize: '0.62rem', 
+                    fontWeight: 800, 
+                    textTransform: 'uppercase', 
+                    color: 'hsl(var(--accent-hsl))',
+                    letterSpacing: '0.08em',
+                    opacity: 0.95
+                  }}>
+                    DERIVACIÓN DIGITAL
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsVersionModalOpen(true);
+                    }}
+                    title="Ver notas de la versión actual"
+                    style={{
+                      background: 'rgba(20, 184, 166, 0.12)',
+                      border: '1px solid rgba(20, 184, 166, 0.35)',
+                      color: 'hsl(var(--accent-hsl))',
+                      borderRadius: '12px',
+                      fontSize: '0.58rem',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                      transition: 'all 0.15s ease',
+                      outline: 'none',
+                      lineHeight: '1.2'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(20, 184, 166, 0.25)';
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(20, 184, 166, 0.12)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    <span>{CURRENT_VERSION}</span>
+                    <span style={{ opacity: 0.7, fontSize: '0.5rem' }}>ℹ</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -633,6 +673,154 @@ export default function Sidebar({ user }: SidebarProps) {
           </button>
         </div>
       </aside>
+
+      {/* Modal de Notas de la Versión */}
+      <Modal
+        isOpen={isVersionModalOpen}
+        onClose={() => setIsVersionModalOpen(false)}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: 'rgba(20, 184, 166, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'hsl(var(--accent-hsl))'
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </div>
+            <div>
+              <span style={{ fontSize: '1.05rem', fontWeight: 800 }}>Notas de la Versión del Software</span>
+              <span style={{ display: 'block', fontSize: '0.72rem', opacity: 0.6, fontWeight: 500 }}>
+                Policlínico Tabancura • Sistema de Derivación Digital
+              </span>
+            </div>
+          </div>
+        }
+        maxWidth="680px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '4px' }}>
+          
+          {RELEASE_HISTORY.map((rel, idx) => (
+            <div
+              key={rel.version}
+              style={{
+                background: rel.isLatest 
+                  ? 'linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%)' 
+                  : 'rgba(255, 255, 255, 0.02)',
+                border: rel.isLatest 
+                  ? '1px solid rgba(20, 184, 166, 0.3)' 
+                  : '1px solid var(--glass-border)',
+                borderRadius: '12px',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}
+            >
+              {/* Header version card */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{
+                    fontSize: '1.15rem',
+                    fontWeight: 900,
+                    fontFamily: 'monospace',
+                    color: rel.isLatest ? 'hsl(var(--accent-hsl))' : 'inherit'
+                  }}>
+                    {rel.version}
+                  </span>
+                  {rel.isLatest && (
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      backgroundColor: 'rgba(20, 184, 166, 0.2)',
+                      color: 'hsl(var(--accent-hsl))',
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      border: '1px solid rgba(20, 184, 166, 0.4)'
+                    }}>
+                      Versión Actual
+                    </span>
+                  )}
+                  {rel.codename && (
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8 }}>
+                      • {rel.codename}
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: '0.78rem', opacity: 0.55, fontWeight: 500 }}>
+                  {rel.date}
+                </span>
+              </div>
+
+              {/* Highlights */}
+              {rel.highlights && rel.highlights.length > 0 && (
+                <div style={{
+                  background: 'rgba(0, 0, 0, 0.15)',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  border: '1px solid rgba(255, 255, 255, 0.04)'
+                }}>
+                  <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.7, display: 'block', marginBottom: '6px' }}>
+                    Aspectos Destacados
+                  </strong>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.86rem', lineHeight: '1.5', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {rel.highlights.map((h, i) => (
+                      <li key={i}>{h}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Detailed Categories */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {rel.sections.map((sec, secIdx) => (
+                  <div key={secIdx}>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: sec.category === 'Nuevas Funcionalidades' ? '#10b981' : sec.category === 'Seguridad & Privacidad' ? '#f59e0b' : sec.category === 'Mejoras Clínicas & Legales' ? '#6366f1' : '#38bdf8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginBottom: '6px'
+                    }}>
+                      <span style={{ fontSize: '0.8rem' }}>•</span>
+                      {sec.category}
+                    </span>
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.84rem', lineHeight: '1.5', opacity: 0.9, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {sec.items.map((item, itemIdx) => (
+                        <li key={itemIdx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          ))}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--glass-border)', fontSize: '0.75rem', opacity: 0.6 }}>
+            <span>© 2026 Policlínico Tabancura. Todos los derechos reservados.</span>
+            <button
+              type="button"
+              onClick={() => setIsVersionModalOpen(false)}
+              className="btn-secondary"
+              style={{ padding: '6px 16px', fontSize: '0.8rem' }}
+            >
+              Entendido
+            </button>
+          </div>
+
+        </div>
+      </Modal>
 
       {/* CSS injected to handle responsiveness, collapse margins & Emil Kowalski micro-interactions */}
       <style jsx global>{`
