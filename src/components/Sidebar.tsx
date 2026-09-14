@@ -18,6 +18,7 @@ export default function Sidebar({ user }: SidebarProps) {
   const { startPreloadNavigation, isNavigating, targetPath } = useNavigationPreload();
   const [isOpen, setIsOpen] = useState(true);
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+  const [currentVersionIndex, setCurrentVersionIndex] = useState(0);
 
   // Detect screen size to close sidebar on mobile by default
   useEffect(() => {
@@ -319,6 +320,7 @@ export default function Sidebar({ user }: SidebarProps) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setCurrentVersionIndex(0);
                       setIsVersionModalOpen(true);
                     }}
                     title="Ver notas de la versión actual"
@@ -699,133 +701,248 @@ export default function Sidebar({ user }: SidebarProps) {
             </div>
           </div>
         }
-        maxWidth="680px"
+        maxWidth="720px"
       >
-        <div style={{ maxHeight: '74vh', overflowY: 'auto', paddingRight: '6px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {RELEASE_HISTORY.map((rel) => (
-            <div 
-              key={rel.version}
-              style={{
-                backgroundColor: 'hsl(var(--card-hsl))',
-                border: rel.isCurrent ? '2px dashed #22c55e' : '1.5px dashed var(--glass-border)',
-                borderRadius: '12px',
-                padding: '24px 28px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '20px',
-                position: 'relative'
-              }}
-            >
-              {/* Document Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)', paddingBottom: '14px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <strong style={{ fontSize: '0.85rem', letterSpacing: '0.04em', fontWeight: 800 }}>POLICLÍNICO TABANCURA</strong>
-                    {rel.isCurrent && (
-                      <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#22c55e', background: 'rgba(34, 197, 94, 0.12)', padding: '1px 6px', borderRadius: '4px' }}>
-                        VERSIÓN ACTUAL
-                      </span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: '0.74rem', opacity: 0.75, display: 'block', fontWeight: 500 }}>{rel.department}</span>
-                  <span style={{ fontSize: '0.72rem', opacity: 0.65, display: 'block' }}>{rel.area}</span>
-                </div>
-                <div style={{ fontSize: '0.78rem', fontWeight: 700, opacity: 0.75, fontFamily: 'monospace' }}>
-                  {rel.bienio}
-                </div>
-              </div>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          
+          {/* Botón de Navegación Izquierda */}
+          <button
+            type="button"
+            onClick={() => setCurrentVersionIndex((prev) => Math.max(0, prev - 1))}
+            disabled={currentVersionIndex === 0}
+            title="Versión más reciente"
+            style={{
+              position: 'absolute',
+              left: '-14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 10,
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: 'hsl(var(--card-hsl))',
+              border: '1.5px solid var(--glass-border)',
+              color: currentVersionIndex === 0 ? 'rgba(255, 255, 255, 0.2)' : 'hsl(var(--foreground-hsl))',
+              cursor: currentVersionIndex === 0 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+              transition: 'all 0.2s ease',
+              opacity: currentVersionIndex === 0 ? 0.35 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (currentVersionIndex > 0) {
+                e.currentTarget.style.borderColor = '#22c55e';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--glass-border)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
 
-              {/* Title and version badge banner */}
-              <div>
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, opacity: 0.7, textTransform: 'lowercase', letterSpacing: '0.04em' }}>
-                  notas de versión
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '2px', flexWrap: 'wrap' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
-                    Derivaciones Digitales
-                  </h2>
-                  <span style={{
-                    backgroundColor: rel.badgeColor || '#22c55e',
-                    color: '#ffffff',
-                    fontWeight: 900,
-                    fontSize: '0.85rem',
-                    padding: '2px 10px',
-                    borderRadius: '6px',
-                    boxShadow: rel.isCurrent ? '0 2px 8px rgba(34, 197, 94, 0.3)' : 'none'
-                  }}>
-                    {rel.version}
-                  </span>
-                </div>
-              </div>
+          {/* Botón de Navegación Derecha */}
+          <button
+            type="button"
+            onClick={() => setCurrentVersionIndex((prev) => Math.min(RELEASE_HISTORY.length - 1, prev + 1))}
+            disabled={currentVersionIndex === RELEASE_HISTORY.length - 1}
+            title="Versión anterior"
+            style={{
+              position: 'absolute',
+              right: '-14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 10,
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: 'hsl(var(--card-hsl))',
+              border: '1.5px solid var(--glass-border)',
+              color: currentVersionIndex === RELEASE_HISTORY.length - 1 ? 'rgba(255, 255, 255, 0.2)' : 'hsl(var(--foreground-hsl))',
+              cursor: currentVersionIndex === RELEASE_HISTORY.length - 1 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+              transition: 'all 0.2s ease',
+              opacity: currentVersionIndex === RELEASE_HISTORY.length - 1 ? 0.35 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (currentVersionIndex < RELEASE_HISTORY.length - 1) {
+                e.currentTarget.style.borderColor = '#22c55e';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--glass-border)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
 
-              {/* Document Body Sections */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                {rel.sections.map((sec, sIdx) => (
-                  <div key={sIdx} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.92rem', fontWeight: 800, color: 'hsl(var(--foreground-hsl))' }}>
-                      <span>{sec.icon}</span>
-                      <span>{sec.category}</span>
+          {/* Hoja de Versión Activa */}
+          {(() => {
+            const rel = RELEASE_HISTORY[currentVersionIndex] || RELEASE_HISTORY[0];
+            return (
+              <div style={{ width: '100%', padding: '0 16px' }}>
+                <div 
+                  key={rel.version}
+                  className="animate-fade-in"
+                  style={{
+                    backgroundColor: 'hsl(var(--card-hsl))',
+                    border: rel.isCurrent ? '2px dashed #22c55e' : '1.5px dashed var(--glass-border)',
+                    borderRadius: '12px',
+                    padding: '24px 28px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px',
+                    position: 'relative',
+                    boxShadow: rel.isCurrent ? '0 0 25px rgba(34, 197, 94, 0.08)' : 'none'
+                  }}
+                >
+                  {/* Document Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)', paddingBottom: '14px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <strong style={{ fontSize: '0.85rem', letterSpacing: '0.04em', fontWeight: 800 }}>POLICLÍNICO TABANCURA</strong>
+                        {rel.isCurrent && (
+                          <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#22c55e', background: 'rgba(34, 197, 94, 0.12)', padding: '1px 6px', borderRadius: '4px' }}>
+                            VERSIÓN ACTUAL
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: '0.74rem', opacity: 0.75, display: 'block', fontWeight: 500 }}>{rel.department}</span>
+                      <span style={{ fontSize: '0.72rem', opacity: 0.65, display: 'block' }}>{rel.area}</span>
                     </div>
-
-                    <ul style={{
-                      margin: 0,
-                      paddingLeft: '22px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      fontSize: '0.86rem',
-                      lineHeight: '1.5'
-                    }}>
-                      {sec.items.map((item, itmIdx) => (
-                        <li key={itmIdx} style={{ opacity: 0.9 }}>
-                          {item.title && (
-                            <strong style={{ color: 'hsl(var(--foreground-hsl))', fontWeight: 700 }}>
-                              {item.title}{' '}
-                            </strong>
-                          )}
-                          <span>{item.description}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, opacity: 0.75, fontFamily: 'monospace' }}>
+                      {rel.bienio}
+                    </div>
                   </div>
-                ))}
-              </div>
 
-              {/* Document Footer: Próximamente & Sugerencias */}
-              <div style={{
-                marginTop: '10px',
-                paddingTop: '14px',
-                borderTop: '1px solid var(--glass-border)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                fontSize: '0.78rem'
-              }}>
-                {rel.proximamente && (
+                  {/* Title and version badge banner */}
                   <div>
-                    <strong style={{ opacity: 0.85 }}>Próximamente (v.1.1):</strong>{' '}
-                    <span style={{ opacity: 0.7 }}>{rel.proximamente}</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, opacity: 0.7, textTransform: 'lowercase', letterSpacing: '0.04em' }}>
+                      notas de versión
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '2px', flexWrap: 'wrap' }}>
+                      <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
+                        Derivaciones Digitales
+                      </h2>
+                      <span style={{
+                        backgroundColor: rel.badgeColor || '#22c55e',
+                        color: '#ffffff',
+                        fontWeight: 900,
+                        fontSize: '0.85rem',
+                        padding: '2px 10px',
+                        borderRadius: '6px',
+                        boxShadow: rel.isCurrent ? '0 2px 8px rgba(34, 197, 94, 0.3)' : 'none'
+                      }}>
+                        {rel.version}
+                      </span>
+                    </div>
                   </div>
-                )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
-                  <div>
-                    <span style={{ opacity: 0.85, fontWeight: 700 }}>Deja tu sugerencia:</span>{' '}
-                    <a 
-                      href={`mailto:${rel.contactEmail || 'njofre@policlinicotabancura.cl'}`} 
-                      style={{ color: 'hsl(var(--accent-hsl))', textDecoration: 'none', fontWeight: 600 }}
-                    >
-                      {rel.contactEmail || 'njofre@policlinicotabancura.cl'}
-                    </a>
+                  {/* Document Body Sections */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                    {rel.sections.map((sec, sIdx) => (
+                      <div key={sIdx} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.92rem', fontWeight: 800, color: 'hsl(var(--foreground-hsl))' }}>
+                          <span>{sec.icon}</span>
+                          <span>{sec.category}</span>
+                        </div>
+
+                        <ul style={{
+                          margin: 0,
+                          paddingLeft: '22px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px',
+                          fontSize: '0.86rem',
+                          lineHeight: '1.5'
+                        }}>
+                          {sec.items.map((item, itmIdx) => (
+                            <li key={itmIdx} style={{ opacity: 0.9 }}>
+                              {item.title && (
+                                <strong style={{ color: 'hsl(var(--foreground-hsl))', fontWeight: 700 }}>
+                                  {item.title}{' '}
+                                </strong>
+                              )}
+                              <span>{item.description}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
-                  <span style={{ opacity: 0.45, fontWeight: 700, fontFamily: 'monospace' }}>
-                    {rel.pageNumber || '1/1'}
-                  </span>
+
+                  {/* Document Footer: Próximamente & Sugerencias */}
+                  <div style={{
+                    marginTop: '10px',
+                    paddingTop: '14px',
+                    borderTop: '1px solid var(--glass-border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    fontSize: '0.78rem'
+                  }}>
+                    {rel.proximamente && (
+                      <div>
+                        <strong style={{ opacity: 0.85 }}>Próximamente (v.1.1):</strong>{' '}
+                        <span style={{ opacity: 0.7 }}>{rel.proximamente}</span>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                      <div>
+                        <span style={{ opacity: 0.85, fontWeight: 700 }}>Deja tu sugerencia:</span>{' '}
+                        <a 
+                          href={`mailto:${rel.contactEmail || 'njofre@policlinicotabancura.cl'}`} 
+                          style={{ color: 'hsl(var(--accent-hsl))', textDecoration: 'none', fontWeight: 600 }}
+                        >
+                          {rel.contactEmail || 'njofre@policlinicotabancura.cl'}
+                        </a>
+                      </div>
+                      
+                      {/* Pagination Controls */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '5px' }}>
+                          {RELEASE_HISTORY.map((_, dotIdx) => (
+                            <button
+                              key={dotIdx}
+                              type="button"
+                              onClick={() => setCurrentVersionIndex(dotIdx)}
+                              style={{
+                                width: dotIdx === currentVersionIndex ? '16px' : '6px',
+                                height: '6px',
+                                borderRadius: '3px',
+                                backgroundColor: dotIdx === currentVersionIndex ? '#22c55e' : 'rgba(255, 255, 255, 0.25)',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: 0,
+                                transition: 'all 0.2s ease'
+                              }}
+                              title={`Ir a ${RELEASE_HISTORY[dotIdx].version}`}
+                            />
+                          ))}
+                        </div>
+                        <span style={{ opacity: 0.6, fontWeight: 700, fontFamily: 'monospace', fontSize: '0.76rem', marginLeft: '4px' }}>
+                          {currentVersionIndex + 1}/{RELEASE_HISTORY.length}
+                        </span>
+                      </div>
+
+                    </div>
+                  </div>
+
                 </div>
               </div>
+            );
+          })()}
 
-            </div>
-          ))}
         </div>
       </Modal>
 
