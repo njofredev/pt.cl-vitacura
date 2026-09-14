@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { handleLogin, checkEmailExists } from '@/app/actions/authActions';
 import ShowcaseInteractive from '@/components/ShowcaseInteractive';
 import { Search } from 'lucide-react';
+import { CURRENT_VERSION } from '@/lib/version';
 
 const partnerLogos = [
   { name: 'Municipalidad de Vitacura', path: '/logos_convenios_prevision/logo_vitacura_nuevo.svg' },
@@ -550,14 +551,14 @@ export default function LoginPage() {
                 fontSize: '0.72rem',
                 fontWeight: 700,
                 letterSpacing: '0.05em',
-                color: 'hsl(var(--primary-hsl))',
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
+                color: '#22c55e',
+                background: 'rgba(34, 197, 94, 0.12)',
+                border: '1px solid rgba(34, 197, 94, 0.35)',
                 padding: '2px 8px',
                 borderRadius: '12px',
                 marginTop: '10px'
               }}>
-                v1.0.1
+                {CURRENT_VERSION}
               </span>
             </div>
           </form>
