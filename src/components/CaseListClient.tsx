@@ -1066,7 +1066,6 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                   { value: 'sincronizado', label: 'Sincronizados' },
                   { value: 'agendado', label: 'Agendados' },
                   { value: 'en_tratamiento', label: 'En Tratamiento' },
-                  { value: 'epicrisis_pendiente', label: 'Epicrisis Pendiente' },
                   { value: 'finalizado', label: 'Finalizados' }
                 ]}
               />
@@ -2316,7 +2315,6 @@ export default function CaseListClient({ initialCases, user }: CaseListClientPro
                         { value: 'sincronizado', label: 'Sincronizado' },
                         { value: 'agendado', label: 'Agendado' },
                         { value: 'en_tratamiento', label: 'En Tratamiento' },
-                        { value: 'epicrisis_pendiente', label: 'Epicrisis Pendiente' },
                         { value: 'finalizado', label: 'Finalizado' }
                       ]}
                       disabled={loading}

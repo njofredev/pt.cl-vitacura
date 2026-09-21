@@ -802,15 +802,10 @@ export async function syncCaseStatusAction(caseId: string, yearlyCorrelative?: n
     const allDetailsCompleted = details.length > 0 && details.every((detail: any) => Number(detail.realizado) === 1);
     
     if (matchingTreatment.finalizado === 1 || allDetailsCompleted) {
-      if (c.status === 'finalizado') {
-        newStatus = 'finalizado';
-        obs = c.observations || 'Tratamiento completado y con epicrisis emitida.';
-      } else {
-        newStatus = 'epicrisis_pendiente';
-        obs = matchingTreatment.finalizado === 1 
-          ? 'Tratamiento completado en Dentalink. Pendiente redacción y emisión de Epicrisis Clínica.'
-          : 'Todas las prestaciones realizadas en Dentalink. Pendiente redacción y emisión de Epicrisis Clínica.';
-      }
+      newStatus = 'finalizado';
+      obs = matchingTreatment.finalizado === 1 
+        ? 'Tratamiento completado en Dentalink.'
+        : 'Todas las prestaciones realizadas en Dentalink. Tratamiento finalizado.';
     } else {
       // Ignore purely administrative notes (like transferring doctor or plan) from considering treatment as clinically started
       const clinicalEvs = evs.filter((ev: any) => {

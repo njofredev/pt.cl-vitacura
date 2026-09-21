@@ -45,7 +45,6 @@ export default function StatusHistoryClient({ userRole }: { userRole?: string })
     { value: 'sincronizado', label: 'Sincronizado' },
     { value: 'agendado', label: 'Agendado' },
     { value: 'en_tratamiento', label: 'En Tratamiento' },
-    { value: 'epicrisis_pendiente', label: 'Epicrisis Pendiente' },
     { value: 'finalizado', label: 'Finalizado' },
   ];
 

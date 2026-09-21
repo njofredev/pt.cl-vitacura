@@ -425,13 +425,8 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             let obs = c.observations || '';
             
             if (matchingTreatment.finalizado === 1) {
-              // If already finalizado, preserve it. Otherwise, route to epicrisis_pendiente for medical discharge report
-              if (c.status === 'finalizado') {
-                newStatus = 'finalizado';
-              } else {
-                newStatus = 'epicrisis_pendiente';
-                obs = 'Tratamiento completado en Dentalink. Pendiente redacción y emisión de Epicrisis Clínica.';
-              }
+              newStatus = 'finalizado';
+              obs = 'Tratamiento completado en Dentalink.';
             } else {
               const clinicalEvs = evs.filter((ev: any) => {
                 const text = (ev.datos || '').toLowerCase();
@@ -785,12 +780,8 @@ export default function AutomaticEntryClient({ initialCases }: AutomaticEntryCli
             let obs = wizardCase.observations || '';
             
             if (matchingTreatment.finalizado === 1) {
-              if (wizardCase.status === 'finalizado') {
-                newStatus = 'finalizado';
-              } else {
-                newStatus = 'epicrisis_pendiente';
-                obs = 'Tratamiento completado en Dentalink. Pendiente redacción y emisión de Epicrisis Clínica.';
-              }
+              newStatus = 'finalizado';
+              obs = 'Tratamiento completado en Dentalink.';
             } else {
               const clinicalEvs = evs.filter((ev: any) => {
                 const text = (ev.datos || '').toLowerCase();
