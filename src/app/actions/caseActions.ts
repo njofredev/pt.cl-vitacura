@@ -73,6 +73,15 @@ export async function registerPersonAndCaseAction(formData: FormData) {
     return { error: 'Debe seleccionar al menos una prestación o tratamiento en el odontograma interactivo.' };
   }
 
+  // Validate that all diagnosed pieces have at least one treatment assigned
+  if (dentalDiagnosis && dentalDiagnosis.includes('Pieza ')) {
+    const diagnosedPieces = Array.from(dentalDiagnosis.matchAll(/Pieza\s+(\d+)/gi)).map(m => m[1]);
+    const unassignedPieces = diagnosedPieces.filter(p => !treatmentNeeded || !treatmentNeeded.includes(`Pieza ${p}:`));
+    if (unassignedPieces.length > 0) {
+      return { error: `Cada pieza seleccionada debe tener al menos una prestación obligatoria. Falta prestación en la Pieza ${unassignedPieces.join(', ')}.` };
+    }
+  }
+
   try {
     // Start transaction
     const client = await pool.connect();

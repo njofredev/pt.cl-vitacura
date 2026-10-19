@@ -159,6 +159,8 @@ interface OdontogramProps {
     selectedTreatmentIds: string;
     dentalCount: number;
     xrayCount: number;
+    hasIncompleteTeeth?: boolean;
+    incompleteTeeth?: number[];
   }) => void;
 }
 
@@ -196,6 +198,7 @@ export default function Odontogram({
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [multiSelectedTeeth, setMultiSelectedTeeth] = useState<number[]>([]);
   const [selectedMultiTreatment, setSelectedMultiTreatment] = useState<string | null>(null);
+  const [modalValidationError, setModalValidationError] = useState<string | null>(null);
 
   // Dynamic database aranceles states
   const [treatmentOptions, setTreatmentOptions] = useState<TreatmentOption[]>(TREATMENT_OPTIONS);
@@ -672,11 +675,12 @@ export default function Odontogram({
     );
   };
 
-  // Reset category and search term on tooth select
+  // Reset category, search term and validation error on tooth select
   useEffect(() => {
     if (selectedTooth) {
       setSelectedCategory(null);
       setSearchTerm('');
+      setModalValidationError(null);
     }
   }, [selectedTooth]);
 
@@ -787,11 +791,25 @@ export default function Odontogram({
       : '';
 
     const allSelectedTreatmentIds: string[] = [];
-    Object.entries(chartState).forEach(([id, state]) => {
+    const invalidTeeth: number[] = [];
+
+    Object.entries(chartState).forEach(([idStr, state]) => {
+      const tid = parseInt(idStr, 10);
+      const isPseudo = tid === 101 || tid === 102 || tid === 103;
+
       if (state.treatments && state.treatments.length > 0) {
-        state.treatments.forEach(tid => {
-          allSelectedTreatmentIds.push(tid);
+        state.treatments.forEach(tId => {
+          allSelectedTreatmentIds.push(tId);
         });
+      }
+
+      if (isPseudo) {
+        if (state.treatments.length === 0) invalidTeeth.push(tid);
+      } else {
+        const hasDiag = Object.values(state.faces).some(Boolean) || !!state.condition;
+        if (hasDiag && state.treatments.length === 0) {
+          invalidTeeth.push(tid);
+        }
       }
     });
 
@@ -801,7 +819,9 @@ export default function Odontogram({
       description: generalObservations,
       selectedTreatmentIds: allSelectedTreatmentIds.join(','),
       dentalCount,
-      xrayCount
+      xrayCount,
+      hasIncompleteTeeth: invalidTeeth.length > 0,
+      incompleteTeeth: invalidTeeth
     });
   }, [chartState, activeTab, generalObservations]);
 
@@ -840,6 +860,9 @@ export default function Odontogram({
       updatedTreatments = currentState.treatments.filter((tid) => tid !== treatmentId);
     } else {
       updatedTreatments = [...currentState.treatments, treatmentId];
+      if (modalValidationError) {
+        setModalValidationError(null);
+      }
     }
 
     const updatedState = {
@@ -867,6 +890,58 @@ export default function Odontogram({
     }));
   };
 
+  // Handlers for active tooth modal saving, discarding, and closing
+  const handleSaveTooth = () => {
+    if (!selectedTooth) return;
+    const state = getToothState(selectedTooth);
+
+    // Enforce mandatory treatment requirement
+    if (state.treatments.length === 0) {
+      setModalValidationError(`⚠️ Es obligatorio ingresar al menos una prestación para la Pieza ${selectedTooth} antes de guardar.`);
+      return;
+    }
+
+    setModalValidationError(null);
+    setSelectedTooth(null);
+  };
+
+  const handleDiscardTooth = () => {
+    if (selectedTooth !== null) {
+      setChartState((prev) => {
+        const copy = { ...prev };
+        delete copy[selectedTooth];
+        return copy;
+      });
+    }
+    setModalValidationError(null);
+    setSelectedTooth(null);
+  };
+
+  const handleAttemptClose = () => {
+    if (!selectedTooth) return;
+    const state = getToothState(selectedTooth);
+    const hasModifications = Object.values(state.faces).some(Boolean) || !!state.condition;
+
+    if (hasModifications && state.treatments.length === 0) {
+      setModalValidationError(`⚠️ Debe asignar al menos una prestación para guardar la Pieza ${selectedTooth}, o presionar "Descartar Selección" para cancelar.`);
+      return;
+    }
+
+    if (!hasModifications && state.treatments.length === 0) {
+      setChartState((prev) => {
+        const copy = { ...prev };
+        delete copy[selectedTooth];
+        return copy;
+      });
+      setModalValidationError(null);
+      setSelectedTooth(null);
+      return;
+    }
+
+    setModalValidationError(null);
+    setSelectedTooth(null);
+  };
+
   // Clear a single tooth's selections
   const clearTooth = (id: number) => {
     setChartState((prev) => {
@@ -889,6 +964,15 @@ export default function Odontogram({
     return hasActiveFace || hasTreatments || hasCondition;
   };
 
+  // Check if a tooth is incomplete (has diagnostic faces/condition but no treatments)
+  const isToothIncomplete = (id: number) => {
+    const state = chartState[id];
+    if (!state) return false;
+    const hasActiveFace = Object.values(state.faces).some(Boolean);
+    const hasCondition = !!state.condition;
+    return (hasActiveFace || hasCondition) && state.treatments.length === 0;
+  };
+
   // Render Tooth SVG Anatomical Icon (Line art, flips on isUpper=false)
   const renderToothIcon = (id: number, type: 'incisor' | 'canine' | 'premolar' | 'molar', isUpper: boolean, size = 30) => {
     const state = getToothState(id);
@@ -898,6 +982,7 @@ export default function Odontogram({
     let color = 'hsla(var(--foreground-hsl) / 0.16)';
     if (isFocused) color = 'hsl(var(--primary-hsl))';
     else if (isMultiSelected) color = 'hsl(var(--accent-hsl))';
+    else if (isToothIncomplete(id)) color = '#ef4444';
     else if (isToothModified(id)) color = 'hsl(var(--accent-hsl))';
 
     // Tailored SVG Line art paths for Incisor, Canine, Premolar, Molar
@@ -986,6 +1071,7 @@ export default function Odontogram({
     let strokeColor = 'var(--glass-border)';
     if (isFocused) strokeColor = 'hsl(var(--primary-hsl))';
     else if (isMultiSelected) strokeColor = 'hsl(var(--accent-hsl))';
+    else if (isToothIncomplete(id)) strokeColor = '#ef4444';
     else if (isToothModified(id)) strokeColor = 'hsl(var(--accent-hsl))';
 
     const { left: leftFace, right: rightFace } = getLeftAndRightFaces(id, activeTab === 'child');
@@ -2048,7 +2134,7 @@ export default function Odontogram({
                 zIndex: 99999,
                 padding: '24px'
               }}
-              onClick={() => setSelectedTooth(null)}
+              onClick={handleAttemptClose}
             >
               <div
                 id="active-tooth-editor"
@@ -2076,7 +2162,7 @@ export default function Odontogram({
                 {/* Top-Right Absolute Close X button */}
                 <button
                   type="button"
-                  onClick={() => setSelectedTooth(null)}
+                  onClick={handleAttemptClose}
                   style={{
                     position: 'absolute',
                     right: '18px',
@@ -2293,9 +2379,29 @@ export default function Odontogram({
                   position: 'relative'
                 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'hsl(var(--primary-hsl))', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <FileText size={15} style={{ color: 'hsl(var(--primary-hsl))' }} /> Asignar Prestaciones para la Pieza {selectedTooth}:
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                      <span style={{ fontSize: '0.86rem', fontWeight: 800, color: 'hsl(var(--primary-hsl))', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <FileText size={15} style={{ color: 'hsl(var(--primary-hsl))' }} /> Asignar Prestaciones para la Pieza {selectedTooth}:
+                      </span>
+                      <span style={{
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: activeToothState.treatments.length > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                        color: activeToothState.treatments.length > 0 ? '#10b981' : '#ef4444',
+                        border: activeToothState.treatments.length > 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.35)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        {activeToothState.treatments.length > 0 ? (
+                          <>✓ {activeToothState.treatments.length} asignada(s)</>
+                        ) : (
+                          <>⚠️ Obligatorio (0 seleccionadas)</>
+                        )}
+                      </span>
+                    </div>
 
                     {/* Quick Search Input */}
                     <div style={{ position: 'relative', width: '100%' }}>
@@ -2653,10 +2759,31 @@ export default function Odontogram({
                   </div>
                 </div>
 
+                {/* Validation Error Banner */}
+                {modalValidationError && (
+                  <div style={{
+                    gridColumn: '1 / -1',
+                    padding: '12px 18px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                    borderRadius: '10px',
+                    color: '#ef4444',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.1)'
+                  }}>
+                    <XCircle size={18} style={{ flexShrink: 0 }} />
+                    <span>{modalValidationError}</span>
+                  </div>
+                )}
+
                 {/* Footer Buttons Section */}
                 <div style={{
                   display: 'flex',
-                  justifyContent: 'flex-end',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                   marginTop: '20px',
                   borderTop: '1px solid var(--glass-border)',
@@ -2667,16 +2794,7 @@ export default function Odontogram({
                 }}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setChartState(prev => {
-                        const copy = { ...prev };
-                        if (selectedTooth !== null) {
-                          delete copy[selectedTooth];
-                        }
-                        return copy;
-                      });
-                      setSelectedTooth(null);
-                    }}
+                    onClick={handleDiscardTooth}
                     className="btn btn-secondary"
                     style={{
                       display: 'inline-flex',
@@ -2690,25 +2808,34 @@ export default function Odontogram({
                       borderColor: 'rgba(239, 68, 68, 0.25)'
                     }}
                   >
-                    <Eraser size={14} style={{ strokeWidth: 2.2 }} /> Limpiar Selección
+                    <Eraser size={14} style={{ strokeWidth: 2.2 }} /> Descartar Selección
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn-accent"
-                    onClick={() => setSelectedTooth(null)}
-                    style={{
-                      padding: '10px 26px',
-                      borderRadius: '8px',
-                      fontSize: '0.84rem',
-                      fontWeight: 700,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 12px rgba(20, 184, 166, 0.2)'
-                    }}
-                  >
-                    <Save size={15} style={{ strokeWidth: 2.5 }} /> Guardar
-                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {activeToothState.treatments.length === 0 && (
+                      <span style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: 600 }}>
+                        * Ingrese al menos una prestación para guardar
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className={`btn ${activeToothState.treatments.length > 0 ? 'btn-accent' : 'btn-secondary'}`}
+                      onClick={handleSaveTooth}
+                      style={{
+                        padding: '10px 26px',
+                        borderRadius: '8px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        opacity: activeToothState.treatments.length > 0 ? 1 : 0.85,
+                        boxShadow: activeToothState.treatments.length > 0 ? '0 4px 12px rgba(20, 184, 166, 0.2)' : 'none'
+                      }}
+                    >
+                      <Save size={15} style={{ strokeWidth: 2.5 }} /> Guardar
+                    </button>
+                  </div>
                 </div>
 
               </div>
@@ -2879,7 +3006,38 @@ export default function Odontogram({
                             })}
                           </div>
                         ) : (
-                          <span style={{ fontSize: '0.8rem', opacity: 0.4, fontStyle: 'italic', color: 'hsla(var(--foreground-hsl) / 0.4)' }}>Sin prestaciones asignadas</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                              color: '#ef4444',
+                              border: '1px solid rgba(239, 68, 68, 0.35)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              ⚠️ Falta prestación (Obligatorio)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedTooth(id)}
+                              style={{
+                                background: 'rgba(20, 184, 166, 0.15)',
+                                border: '1px solid rgba(20, 184, 166, 0.4)',
+                                color: '#14b8a6',
+                                borderRadius: '6px',
+                                padding: '2px 8px',
+                                fontSize: '0.74rem',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Asignar ahora
+                            </button>
+                          </div>
                         )}
                       </td>
                       <td style={{ padding: '8px 12px', textAlign: 'right' }}>

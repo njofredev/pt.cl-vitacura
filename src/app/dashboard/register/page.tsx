@@ -598,6 +598,19 @@ export default function RegisterCasePage() {
       });
     }
 
+    // Require all diagnosed pieces to have a treatment
+    if (odontogramData.hasIncompleteTeeth && odontogramData.incompleteTeeth && odontogramData.incompleteTeeth.length > 0) {
+      const teethLabels = odontogramData.incompleteTeeth.map((t: number) => (t > 100 ? (t === 101 ? 'Arcada Superior' : t === 102 ? 'Arcada Inferior' : 'Boca Completa') : `Pieza ${t}`)).join(', ');
+      setOdontogramError(`Falta asignar prestación obligatoria en: ${teethLabels}. Cada pieza diagnosticada debe tener al menos una prestación.`);
+      errorsList.push({
+        field: 'odontogram_incomplete',
+        step: 2,
+        label: 'Prestaciones Pendientes',
+        message: `Asigne prestación obligatoria en ${teethLabels}.`,
+        elementId: 'odontogram_container'
+      });
+    }
+
     setValidationErrors(errorsList);
 
     if (errorsList.length > 0) {
@@ -673,6 +686,18 @@ export default function RegisterCasePage() {
     if (!hasTreatments && (odontogramData.dentalCount === 0 && odontogramData.xrayCount === 0)) {
       setError('Debe seleccionar al menos una prestación o tratamiento en el odontograma interactivo para inscribir el caso.');
       setOdontogramError('Debe seleccionar al menos una prestación o tratamiento en el odontograma.');
+      setStep(2);
+      setTimeout(() => {
+        triggerErrorJump('odontogram_container', 2);
+      }, 100);
+      return;
+    }
+
+    // Require all diagnosed pieces to have a treatment
+    if (odontogramData.hasIncompleteTeeth && odontogramData.incompleteTeeth && odontogramData.incompleteTeeth.length > 0) {
+      const teethLabels = odontogramData.incompleteTeeth.map((t: number) => (t > 100 ? (t === 101 ? 'Arcada Superior' : t === 102 ? 'Arcada Inferior' : 'Boca Completa') : `Pieza ${t}`)).join(', ');
+      setError(`Falta asignar prestación obligatoria en: ${teethLabels}. Cada pieza diagnosticada debe tener al menos una prestación.`);
+      setOdontogramError(`Falta asignar prestación obligatoria en: ${teethLabels}.`);
       setStep(2);
       setTimeout(() => {
         triggerErrorJump('odontogram_container', 2);
